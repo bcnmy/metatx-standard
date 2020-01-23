@@ -102,3 +102,8 @@ dist
 
 # TernJS port file
 .tern-port
+.DS_Store
+example/react-ui/package-lock.json
+example/react-ui/yarn.lock
+src/.secret
+src/package-lock.json

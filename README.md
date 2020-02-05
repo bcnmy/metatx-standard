@@ -7,6 +7,8 @@ You can see the LIVE DEMO <a href="https://metatx.biconomy.io" target="_blank" >
 
 The standard is the result of initiative by metamask here https://medium.com/metamask/announcing-a-generalized-metatransaction-contest-abd4f321470b
 
+Biconomy was selected as one of the finalist in the hackathon. Read <a href="https://medium.com/metamask/our-metatransaction-hackathon-winner-a620551ccb9b" target="_blank">here</a>
+
 <h3>How do i use this in my Smart Contracts?</h3>
 
 1. Inherit <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/EIP712MetaTransaction.sol" target="_blank" >EIP712MetaTransaction</a> contract 

@@ -51,7 +51,7 @@ function App() {
         if (provider.networkVersion === "3") {
           domainData.chainId = 3;
           web3 = new Web3(provider);
-          
+
           contract = new web3.eth.Contract(
             config.contract.abi,
             config.contract.address
@@ -121,7 +121,7 @@ function App() {
                 sig: response.result
               });
               console.log(`Recovered ${recovered}`);
-              sendSignedTransaction(userAddress, functionSignature, r, s, v);
+              sendTransaction(userAddress, functionSignature, r, s, v);
             }
           }
         );
@@ -198,12 +198,12 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
+  const sendTransaction = async (userAddress, functionData, r, s, v) => {
     if (web3 && contract) {
       try {
         let gasLimit = await contract.methods
           .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .estimateGas({ from: config.publicKey });
+          .estimateGas({ from: userAddress });
         let gasPrice = await web3.eth.getGasPrice();
         console.log(gasLimit);
         console.log(gasPrice);

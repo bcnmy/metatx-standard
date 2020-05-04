@@ -28,10 +28,11 @@ const metaTransactionType = [
 let domainData = {
   name: "TestContract",
   version: "1",
-  verifyingContract: config.contract.address
+  chainId:"1",
+  verifyingContract: config.contract.address.toLowerCase()
 };
 
-let web3;
+let web3,getWeb3;
 let contract;
 
 function App() {
@@ -49,18 +50,17 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-        if (provider.networkVersion === "3") {
-          domainData.chainId = 3;
-          const biconomy = new Biconomy(provider, {
-            dappId: "5e8a2c40f64c16288c945036",
-            apiKey: "xLdCI_-Rl.75c5c576-c433-4092-9171-bcfb22aa3325"
+          const biconomy = new Biconomy(new Web3.providers.HttpProvider("https://testnet2.matic.network"), {
+            apiKey: "VwZJoYCFh.b28dfca0-66ca-4093-a04f-b171447ed6ec",
+            debug:true
           });
-          web3 = new Web3(biconomy);
+          web3 = new Web3(provider);
+          getWeb3 = new Web3(biconomy);
 
           biconomy
             .onEvent(biconomy.READY, () => {
               // Initialize your dapp here like getting user accounts etc
-              contract = new web3.eth.Contract(
+              contract = new getWeb3.eth.Contract(
                 config.contract.abi,
                 config.contract.address
               );
@@ -73,9 +73,6 @@ function App() {
             .onEvent(biconomy.ERROR, (error, message) => {
               // Handle error while initializing mexa
             });
-        } else {
-          showErrorMessage("Please change the network in metamask to Ropsten");
-        }
       } else {
         showErrorMessage("Metamask not installed");
       }
@@ -215,7 +212,7 @@ function App() {
       try {
         let gasLimit = await contract.methods
           .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .estimateGas({ from: config.publicKey });
+          .estimateGas({ from: userAddress });
         let gasPrice = await web3.eth.getGasPrice();
         console.log(gasLimit);
         console.log(gasPrice);
@@ -223,8 +220,8 @@ function App() {
           .executeMetaTransaction(userAddress, functionData, r, s, v)
           .send({
             from: userAddress,
-            gasPrice: web3.utils.toHex(gasPrice),
-            gasLimit: web3.utils.toHex(gasLimit)
+            gasPrice:gasPrice,
+            gasLimit:gasLimit
           });
 
         tx.on("transactionHash", function(hash) {

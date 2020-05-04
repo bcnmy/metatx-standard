@@ -50,8 +50,8 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-          const biconomy = new Biconomy(new Web3.providers.HttpProvider("https://testnet2.matic.network"), {
-            apiKey: "VwZJoYCFh.b28dfca0-66ca-4093-a04f-b171447ed6ec",
+          const biconomy = new Biconomy(new Web3.providers.HttpProvider("https://betav2.matic.network"), {
+            apiKey: "tiXGPFf7Z.a12ae5fd-6638-4848-b0e8-af7016d8cfa6",
             debug:true
           });
           web3 = new Web3(provider);

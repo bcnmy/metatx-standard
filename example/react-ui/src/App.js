@@ -28,8 +28,8 @@ const metaTransactionType = [
 let domainData = {
   name: "TestContract",
   version: "1",
-  chainId:"1",
-  verifyingContract: config.contract.address.toLowerCase()
+  chainId: 16110,
+  verifyingContract: config.contract.address
 };
 
 let web3,getWeb3;
@@ -50,17 +50,16 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-          const biconomy = new Biconomy(new Web3.providers.HttpProvider("https://betav2.matic.network"), {
+          const biconomy = new Biconomy(provider, {
             apiKey: "tiXGPFf7Z.a12ae5fd-6638-4848-b0e8-af7016d8cfa6",
             debug:true
           });
-          web3 = new Web3(provider);
-          getWeb3 = new Web3(biconomy);
+          web3 = new Web3(biconomy);
 
           biconomy
             .onEvent(biconomy.READY, () => {
               // Initialize your dapp here like getting user accounts etc
-              contract = new getWeb3.eth.Contract(
+              contract = new web3.eth.Contract(
                 config.contract.abi,
                 config.contract.address
               );

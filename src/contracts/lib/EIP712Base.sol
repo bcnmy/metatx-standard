@@ -25,7 +25,7 @@ contract EIP712Base {
 
     function getChainID() internal pure returns (uint256 id) {
 		assembly {
-			id := 1
+			id := 16110
 		}
 	}
 

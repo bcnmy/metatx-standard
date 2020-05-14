@@ -6,9 +6,8 @@ import {
   NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
-import Biconomy from "@biconomy/mexa";
-
 import Web3 from "web3";
+import Biconomy from "@biconomy/mexa";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 
@@ -28,11 +27,11 @@ const metaTransactionType = [
 let domainData = {
   name: "TestContract",
   version: "1",
-  chainId: 16110,
+  chainId: 31,
   verifyingContract: config.contract.address
 };
 
-let web3,getWeb3;
+let web3;
 let contract;
 
 function App() {
@@ -48,30 +47,25 @@ function App() {
         window.ethereum.isMetaMask
       ) {
         // Ethereum user detected. You can now use the provider.
-        const provider = window["ethereum"];
-        await provider.enable();
-          const biconomy = new Biconomy(provider, {
-            apiKey: "tiXGPFf7Z.a12ae5fd-6638-4848-b0e8-af7016d8cfa6",
-            debug:true
-          });
+          const provider = window["ethereum"];
+          await provider.enable();
+          const biconomy = new Biconomy(provider,{apiKey: "vGqzPQyZB.2ad53836-7122-40a2-ae2b-6369189bfa8b"});
           web3 = new Web3(biconomy);
 
-          biconomy
-            .onEvent(biconomy.READY, () => {
-              // Initialize your dapp here like getting user accounts etc
-              contract = new web3.eth.Contract(
-                config.contract.abi,
-                config.contract.address
-              );
-              setSelectedAddress(provider.selectedAddress);
-              getQuoteFromNetwork();
-              provider.on("accountsChanged", function(accounts) {
-                setSelectedAddress(accounts[0]);
-              });
-            })
-            .onEvent(biconomy.ERROR, (error, message) => {
-              // Handle error while initializing mexa
+          biconomy.onEvent(biconomy.READY, () => {
+            // Initialize your dapp here like getting user accounts etc
+            contract = new web3.eth.Contract(
+              config.contract.abi,
+              config.contract.address
+            );
+            setSelectedAddress(provider.selectedAddress);
+            getQuoteFromNetwork();
+            provider.on("accountsChanged", function(accounts) {
+              setSelectedAddress(accounts[0]);
             });
+          }).onEvent(biconomy.ERROR, (error, message) => {
+            // Handle error while initializing mexa
+          });
       } else {
         showErrorMessage("Metamask not installed");
       }

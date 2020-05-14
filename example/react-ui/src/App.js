@@ -27,7 +27,6 @@ const metaTransactionType = [
 let domainData = {
   name: "TestContract",
   version: "1",
-  chainId: 31,
   verifyingContract: config.contract.address
 };
 
@@ -49,6 +48,8 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
+          if (provider.networkVersion == "31") {
+            domainData.chainId = 31;
           const biconomy = new Biconomy(provider,{apiKey: "vGqzPQyZB.2ad53836-7122-40a2-ae2b-6369189bfa8b"});
           web3 = new Web3(biconomy);
 
@@ -66,6 +67,9 @@ function App() {
           }).onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
           });
+        } else {
+           showErrorMessage("Please change the network in metamask to RSK with RPC https://public-node.testnet.rsk.co:443");
+        }
       } else {
         showErrorMessage("Metamask not installed");
       }

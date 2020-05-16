@@ -107,3 +107,8 @@ example/react-ui/package-lock.json
 example/react-ui/yarn.lock
 src/.secret
 src/package-lock.json
+src/build/contracts/EIP712Base.json
+src/build/contracts/EIP712MetaTransaction.json
+src/build/contracts/SafeMath.json
+src/build/contracts/TestContract.json
+src/build/contracts/Migrations.json

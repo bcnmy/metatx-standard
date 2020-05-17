@@ -68,7 +68,9 @@ function App() {
             // Handle error while initializing mexa
           });
         } else {
-          showErrorMessage("Please change the network in metamask to Ropsten");
+          showErrorMessage("Please change the network in metamask to POA Sokol. Please check conosle for RPC");
+          console.log("Sokol RPC: https://sokol.poa.network");
+          console.log("Sokol Network_ID: 77");
         }
       } else {
         showErrorMessage("Metamask not installed");

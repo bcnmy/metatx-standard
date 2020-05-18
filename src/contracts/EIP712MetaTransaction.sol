@@ -34,7 +34,7 @@ contract EIP712MetaTransaction is EIP712Base {
         });
         require(verify(userAddress, metaTx, sigR, sigS, sigV), "Signer and signature do not match");
         // Append userAddress and relayer address at the end to extract it from calling context
-        (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress, msg.sender));
+        (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress));
 
         require(success, "Function call not successfull");
         nonces[userAddress] = nonces[userAddress].add(1);
@@ -61,31 +61,18 @@ contract EIP712MetaTransaction is EIP712Base {
 
     function msgSender() internal view returns(address sender) {
         if(msg.sender == address(this)) {
-            bytes20 userAddress;
-            bytes memory data = msg.data;
-            uint256 dataLength = msg.data.length;
+            bytes memory array = msg.data;
+            uint256 index = msg.data.length;
             assembly {
-                calldatacopy(0x0, sub(dataLength, 40), sub(dataLength, 20))
-                userAddress := mload(0x0)
+                // Load the 32 bytes word from memory with the address on the lower 20 bytes, and mask those.
+                sender := and(mload(add(array, index)), 0xffffffffffffffffffffffffffffffffffffffff)
             }
-            sender = address(uint160(userAddress));
         } else {
             sender = msg.sender;
         }
+        return sender;
     }
 
-    function msgRelayer() internal view returns(address relayer) {
-        if(msg.sender == address(this)) {
-            bytes20 relayerAddress;
-            bytes memory data = msg.data;
-            uint256 dataLength = msg.data.length;
-            assembly {
-                calldatacopy(0x0, sub(dataLength, 20), dataLength)
-                relayerAddress := mload(0x0)
-            }
-            relayer = address(uint160(relayerAddress));
-        }
-    }
 
 
 

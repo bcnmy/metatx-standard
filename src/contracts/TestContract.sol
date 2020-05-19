@@ -1,9 +1,9 @@
 pragma solidity ^0.5.13;
 pragma experimental ABIEncoderV2;
 
-import "./EIP712MetaTransaction.sol";
+import "./BasicMetaTransaction.sol";
 
-contract TestContract is EIP712MetaTransaction("TestContract","1") {
+contract TestContract is BasicMetaTransaction {
 
     string public quote;
     address public owner;

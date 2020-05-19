@@ -11,25 +11,6 @@ import Web3 from "web3";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 
-const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" }
-];
-
-const metaTransactionType = [
-  { name: "nonce", type: "uint256" },
-  { name: "from", type: "address" },
-  { name: "functionSignature", type: "bytes" }
-];
-
-let domainData = {
-  name: "TestContract",
-  version: "1",
-  verifyingContract: config.contract.address
-};
-
 let web3;
 let contract;
 
@@ -38,19 +19,18 @@ function App() {
   const [owner, setOwner] = useState("Default Owner Address");
   const [newQuote, setNewQuote] = useState("");
   const [selectedAddress, setSelectedAddress] = useState("");
+  const [error, setError] =  useState("");
   const [metaTxEnabled, setMetaTxEnabled] = useState(true);
   useEffect(() => {
     async function init() {
       if (
-        typeof window.ethereum !== "undefined" &&
-        window.ethereum.isMetaMask
+        typeof window.ethereum !== "undefined"
       ) {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
-        const biconomy = new Biconomy(provider,{apiKey: "7lCU2EVu6.de6ff3bf-c43e-4d05-9769-57ea1890108f"});
+        const biconomy = new Biconomy(provider,{apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", debug: true});
         await provider.enable();
-        if (provider.networkVersion === "77") {
-          domainData.chainId = 77;
+        if (provider.networkVersion === "42") {
           web3 = new Web3(biconomy);
 
           biconomy.onEvent(biconomy.READY, () => {
@@ -65,15 +45,16 @@ function App() {
               setSelectedAddress(accounts[0]);
             });
           }).onEvent(biconomy.ERROR, (error, message) => {
+            console.error(error);
+            setError(JSON.stringify(error));
+            showErrorMessage("Error while initializing Biconomy. Please contact Biconomy team.");
             // Handle error while initializing mexa
           });
         } else {
-          showErrorMessage("Please change the network in metamask to POA Sokol. Please check conosle for RPC");
-          console.log("Sokol RPC: https://sokol.poa.network");
-          console.log("Sokol Network_ID: 77");
+          showErrorMessage("Please change the network in metamask to Kovan");
         }
       } else {
-        showErrorMessage("Metamask not installed");
+        showErrorMessage("Your browser is not web3 enabled");
       }
     }
     init();
@@ -90,49 +71,19 @@ function App() {
         let userAddress = selectedAddress;
         let nonce = await contract.methods.getNonce(userAddress).call();
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        let message = {};
-        message.nonce = parseInt(nonce);
-        message.from = userAddress;
-        message.functionSignature = functionSignature;
-
-        const dataToSign = JSON.stringify({
-          types: {
-            EIP712Domain: domainType,
-            MetaTransaction: metaTransactionType
-          },
-          domain: domainData,
-          primaryType: "MetaTransaction",
-          message: message
-        });
-        console.log(domainData);
-        console.log();
-        web3.currentProvider.send(
-          {
-            jsonrpc: "2.0",
-            id: 999999999999,
-            method: "eth_signTypedData_v4",
-            params: [userAddress, dataToSign]
-          },
-          function(error, response) {
-            console.info(`User signature is ${response.result}`);
-            if (error || (response && response.error)) {
-              showErrorMessage("Could not get user signature");
-            } else if (response && response.result) {
-              let { r, s, v } = getSignatureParameters(response.result);
-              console.log(userAddress);
-              console.log(JSON.stringify(message));
-              console.log(message);
-              console.log(getSignatureParameters(response.result));
-
-              const recovered = sigUtil.recoverTypedSignature_v4({
-                data: JSON.parse(dataToSign),
-                sig: response.result
-              });
-              console.log(`Recovered ${recovered}`);
-              sendTransaction(userAddress, functionSignature, r, s, v);
-            }
-          }
+        let message = "Please provide your signature to avail free transactions. Tracking Id ";
+        let messageToSign = `${message}${nonce}`;
+        const signature = await web3.eth.personal.sign(
+          messageToSign,
+          userAddress
         );
+        console.info(`User signature is ${signature}`);
+        let { r, s, v } = getSignatureParameters(signature);
+        console.log(userAddress);
+        console.log(JSON.stringify(message));
+        console.log(message);
+        console.log(getSignatureParameters(signature));
+        sendTransaction(userAddress, functionSignature, message, `${messageToSign.length}`, r, s, v);
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -206,17 +157,17 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendTransaction = async (userAddress, functionData, r, s, v) => {
+  const sendTransaction = async (userAddress, functionData, message, length, r, s, v) => {
     if (web3 && contract) {
       try {
         let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
+          .executeMetaTransaction(userAddress, functionData, message, length, r, s, v)
           .estimateGas({ from: userAddress });
         let gasPrice = await web3.eth.getGasPrice();
         console.log(gasLimit);
         console.log(gasPrice);
         let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
+          .executeMetaTransaction(userAddress, functionData, message, length, r, s, v)
           .send({
             from: userAddress,
             gasPrice: web3.utils.toHex(gasPrice),
@@ -256,6 +207,7 @@ function App() {
           )}
         </div>
       </section>
+      <div>{error}</div>
       <section>
         <div className="submit-container">
           <div className="submit-row">

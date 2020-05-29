@@ -7,6 +7,24 @@
   pointer-events: none;
 }
 
+.token-row {
+  padding: 10px;
+}
+
+.token-input-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.token-input-row input {
+  margin: 10px;
+  width: 300px;
+  height: 25px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;

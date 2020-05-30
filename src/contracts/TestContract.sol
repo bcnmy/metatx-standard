@@ -1,16 +1,15 @@
 pragma solidity ^0.5.13;
 pragma experimental ABIEncoderV2;
 
-import "./EIP712MetaTransaction.sol";
 
-contract TestContract is EIP712MetaTransaction("TestContract","1") {
+contract TestContract {
 
     string public quote;
     address public owner;
 
     function setQuote(string memory newQuote) public {
         quote = newQuote;
-        owner = msgSender();
+        owner = msg.sender;
     }
 
     function getQuote() view public returns(string memory currentQuote, address currentOwner) {

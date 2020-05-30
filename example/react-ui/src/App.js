@@ -6,32 +6,16 @@ import {
   NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
+import Biconomy from "@biconomy/mexa";
 
 import Web3 from "web3";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
-
-const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" }
-];
-
-const metaTransactionType = [
-  { name: "nonce", type: "uint256" },
-  { name: "from", type: "address" },
-  { name: "functionSignature", type: "bytes" }
-];
-
-let domainData = {
-  name: "TestContract",
-  version: "1",
-  verifyingContract: config.contract.address
-};
+const { createWallet } = require("./gnosis/GnosisHelper");
 
 let web3;
-let contract;
+let contract, gnosisFactory, gnosisSafeMaster, proxyWallet;
+const PROXY_ADDRESS = "PROXY_ADDRESS";
 
 function App() {
   const [quote, setQuote] = useState("This is a default quote");
@@ -39,6 +23,8 @@ function App() {
   const [newQuote, setNewQuote] = useState("");
   const [selectedAddress, setSelectedAddress] = useState("");
   const [metaTxEnabled, setMetaTxEnabled] = useState(true);
+  const [walletAddress, setWalletAddress] = useState("");
+
   useEffect(() => {
     async function init() {
       if (
@@ -48,21 +34,69 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-        if (provider.networkVersion === "3") {
-          domainData.chainId = 3;
-          web3 = new Web3(provider);
+        if (provider.networkVersion === "42") {
+          const biconomy = new Biconomy(provider,{apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"});
+          web3 = new Web3(biconomy);
+          // web3 = new Web3(provider);
+          biconomy.onEvent(biconomy.READY, () => {
+            // Initialize your dapp here like getting user accounts etc
+            contract = new web3.eth.Contract(
+              config.contract.abi,
+              config.contract.address
+            );
+            gnosisFactory = new web3.eth.Contract(
+              config.gnosis.proxyFactory.abi,
+              config.gnosis.proxyFactory.address
+            );
+            gnosisSafeMaster = new web3.eth.Contract(
+              config.gnosis.safeMasterCopy.abi,
+              config.gnosis.safeMasterCopy.address
+            );
+            let proxyAddress = getLocalStorage(PROXY_ADDRESS);
+            if(proxyAddress) {
+              proxyWallet = new web3.eth.Contract(
+                config.gnosis.safeMasterCopy.abi,
+                proxyAddress
+              );
+              setWalletAddress(proxyAddress);
+            }
 
-          contract = new web3.eth.Contract(
-            config.contract.abi,
-            config.contract.address
-          );
-          setSelectedAddress(provider.selectedAddress);
-          getQuoteFromNetwork();
-          provider.on("accountsChanged", function(accounts) {
-            setSelectedAddress(accounts[0]);
+            setSelectedAddress(provider.selectedAddress);
+            getQuoteFromNetwork();
+            provider.on("accountsChanged", function(accounts) {
+              setSelectedAddress(accounts[0]);
+            });
+            // Whiltelist our DApp smart contract
+            let data = {
+              destinationAddresses : [
+                config.contract.address.toLowerCase()
+              ]
+            }
+            fetch("https://api.biconomy.io/api/v1/dapp/whitelist/destination", {
+              method: "POST",
+              body: JSON.stringify(data),
+              headers: {
+                "Authorization" : "User b99b1ecb-7d57-487f-a46d-d6aafef0be1a",
+                'Content-Type': 'application/json;charset=utf-8'
+              }
+            }).then(response => {
+              if(response.ok) {
+                return response.json();
+              } else {
+                showErrorMessage("Whilelisting contract address failed");
+              }
+            }).then(response => {
+              console.log(response);
+              showSuccessMessage("Dapp whitelisted successfully");
+            });
+
+          }).onEvent(biconomy.ERROR, (error, message) => {
+            // Handle error while initializing mexa
+            console.log(error);
+            showErrorMessage("Error while initializing biconomy");
           });
         } else {
-          showErrorMessage("Please change the network in metamask to Ropsten");
+          showErrorMessage("Please change the network in metamask to Kovan");
         }
       } else {
         showErrorMessage("Metamask not installed");
@@ -71,77 +105,179 @@ function App() {
     init();
   }, []);
 
+  const getLocalStorage = (key) => {
+    if(typeof localStorage != 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return;
+  }
+
+  const setLocalStorage = (key, value) => {
+    if(typeof localStorage != 'undefined') {
+      if(key && value) {
+        localStorage.setItem(key, value);
+      }
+    }
+  }
+
   const onQuoteChange = event => {
     setNewQuote(event.target.value);
   };
 
+  const onLogin = async event => {
+    let transaction = createWallet(gnosisFactory, gnosisSafeMaster, selectedAddress);
+    console.log(transaction);
+    transaction.on("transactionHash", (hash) => {
+      console.log("Transaction Hash", hash);
+      showInfoMessage("Wallet creation transaction sent to blockchain");
+    }).once("confirmation", async function(confirmationNumber, receipt) {
+      console.log("Transaction confirmed", receipt);
+
+      const localReceipt = await web3.eth.getTransactionReceipt(receipt.transactionHash);
+
+      let localProxyAddress = hexStripZeros(localReceipt.logs[0].data);
+      console.log('Proxy Address:', localProxyAddress);
+
+      // Get the Proxy Address
+      // TODO: If the first character of address is 0, there will be a problem
+
+      if (localProxyAddress) {
+        if(localProxyAddress.length < 42) {
+          console(`Fixing trailing zeros in address ${localProxyAddress}`);
+          localProxyAddress = fixTrailingZero(localProxyAddress);
+          console.log(`Fixed address ${localProxyAddress}`)
+        }
+        setLocalStorage(PROXY_ADDRESS, localProxyAddress)
+        setWalletAddress(localProxyAddress);
+        proxyWallet = new web3.eth.Contract(
+          config.gnosis.safeMasterCopy.abi,
+          localProxyAddress
+        );
+        let data = {
+          addresses: [localProxyAddress]
+        }
+        // Lets whitelist this address
+        fetch("https://api.biconomy.io/api/v1/dapp/whitelist/proxy-contracts", {
+          method: "POST",
+          body: JSON.stringify(data),
+          headers: {
+            "Authorization" : "User b99b1ecb-7d57-487f-a46d-d6aafef0be1a",
+            'Content-Type': 'application/json;charset=utf-8'
+          }
+        }).then(response => {
+          if(response.ok) {
+            return response.json();
+          } else {
+            showErrorMessage("Whilelisting user proxy address failed");
+          }
+        }).then(response => {
+          console.log(response);
+          showSuccessMessage("User address whitelisted");
+        });
+        showSuccessMessage("Proxy Wallet created");
+      } else {
+        showErrorMessage("Login failed");
+      }
+    }).on("error", error => {
+      console.log(error);
+      showErrorMessage("Login failed");
+    })
+  }
+
+  const fixTrailingZero = (address) => {
+    let trailingZero = "";
+    for(let index = 0; index < (42-address.length); index++) trailingZero += "0";
+    return `${address.substring(0,2)}${trailingZero}${address.substring(2,address.length)}`;
+  }
+
+  const hexStripZeros = (value) => {
+    if (!web3.utils.isHex(value)) {
+        throw new Error('invalid hex string', { arg: 'value', value: value });
+    }
+    while (value.length > 3 && value.substring(0, 3) === '0x0') {
+        value = '0x' + value.substring(3);
+    }
+    return value;
+  }
+
   const onSubmit = async event => {
     if (newQuote != "" && contract) {
-      if (metaTxEnabled) {
-        console.log("Sending meta transaction");
-        let userAddress = selectedAddress;
-        let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        let message = {};
-        message.nonce = parseInt(nonce);
-        message.from = userAddress;
-        message.functionSignature = functionSignature;
+      const operation = 0; // CALL
+      const gasPrice = 0; // If 0, then no refund to relayer
+      const gasToken = '0x0000000000000000000000000000000000000000'; // ETH
+      const executor = '0x0000000000000000000000000000000000000000';
+      const to = config.contract.address;
+      const valueWei = 0;
+      const data = contract.methods.setQuote(newQuote).encodeABI();
+      let txGasEstimate = 0;
+      let baseGasEstimate = 0;
 
-        const dataToSign = JSON.stringify({
-          types: {
-            EIP712Domain: domainType,
-            MetaTransaction: metaTransactionType
-          },
-          domain: domainData,
-          primaryType: "MetaTransaction",
-          message: message
-        });
-        console.log(domainData);
-        console.log();
-        web3.currentProvider.send(
-          {
-            jsonrpc: "2.0",
-            id: 999999999999,
-            method: "eth_signTypedData_v4",
-            params: [userAddress, dataToSign]
-          },
-          function(error, response) {
-            console.info(`User signature is ${response.result}`);
-            if (error || (response && response.error)) {
-              showErrorMessage("Could not get user signature");
-            } else if (response && response.result) {
-              let { r, s, v } = getSignatureParameters(response.result);
-              console.log(userAddress);
-              console.log(JSON.stringify(message));
-              console.log(message);
-              console.log(getSignatureParameters(response.result));
+      let nonce = await getProxyContractNonce();
+      const transactionHash = await proxyWallet.methods.getTransactionHash(
+        to, valueWei, data, operation, txGasEstimate, baseGasEstimate, gasPrice, gasToken, executor, nonce).call();
+        console.log(transactionHash)
+        console.log(selectedAddress);
 
-              const recovered = sigUtil.recoverTypedSignature_v4({
-                data: JSON.parse(dataToSign),
-                sig: response.result
-              });
-              console.log(`Recovered ${recovered}`);
-              sendTransaction(userAddress, functionSignature, r, s, v);
-            }
-          }
-        );
-      } else {
-        console.log("Sending normal transaction");
-        contract.methods
-          .setQuote(newQuote)
-          .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
-            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-          })
-          .once("confirmation", function(confirmationNumber, receipt) {
-            showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
+        console.log(web3.currentProvider)
+        // let signature = await web3.eth.personal.sign(transactionHash, selectedAddress,"");
+      var params = [transactionHash, selectedAddress]
+      var method = 'personal_sign'
+      web3.currentProvider.send({
+        jsonrpc: "2.0",
+        method,
+        params,
+        id: "9999999"
+      }, function (err, result) {
+        if (err) return console.error(err)
+        if (result.error) return console.error(result.error)
+        console.log('PERSONAL SIGNED:' + JSON.stringify(result.result))
+
+        let signature = result.result
+        const sig = getSignatureParameters(signature);
+        const newSignature = `${sig.r}${sig.s.substring(2)}${Number(sig.v + 4).toString(16)}`;
+
+        if(proxyWallet) {
+          let trasnaction = proxyWallet.methods.execTransaction(to, valueWei, data, operation, txGasEstimate,
+            baseGasEstimate, gasPrice, gasToken, executor, newSignature).send({from: selectedAddress});
+
+          trasnaction.on("transactionHash", (hash) => {
+              console.log("Transaction Hash", hash);
+              showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
+          }).once("confirmation", async function(confirmationNumber, receipt) {
+              console.log("Transaction confirmed", receipt);
+              showSuccessMessage("Transaction confirmed");
+              getQuoteFromNetwork();
+          }).on("error", error => {
+              console.log(error);
           });
-      }
+
+        } else {
+          console.error("Proxy wallet is not initialized")
+        }
+      });
+
+
+
+      // contract.methods
+      //   .setQuote(newQuote)
+      //   .send({ from: selectedAddress })
+      //   .on("transactionHash", function(hash) {
+      //     showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
+      //   })
+      //   .once("confirmation", function(confirmationNumber, receipt) {
+      //     showSuccessMessage("Transaction confirmed");
+      //     getQuoteFromNetwork();
+      //   });
     } else {
       showErrorMessage("Please enter the quote");
     }
   };
+
+  const getProxyContractNonce = async function() {
+    const nonce = await proxyWallet.methods.nonce().call();
+    console.log('nonce.toNumber():', nonce);
+    return nonce;
+  }
 
   const getSignatureParameters = signature => {
     if (!web3.utils.isHexStrict(signature)) {
@@ -248,9 +384,16 @@ function App() {
           )}
         </div>
       </section>
+      { walletAddress &&
+        <div className="wallet-info">
+          <span>Wallet Address : </span>
+          <span>{walletAddress}</span>
+        </div>
+      }
       <section>
         <div className="submit-container">
-          <div className="submit-row">
+          { walletAddress &&
+            <div className="submit-row">
             <input
               type="text"
               placeholder="Enter your quote"
@@ -261,6 +404,14 @@ function App() {
               Submit
             </Button>
           </div>
+          }
+          {!walletAddress &&
+          <div className="login-row">
+            <Button variant="outlined" color="primary" onClick={onLogin}>
+              Login
+            </Button>
+          </div>
+          }
         </div>
       </section>
       <NotificationContainer />

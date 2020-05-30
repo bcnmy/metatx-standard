@@ -107,3 +107,5 @@ example/react-ui/package-lock.json
 example/react-ui/yarn.lock
 src/.secret
 src/package-lock.json
+package-lock.json
+src/build/*

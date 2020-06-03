@@ -1,20 +1,30 @@
-pragma solidity ^0.5.13;
+pragma solidity ^0.6.2;
 pragma experimental ABIEncoderV2;
 
-import "./EIP712MetaTransaction.sol";
+import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 
-contract TestContract is EIP712MetaTransaction("TestContract","1") {
+contract TestContract is BaseRelayRecipient {
 
     string public quote;
     address public owner;
+    string private paymasterVersion;
+
+    constructor(address _forwarder, string memory _paymasterVersion) public {
+        trustedForwarder = _forwarder;
+        paymasterVersion = _paymasterVersion;
+	}
 
     function setQuote(string memory newQuote) public {
         quote = newQuote;
-        owner = msgSender();
+        owner = _msgSender();
     }
 
-    function getQuote() view public returns(string memory currentQuote, address currentOwner) {
+    function getQuote() public view returns(string memory currentQuote, address currentOwner) {
         currentQuote = quote;
         currentOwner = owner;
+    }
+
+    function versionRecipient() external view override returns (string memory) {
+        return "1";
     }
 }

@@ -48,9 +48,9 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          if (provider.networkVersion == "31") {
-            domainData.chainId = 31;
-          const biconomy = new Biconomy(provider,{apiKey: "vGqzPQyZB.2ad53836-7122-40a2-ae2b-6369189bfa8b"});
+          if (provider.networkVersion == "80001") {
+            domainData.chainId = 80001;
+          const biconomy = new Biconomy(provider,{apiKey: "emxBQWVss.dba9922c-1cd9-49d3-bfab-90d9dba77c53", debug: true});
           web3 = new Web3(biconomy);
 
           biconomy.onEvent(biconomy.READY, () => {
@@ -68,7 +68,7 @@ function App() {
             // Handle error while initializing mexa
           });
         } else {
-           showErrorMessage("Please change the network in metamask to RSK with RPC https://public-node.testnet.rsk.co:443");
+           showErrorMessage("Please change the network in metamask to Mumbai Testnet");
         }
       } else {
         showErrorMessage("Metamask not installed");

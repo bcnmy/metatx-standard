@@ -8,6 +8,10 @@ import {
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
 import Biconomy from "@biconomy/mexa";
+import { makeStyles } from '@material-ui/core/styles';
+import Link from '@material-ui/core/Link';
+import Typography from '@material-ui/core/Typography';
+import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 
@@ -33,12 +37,27 @@ let domainData = {
 let web3;
 let contract;
 
+const useStyles = makeStyles((theme) => ({
+  root: {
+    '& > * + *': {
+      marginLeft: theme.spacing(2),
+    },
+  },
+  link: {
+    marginLeft: "5px"
+  }
+}));
+
 function App() {
+  const classes = useStyles();
+  const preventDefault = (event) => event.preventDefault();
   const [quote, setQuote] = useState("This is a default quote");
   const [owner, setOwner] = useState("Default Owner Address");
   const [newQuote, setNewQuote] = useState("");
   const [selectedAddress, setSelectedAddress] = useState("");
   const [metaTxEnabled, setMetaTxEnabled] = useState(true);
+  const [transactionHash, setTransactionHash] = useState("");
+
   useEffect(() => {
     async function init() {
       if (
@@ -83,6 +102,7 @@ function App() {
 
   const onSubmit = async event => {
     if (newQuote != "" && contract) {
+      setTransactionHash("");
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
@@ -140,6 +160,7 @@ function App() {
             showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
           })
           .once("confirmation", function(confirmationNumber, receipt) {
+            setTransactionHash(receipt.transactionHash);
             showSuccessMessage("Transaction confirmed");
             getQuoteFromNetwork();
           });
@@ -226,6 +247,7 @@ function App() {
           showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
         }).once("confirmation", function(confirmationNumber, receipt) {
           console.log(receipt);
+          setTransactionHash(receipt.transactionHash);
           showSuccessMessage("Transaction confirmed on chain");
           getQuoteFromNetwork();
         });
@@ -253,6 +275,17 @@ function App() {
             <cite>You are not the owner of the quote</cite>
           )}
         </div>
+      </section>
+      <section>
+        {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
+          <Typography>
+            Check your transaction hash
+            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}/internal_transactions`} target="_blank"
+            className={classes.link}>
+              here
+            </Link>
+          </Typography>
+        </Box>}
       </section>
       <section>
         <div className="submit-container">

@@ -1,4 +1,4 @@
-pragma solidity ^0.5.13;
+pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
 import "./BasicMetaTransaction.sol";
@@ -13,7 +13,7 @@ contract TestContract is BasicMetaTransaction {
         owner = msgSender();
     }
 
-    function getQuote() view public returns(string memory currentQuote, address currentOwner) {
+    function getQuote() public view returns(string memory currentQuote, address currentOwner) {
         currentQuote = quote;
         currentOwner = owner;
     }

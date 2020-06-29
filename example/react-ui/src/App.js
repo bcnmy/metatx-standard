@@ -10,7 +10,7 @@ import Biconomy from "@biconomy/mexa";
 import Web3 from "web3";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
-
+let chainId = "42";
 let web3;
 let contract;
 
@@ -30,7 +30,7 @@ function App() {
         const provider = window["ethereum"];
         const biconomy = new Biconomy(provider,{apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", debug: true});
         await provider.enable();
-        if (provider.networkVersion === "42") {
+        if (provider.networkVersion === chainId) {
           web3 = new Web3(biconomy);
 
           biconomy.onEvent(biconomy.READY, () => {
@@ -72,7 +72,7 @@ function App() {
         let nonce = await contract.methods.getNonce(userAddress).call();
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         let message = "Please provide your signature to avail free transactions. Tracking Id ";
-        let messageToSign = `${message}${nonce}`;
+        let messageToSign = `${message}${nonce}${chainId}`;
         const signature = await web3.eth.personal.sign(
           messageToSign,
           userAddress

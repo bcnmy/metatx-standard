@@ -1,4 +1,4 @@
-pragma solidity ^0.5.13;
+pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
 import "./lib/SafeMath.sol";
@@ -9,6 +9,14 @@ contract BasicMetaTransaction {
 
     event MetaTransactionExecuted(address userAddress, address payable relayerAddress, bytes functionSignature);
     mapping(address => uint256) nonces;
+
+    function getChainID() public pure returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
+    }
 
     /**
      * Main function to be called when user wants to execute meta transaction.
@@ -27,7 +35,7 @@ contract BasicMetaTransaction {
         bytes memory functionSignature, string memory message, string memory length,
         bytes32 sigR, bytes32 sigS, uint8 sigV) public payable returns(bytes memory) {
 
-        require(verify(userAddress, message, length, nonces[userAddress], sigR, sigS, sigV), "Signer and signature do not match");
+        require(verify(userAddress, message, length, nonces[userAddress], getChainID(), sigR, sigS, sigV), "Signer and signature do not match");
         // Append userAddress and relayer address at the end to extract it from calling context
         (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress));
 
@@ -41,11 +49,14 @@ contract BasicMetaTransaction {
         nonce = nonces[user];
     }
 
-    function verify(address owner, string memory message, string memory length, uint256 nonce,
-        bytes32 sigR, bytes32 sigS, uint8 sigV) public view returns (bool) {
+
+
+    function verify(address owner, string memory message, string memory length, uint256 nonce, uint256 chainID,
+        bytes32 sigR, bytes32 sigS, uint8 sigV) public pure returns (bool) {
 
         string memory nonceStr = uint2str(nonce);
-        bytes32 hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n", length, message, nonceStr));
+        string memory chainIDStr = uint2str(chainID);
+        bytes32 hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n", length, message, nonceStr, chainIDStr));
 		return (owner == ecrecover(hash, sigV, sigR, sigS));
     }
 
@@ -88,5 +99,6 @@ contract BasicMetaTransaction {
     }
 
     // To recieve ether in contract
-    function() external payable { }
+    receive() external payable { }
+    fallback() external payable { }
 }

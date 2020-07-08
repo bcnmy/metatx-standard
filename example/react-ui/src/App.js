@@ -35,7 +35,7 @@ function App() {
         const provider = window["ethereum"];
         await provider.enable();
         if (provider.networkVersion === "42") {
-          const biconomy = new Biconomy(provider,{apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"});
+          const biconomy = new Biconomy(provider,{apiKey: "Sj3Vql4LI.01d8bb61-704c-4566-97c9-6fa4a19d7ebb"});
           web3 = new Web3(biconomy);
           // web3 = new Web3(provider);
           biconomy.onEvent(biconomy.READY, () => {
@@ -125,17 +125,8 @@ function App() {
   };
 
   const onLogin = async event => {
-    let transaction = createWallet(gnosisFactory, gnosisSafeMaster, selectedAddress);
-    console.log(transaction);
-    transaction.on("transactionHash", (hash) => {
-      console.log("Transaction Hash", hash);
-      showInfoMessage("Wallet creation transaction sent to blockchain");
-    }).once("confirmation", async function(confirmationNumber, receipt) {
-      console.log("Transaction confirmed", receipt);
 
-      const localReceipt = await web3.eth.getTransactionReceipt(receipt.transactionHash);
-
-      let localProxyAddress = hexStripZeros(localReceipt.logs[0].data);
+      let localProxyAddress = "0xb16a5a4dbb3e837bf43e8bb8a699d99b7bef6943";
       console.log('Proxy Address:', localProxyAddress);
 
       // Get the Proxy Address
@@ -178,10 +169,6 @@ function App() {
       } else {
         showErrorMessage("Login failed");
       }
-    }).on("error", error => {
-      console.log(error);
-      showErrorMessage("Login failed");
-    })
   }
 
   const fixTrailingZero = (address) => {
@@ -209,7 +196,7 @@ function App() {
       const to = config.contract.address;
       const valueWei = 0;
       const data = contract.methods.setQuote(newQuote).encodeABI();
-      let txGasEstimate = 0;
+      let txGasEstimate = web3.utils.toHex(210000);
       let baseGasEstimate = 0;
 
       let nonce = await getProxyContractNonce();
@@ -347,8 +334,8 @@ function App() {
           .executeMetaTransaction(userAddress, functionData, r, s, v)
           .send({
             from: userAddress,
-            gasPrice: web3.utils.toHex(gasPrice),
-            gasLimit: web3.utils.toHex(gasLimit)
+            gasPrice: web3.utils.toHex(gasPrice)
+            // gasLimit: web3.utils.toHex(gasLimit)
           });
 
         tx.on("transactionHash", function(hash) {

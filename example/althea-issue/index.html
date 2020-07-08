@@ -1,0 +1,523 @@
+<html>
+<head>
+    <title>Magic Hello World 🌎</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- 1️⃣ Install Magic SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@biconomy/mexa@1/dist/mexa.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <!-- 📋 Copy & Paste -->
+    <script>
+      console.log("Script started")
+    
+      // Smart contract values
+      let contractAddress = "0x302484FcAa899B637E5637a7861c6Bc147a843Da";
+      const contractABI =
+            '[{"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_symbol","type":"string"},{"internalType":"uint8","name":"_decimals","type":"uint8"},{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_recipient","type":"address"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"address payable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"MinterAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"MinterRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Paused","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"PauserAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"PauserRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Unpaused","type":"event"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"constant":false,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"addMinter","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"addPauser","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"burn","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"account","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"burnFrom","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isMinter","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isPauser","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"account","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"pause","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"renounceMinter","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"renouncePauser","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"uint256","name":"_cap","type":"uint256"}],"name":"setCap","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"unpause","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]'
+
+      let faucetAddress = "0x0573395efdf2ce7f8cf5743388a7d0cc451d838e"
+      const faucetABI = '[{"constant":false,"inputs":[{"name":"_value","type":"uint256"}],"name":"setTokenAmount","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"pauseContract","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"renounceOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_token","type":"address"}],"name":"sendTokens","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"contractState","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"isOwner","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"unPauseContract","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"tokenAmount","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"previousOwner","type":"address"},{"indexed":true,"name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"}]'
+      // const contractABI = '[{"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_symbol","type":"string"},{"internalType":"uint8","name":"_decimals","type":"uint8"},{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_recipient","type":"address"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"address payable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"MinterAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"MinterRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Paused","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"PauserAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"PauserRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Unpaused","type":"event"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"constant":false,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"addMinter","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"addPauser","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"burn","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"account","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"burnFrom","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isMinter","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isPauser","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"account","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"pause","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"renounceMinter","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"renouncePauser","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"uint256","name":"_cap","type":"uint256"}],"name":"setCap","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"unpause","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]'
+    
+      let contract
+      let faucetContract
+      let magicWalletAddress
+      const magic = new Magic("pk_test_631BD76761FAF031", {
+            network: "ropsten"
+        });
+      // Trying to fix Magic Error: Failed to subscribe to new newBlockHeaders to confirm the transaction receipts
+      // const options = {
+      //   transactionConfirmationBlocks: 1
+      // };
+      // let web3 = new Web3(magic.rpcProvider, null, options);
+      let web3 = new Web3(magic.rpcProvider);
+
+      console.log(magic.rpcProvider);
+      console.log("UserLoggedIn:", magic.user.isLoggedIn())
+    
+      const setBiconomy = async () => {
+        let biconomy;
+        if (window.Biconomy) {
+          console.log("Initializing Biconomy")
+          let Biconomy = window.Biconomy;
+          // console.log(`Biconomy: ${Biconomy}`);
+          let testProvider = magic.rpcProvider
+          //await testProvider.enable()
+          console.log("Magic Provider: ", testProvider)
+          console.log("Magic web3: ", web3)
+          biconomy = new Biconomy(testProvider, {
+                    apiKey: "87RpozCfF.dca41cbc-f61e-4848-aba5-96678bd1335b",
+                    debug: true
+                });
+          web3 = new Web3(biconomy);
+          console.log("Biconomy initialization completed: ", biconomy)
+          console.log("Biconomy web3: ", web3)
+        }
+        biconomy.onEvent(biconomy.READY, () => {
+          console.log("Biconomy is ready")
+          contract = new web3.eth.Contract(
+            JSON.parse(contractABI),
+            contractAddress
+          );
+          faucetContract = new web3.eth.Contract(
+            JSON.parse(faucetABI),
+            faucetAddress
+          );
+          loadUIElements();
+          render();
+
+        }).onEvent(biconomy.ERROR, (error, message) => {
+          console.log("Biconomy had error: ", error)
+        });
+      }
+    
+      async function updateBalances() {
+            console.log("Updating balances")
+            console.log(web3);
+            const address = (await web3.eth.getAccounts())[0];
+            console.log("User address: ", address)
+            const balance = web3.utils.fromWei(
+                await web3.eth.getBalance(address)
+            );
+            console.log("ETH balance: ", balance)
+            ethBalance.innerHTML = balance + " ETH"
+            ethBalance.style.color = "#FFFFFF"
+
+            console.log(contract);
+            const aleAmount = web3.utils.fromWei(
+                await contract.methods.balanceOf(address).call()
+            )
+            console.log("ALE balance: ", aleAmount)
+            aleBalance.innerHTML = aleAmount + " ALE"
+            aleBalance.style.color = "#FFFFFF"
+            console.log("Finished updating balances")
+        }
+
+      const render = async () => {
+        console.log("Running render function")
+        // hide(loginSlide)
+        // hide(dashboardSlide)
+        const isLoggedIn = await magic.user.isLoggedIn();
+        if (isLoggedIn) {
+          console.log("User is logged in")
+          const userMetadata = await magic.user.getMetadata();
+          console.log("userMetadata.issuer: ", userMetadata.issuer)
+          console.log("userMetadata.email: ", userMetadata.email)
+          console.log("userMetadata.publicAddress: ", userMetadata.publicAddress)
+          walletAddress.innerHTML = userMetadata.publicAddress + " (Ropsten)"
+          walletAddress.style.color = "#FFFFFF"
+
+          await updateBalances()
+    
+          // display(dashboardSlide)
+          // hide(loadingSlide)
+        }
+        else {
+          console.log("No user logged in")
+          // display(loginSlide)
+          // hide(loadingSlide)
+        }
+      };
+    
+      window.addEventListener('load', function () {
+        console.log("Loading window")
+        setBiconomy()
+      })
+
+      
+    
+      function loadUIElements() {
+        console.log("loadingUIElements")
+        const loadingSlide = document.querySelector("#loadingSlide")
+        const loadingText = document.querySelector("#loadingText > div > p")
+        const loginSlide = document.querySelector("#loginSlide")
+        const emailField = document.querySelector("#form-field-email")
+        const loginButton = document.querySelector("#loginButton")
+        const dashboardSlide = document.querySelector("#dashboardSlide")
+        const walletAddress = document.querySelector("#walletAddress > div > p")
+        const ethBalance = document.querySelector("#ethBalance > div > p")
+        const aleBalance = document.querySelector("#aleBalance > div > p")
+        const transactionLabel = document.querySelector("#transactionLabel > div > div > p")
+        const transakButton = document.querySelector("#transak")
+        // const option1Button = document.querySelector("#option1Button")
+        // const option2Button = document.querySelector("#option2Button")
+        const sendALEbutton = document.querySelector("#sendALE")
+        const ethAddress2 = document.querySelector("#form-field-ethAddress2")
+        const sendETHbutton = document.querySelector("#sendETH")
+        const logoutButton = document.querySelector("#logoutButton")
+        const faucetButton = document.querySelector("#faucet")
+
+        const handleLogin = async () => {
+          // display(loadingSlide)
+          const email = emailField.value;
+          if (email) {
+            const loginTest = await magic.auth.loginWithMagicLink({ email });
+            console.log("Login email sent: ", loginTest)
+            render()
+          }
+          else {
+            alert("Please enter an email")
+          }
+        };
+    
+        loginButton.addEventListener('click', function () {
+          console.log("loginButtonPressed")
+          console.log("value: ", emailField.value)
+          handleLogin()
+        });
+    
+        logoutButton.addEventListener('click', function () {
+          console.log("logoutButtonPressed")
+          handleLogout()
+        });
+    
+        // transakButton.addEventListener('click', function () {
+        //   console.log("transakButtonPressed")
+        //   launchTransak()
+        // });
+    
+        // sendALEbutton.addEventListener('click', function () {
+        //   console.log("option1ButtonPressed")
+        //   loadingText.innerHTML = "Transfering ALE tokens"
+        //   // display(loadingSlide)
+        //   // hide(dashboardSlide)
+        //   //transferALE("5")
+        //   onTokenTransfer()
+        // });
+    
+        sendETHbutton.addEventListener('click', function () {
+          console.log("option2ButtonPressed")
+          // loadingText.innerHTML = "Transfering ETH"
+          // display(loadingSlide)
+          // hide(dashboardSlide)
+          transferETH("0.001")
+        });
+    
+        // faucetButton.addEventListener('click', function () {
+        //   console.log("faucetButtonPressed")
+        //   loadingText.innerHTML = "Requesting ALE tokens from faucet"
+        //   // display(loadingSlide)
+        //   // hide(dashboardSlide)
+        //   let functionSignature = faucetContract.methods.sendTokens(contractAddress).encodeABI();
+        //   prepareMetaTx(functionSignature)
+        // });
+    
+        function launchTransak() {
+          let transak = new TransakSDK.default({
+            apiKey: 'TRANSAK_KEY>', // Your API Key
+            environment: 'STAGING', // STAGING/PRODUCTION
+            defaultCryptoCurrency: 'ETH',
+            walletAddress: magicWalletAddress, // Your customer wallet address
+            themeColor: '000000', // App theme color in hex
+            fiatCurrency: '', // INR/GBP
+            redirectURL: 'alethea.ai',
+            hostURL: window.location.origin,
+            widgetHeight: '550px',
+            widgetWidth: '100%'
+          });
+          transak.init();
+          // To get all the events
+          transak
+            .on(transak.ALL_EVENTS, (data) => {
+              console.log("Transak data: ", data)
+            });
+          // This will trigger when the user marks payment is made.
+          transak.on(transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, (orderData) => {
+            console.log("Transak orderData: ", orderData);
+            //transak.close();
+          });
+        }
+    
+        
+    
+        const handleLogout = async () => {
+          // display(loadingSlide)
+          await magic.user.logout();
+          console.log("User logged out")
+          render()
+        };
+    
+        // render()
+      }
+    
+      async function transferALE(amount) {
+        loadingText.innerHTML = "Sending 5 ALE"
+        const web3amount = web3.utils.toWei(amount);
+        const toAddress = "0x9158468D262F34b69060189Db39dD0403273e67d";
+        console.log("amount: ", web3amount, " fromAddress: ", magicWalletAddress, " contract: ", contract)
+    
+        contract.methods.transfer(toAddress, web3amount).send({ from: magicWalletAddress }, function(error, transactionHash){
+          console.log("hash: ", transactionHash)
+          // display(dashboardSlide)
+          // hide(loadingSlide)
+          if (error) {
+            console.log("Error transfering ALE: ", error)
+            transactionLabel.innerHTML = "Transaction error: " + error
+          }
+          else if (transactionHash){
+            transactionLabel.innerHTML = "Transaction hash: <a href='https://ropsten.etherscan.io/tx/" + transactionHash + "'>" + transactionHash + "</a>"
+            console.log("ALE Transaction Hash: ", transactionHash)
+            waitForReceipt(transactionHash, (receipt) => {
+              transactionLabel.innerHTML = "Transaction completed"
+              console.log("ALE Tokens transferred - receipt: ", receipt)
+              updateBalances()
+            })
+          }
+        });
+    
+      }
+    
+      // TO-DO: Figure out how to fix the errors: "Cannot read property 'post' of undefined" and "insufficient funds for gas * price + value"
+      async function transferETH(amount) {
+
+        const metadata = await magic.user.getMetadata()
+        const fromAddressHex = metadata.publicAddress
+        console.log("amount: ", amount, " fromAddress: ", fromAddressHex);
+
+        // const fromAddressHex = web3.utils.toHex(magicWalletAddress)
+        const destination = "0xF86B30C63E068dBB6bdDEa6fe76bf92F194Dc53c"
+        const destinationHex = web3.utils.toHex(destination)
+        const amountWei = web3.utils.toWei(amount); // Convert ether amount to wei
+        const amountHex = web3.utils.toHex(amountWei)
+        const gasPrice = "1000000000"
+        const gasPriceHex = web3.utils.toHex(gasPrice)
+    
+        web3.eth.sendTransaction({
+          from: fromAddressHex,
+          to: destinationHex,
+          value: amountHex,
+          gasPrice: gasPriceHex
+        }, function(error, hash){
+          console.log("hash: ", hash)
+          // display(dashboardSlide)
+          // hide(loadingSlide)
+          if (error) {
+            console.log("Error transfering ETH: ", error)
+            transactionLabel.innerHTML = "Error transfering ETH: ", error
+          }
+          else if (hash){
+            console.log("ETH Transaction Hash: ", hash)
+            transactionLabel.innerHTML = "Transaction hash: <a href='https://ropsten.etherscan.io/tx/" + hash + "'>" + hash + "</a>"
+            waitForReceipt(hash, (receipt) => {
+              transactionLabel.innerHTML = "Transaction completed"
+              console.log("ETH transferred - receipt: ", receipt)
+              updateBalances()
+            })
+          }
+        });
+      }
+    
+      
+    
+      // TO-DO: Try replacing timout with await on getTransactionReceipt
+      function waitForReceipt(hash, cb) {
+        web3.eth.getTransactionReceipt(hash, function (err, receipt) {
+          if (err) {
+            error(err);
+          }
+    
+          if (receipt !== null) {
+            // Transaction went through
+            if (cb) {
+              cb(receipt);
+            }
+          } else {
+            // Try again in 1 second
+            window.setTimeout(function () {
+              waitForReceipt(hash, cb);
+            }, 1000);
+          }
+        });
+      }
+    
+      function hide(element) {
+        console.log("Trying to hide: ", element.toString())
+        element.style.display = "none"
+      }
+    
+      function display(element) {
+        console.log("Trying to display: ", element.toString())
+        element.style.display = "block"
+      }
+    
+      // Biconomy Transactions
+    
+      const domainType = [
+      { name: "name", type: "string" },
+      { name: "version", type: "string" },
+      { name: "chainId", type: "uint256" },
+      { name: "verifyingContract", type: "address" }
+      ];
+    
+      const metaTransactionType = [
+      { name: "nonce", type: "uint256" },
+      { name: "from", type: "address" },
+      { name: "functionSignature", type: "bytes" }
+      ];
+    
+      let domainData = {
+        name: "AletheaToken",
+        version: "1",
+        verifyingContract: contractAddress
+      };
+    
+      const onTokenTransfer = async event => {
+        const ethAddressField = document.querySelector("#form-field-ethAddress")
+        const tokenAmount = 5
+        const recipientAddress = "0xD02329b31D6a7B33173F2197c7b04Eaf68F8184a";
+        let functionSignature = contract.methods.transfer(recipientAddress, (tokenAmount*1e18).toString()).encodeABI();
+        prepareMetaTx(functionSignature)
+      }
+    
+      async function prepareMetaTx(functionSignature) {
+        console.log("Preparing MetaTx with signature: ", functionSignature)
+        let fromAddress = magicWalletAddress
+        domainData.chainId = 3
+        let nonce = await contract.methods.getNonce(fromAddress).call();
+        // TO-DO: Consider replacing *1e18 with toWei
+        let message = {};
+        message.nonce = parseInt(nonce);
+        message.from = fromAddress;
+        message.functionSignature = functionSignature;
+    
+        const dataToSign = JSON.stringify({
+          types: {
+            EIP712Domain: domainType,
+            MetaTransaction: metaTransactionType
+          },
+          domain: domainData,
+          primaryType: "MetaTransaction",
+          message: message
+        });
+        console.log("domainData: ", domainData);
+    
+        const params = [fromAddress, dataToSign];
+        const method = "eth_signTypedData_v3";
+    
+        web3.currentProvider.sendAsync({
+          jsonrpc: "2.0",
+          id: 1,
+          method,
+          params,
+          fromAddress
+        },
+        function(error, response) {
+          console.info(`web3.currentProvider.sendAsync response: ${response}`);
+          console.info(`web3.currentProvider.sendAsync error: ${error}`);
+    
+          if (error || (response && response.error)) {
+            console.log("response.error: ", response.error)
+          } else if (response && response.result) {
+            console.log(`User signature is ${response.result}`);
+            let {
+              r,
+              s,
+              v
+            } = getSignatureParameters(response.result);
+            sendTransaction(fromAddress, functionSignature, r, s, v);
+          }
+        }
+        );
+      }
+    
+      const getSignatureParameters = signature => {
+        console.log("Running getSignatureParameters")
+        if (!web3.utils.isHexStrict(signature)) {
+          console.log("Signature is not a valid hex string: ", signature)
+          throw new Error(
+          'Given value "'.concat(signature, '" is not a valid hex string.')
+          );
+        }
+        var r = signature.slice(0, 66);
+        var s = "0x".concat(signature.slice(66, 130));
+        var v = "0x".concat(signature.slice(130, 132));
+        v = web3.utils.hexToNumber(v);
+        console.log("r: ", r, " s: ", s, " v: ", v)
+        if (![27, 28].includes(v)) v += 27;
+        console.log("Returning r s v")
+        return {
+          r: r,
+          s: s,
+          v: v
+        };
+      };
+    
+      const sendTransaction = async (userAddress, functionData, r, s, v) => {
+        console.log("SendingTransaction")
+        console.log("fromAddress: ", userAddress, " functionData: ", functionData)
+        if (web3 && contract) {
+          try {
+    
+            let gasLimit = await contract.methods
+            .executeMetaTransaction(userAddress, functionData, r, s, v)
+            .estimateGas({ from: userAddress });
+            let gasPrice = await web3.eth.getGasPrice();
+            console.log("gasLimit: ", gasLimit);
+            console.log("gasPrice: ", gasPrice);
+    
+            //   // TO-DO: Test if receipt is received once tx is completed and consider replacing by the approach below
+            // let reciept = await contract.methods
+            // .executeMetaTransaction(userAddress, functionData, r, s, v)
+            // .send({
+            //   from: userAddress
+            // });
+            // console.log(receipt);
+            // if(reciept && receipt.status) {
+            //   await updateBalances()
+            // }
+    
+            // TO-DO: Consider removing the approach below or above
+            let tx = contract.methods
+            .executeMetaTransaction(userAddress, functionData, r, s, v)
+            .send({
+              from: userAddress
+            });
+            tx.on("transactionHash", function(hash) {
+              console.log(`Transaction hash is ${hash}`);
+              transactionLabel.innerHTML = "<center>Transaction hash: <a href='https://etherscan.io/tx/" + hash + "' target='_blank'>" + hash + " </a></center>"
+              // hide(loadingSlide)
+              // display(dashboardSlide)
+            }).once("confirmation", function(confirmationNumber, receipt) {
+              console.log(receipt);
+              console.log("Transaction confirmed on chain");
+              transactionLabel.innerHTML = "<center>Transaction completed</center>"
+              updateBalances()
+            });
+    
+          } catch (error) {
+            console.log("Tx error: ", error);
+            // hide(loadingSlide)
+            // display(dashboardSlide)
+            transactionLabel.innerHTML = "<center>Transaction error: </center>" + error
+          }
+        }
+      };
+    
+      </script>
+  </head>
+
+  <body style="background-color:#444; color: #fff">
+      <div id="app">Loading...</div>
+      <div id="walletAddress">Loading...</div>
+      <div id="ethBalance">
+          <div>
+              Eth Balance is 
+              <p></p>
+          </div>
+      </div>
+      <div id="aleBalance">
+          <div>
+              Ale Balance is <p></p>
+          </div>
+      </div>
+      <input type="email" id="form-field-email"/>
+      <button id="loginButton">Login</button>
+      <button id="logoutButton">Logout</button>
+  
+  
+      <button id="sendETH">Transfer 0.001 ETH</button>
+  </body>
+  
+  </html>

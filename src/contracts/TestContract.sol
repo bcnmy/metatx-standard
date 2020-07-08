@@ -1,13 +1,16 @@
 pragma solidity ^0.5.13;
-pragma experimental ABIEncoderV2;
-
 
 contract TestContract {
 
     string public quote;
     address public owner;
+    uint256 public value;
 
     function setQuote(string memory newQuote) public {
+        value = 0;
+        for(uint256 i=0; i<=200;i++){
+            value += i;
+        }
         quote = newQuote;
         owner = msg.sender;
     }

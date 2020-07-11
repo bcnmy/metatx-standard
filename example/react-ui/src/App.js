@@ -67,9 +67,9 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          if (provider.networkVersion == "80001") {
-            domainData.chainId = 80001;
-          const biconomy = new Biconomy(provider,{apiKey: "emxBQWVss.dba9922c-1cd9-49d3-bfab-90d9dba77c53", debug: true});
+          if (provider.networkVersion == "137") {
+            domainData.chainId = 137;
+          const biconomy = new Biconomy(provider,{apiKey: "ApCbRrmfX.6ed7f29f-952a-4cd2-807d-932f4bf36caf", debug: true});
           web3 = new Web3(biconomy);
 
           biconomy.onEvent(biconomy.READY, () => {
@@ -87,7 +87,7 @@ function App() {
             // Handle error while initializing mexa
           });
         } else {
-           showErrorMessage("Please change the network in metamask to Mumbai Testnet");
+           showErrorMessage("Please change the network in metamask to Matic Mainnet");
         }
       } else {
         showErrorMessage("Metamask not installed");
@@ -250,6 +250,12 @@ function App() {
           setTransactionHash(receipt.transactionHash);
           showSuccessMessage("Transaction confirmed on chain");
           getQuoteFromNetwork();
+        }).on("error", (error) => {
+          if(error.code == 150 || error.code == 151 || error.code == 152) {
+            showErrorMessage(error.message);
+            console.log("Meta Transaction usage limit reached");
+          }
+          console.log(error);
         });
       } catch (error) {
         console.log(error);
@@ -280,7 +286,7 @@ function App() {
         {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
           <Typography>
             Check your transaction hash
-            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}/internal_transactions`} target="_blank"
+            <Link href={`https://explorer.matic.network/tx/${transactionHash}/internal_transactions`} target="_blank"
             className={classes.link}>
               here
             </Link>

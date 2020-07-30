@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Biconomy from "@biconomy/mexa";
-
+import { Magic } from 'magic-sdk';
 import Web3 from "web3";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
@@ -26,70 +26,66 @@ const metaTransactionType = [
 ];
 
 let domainData = {
-  name: "TestContract",
+  name: "ERC1155",
   version: "1",
-  chainId: 16110,
+  chainId: 3,
   verifyingContract: config.contract.address
 };
 
-let web3,getWeb3;
+let web3;
 let contract;
 
 function App() {
-  const [quote, setQuote] = useState("This is a default quote");
-  const [owner, setOwner] = useState("Default Owner Address");
-  const [newQuote, setNewQuote] = useState("");
   const [selectedAddress, setSelectedAddress] = useState("");
-  const [metaTxEnabled, setMetaTxEnabled] = useState(true);
   useEffect(() => {
     async function init() {
-      if (
-        typeof window.ethereum !== "undefined" &&
-        window.ethereum.isMetaMask
-      ) {
-        // Ethereum user detected. You can now use the provider.
-        const provider = window["ethereum"];
-        await provider.enable();
-          const biconomy = new Biconomy(provider, {
-            apiKey: "tiXGPFf7Z.a12ae5fd-6638-4848-b0e8-af7016d8cfa6",
-            debug:true
-          });
-          web3 = new Web3(biconomy);
+      console.log("start magic")
+      const magic = new Magic("<MAGIC_KEY>", {
+        network: "ropsten"
+      });
+      console.log(`start magic done ${magic}`);
 
-          biconomy
-            .onEvent(biconomy.READY, () => {
-              // Initialize your dapp here like getting user accounts etc
-              contract = new web3.eth.Contract(
-                config.contract.abi,
-                config.contract.address
-              );
-              setSelectedAddress(provider.selectedAddress);
-              getQuoteFromNetwork();
-              provider.on("accountsChanged", function(accounts) {
-                setSelectedAddress(accounts[0]);
-              });
-            })
-            .onEvent(biconomy.ERROR, (error, message) => {
-              // Handle error while initializing mexa
-            });
-      } else {
-        showErrorMessage("Metamask not installed");
-      }
+    console.log(`Initialise Biconomy`)
+    const biconomy = new Biconomy(magic.rpcProvider, {
+      apiKey: "mbuXCxAWd.7d43ddeb-ee04-42a0-85ac-350ae193d607",
+      debug:true
+    });
+    console.log(`Initialised Biconomy`);
+    web3 = new Web3(biconomy);
+
+    biconomy
+      .onEvent(biconomy.READY, async() => {
+        // Initialize your dapp here like getting user accounts etc
+        contract = new web3.eth.Contract(
+          config.contract.abi,
+          config.contract.address
+        );
+
+        const isLoggedIn = await magic.user.isLoggedIn();
+          if (isLoggedIn) { 
+            console.log("User is logged in")
+            const userMetadata = await magic.user.getMetadata();
+            console.log("userMetadata.issuer: ", userMetadata.issuer)
+            console.log("userMetadata.email: ", userMetadata.email)
+            console.log("userMetadata.publicAddress: ", userMetadata.publicAddress)
+            setSelectedAddress(userMetadata.publicAddress);
+          }
+          else{
+            console.log("not able to find the user address")
+          }
+      })
+      .onEvent(biconomy.ERROR, (error, message) => {
+        // Handle error while initializing mexa
+      });
     }
     init();
   }, []);
 
-  const onQuoteChange = event => {
-    setNewQuote(event.target.value);
-  };
-
   const onSubmit = async event => {
-    if (newQuote != "" && contract) {
-      if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
         let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let functionSignature = contract.methods.mint("0xf86b30c63e068dbb6bddea6fe76bf92f194dc53c",2,12,"0x0").encodeABI();
         let message = {};
         message.nonce = parseInt(nonce);
         message.from = userAddress;
@@ -133,22 +129,6 @@ function App() {
             }
           }
         );
-      } else {
-        console.log("Sending normal transaction");
-        contract.methods
-          .setQuote(newQuote)
-          .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
-            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-          })
-          .once("confirmation", function(confirmationNumber, receipt) {
-            showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
-          });
-      }
-    } else {
-      showErrorMessage("Please enter the quote");
-    }
   };
 
   const getSignatureParameters = signature => {
@@ -167,31 +147,6 @@ function App() {
       s: s,
       v: v
     };
-  };
-
-  const getQuoteFromNetwork = () => {
-    if (web3 && contract) {
-      contract.methods
-        .getQuote()
-        .call()
-        .then(function(result) {
-          console.log(result);
-          if (
-            result &&
-            result.currentQuote != undefined &&
-            result.currentOwner != undefined
-          ) {
-            if (result.currentQuote == "") {
-              showErrorMessage("No quotes set on blockchain yet");
-            } else {
-              setQuote(result.currentQuote);
-              setOwner(result.currentOwner);
-            }
-          } else {
-            showErrorMessage("Not able to get quote information from Network");
-          }
-        });
-    }
   };
 
   const showErrorMessage = message => {
@@ -229,7 +184,6 @@ function App() {
         }).once("confirmation", function(confirmationNumber, receipt) {
           console.log(receipt);
           showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
         });
       } catch (error) {
         console.log(error);
@@ -239,34 +193,12 @@ function App() {
 
   return (
     <div className="App">
-      <section className="main">
-        <div className="mb-wrap mb-style-2">
-          <blockquote cite="http://www.gutenberg.org/ebboks/11">
-            <p>{quote}</p>
-          </blockquote>
-        </div>
-
-        <div className="mb-attribution">
-          <p className="mb-author">{owner}</p>
-          {selectedAddress.toLowerCase() === owner.toLowerCase() && (
-            <cite className="owner">You are the owner of the quote</cite>
-          )}
-          {selectedAddress.toLowerCase() !== owner.toLowerCase() && (
-            <cite>You are not the owner of the quote</cite>
-          )}
-        </div>
-      </section>
       <section>
         <div className="submit-container">
           <div className="submit-row">
-            <input
-              type="text"
-              placeholder="Enter your quote"
-              onChange={onQuoteChange}
-              value={newQuote}
-            />
+            
             <Button variant="contained" color="primary" onClick={onSubmit}>
-              Submit
+              Mint
             </Button>
           </div>
         </div>

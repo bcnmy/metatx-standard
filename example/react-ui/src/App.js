@@ -60,7 +60,7 @@ function App() {
           config.contract.abi,
           config.contract.address
         );
-
+        await magic.auth.loginWithMagicLink({email: "<email>"});
         const isLoggedIn = await magic.user.isLoggedIn();
           if (isLoggedIn) { 
             console.log("User is logged in")
@@ -164,30 +164,54 @@ function App() {
   const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
     if (web3 && contract) {
       try {
-        let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .estimateGas({ from: userAddress });
-        let gasPrice = await web3.eth.getGasPrice();
-        console.log(gasLimit);
-        console.log(gasPrice);
-        let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .send({
-            from: userAddress,
-            gasPrice:gasPrice,
-            gasLimit:gasLimit
-          });
-
-        tx.on("transactionHash", function(hash) {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-        }).once("confirmation", function(confirmationNumber, receipt) {
-          console.log(receipt);
-          showSuccessMessage("Transaction confirmed on chain");
-        });
+        fetch(`https://api.biconomy.io/api/v2/meta-tx/native`, {
+          method: "POST",
+          headers: {
+            "x-api-key" : "mbuXCxAWd.7d43ddeb-ee04-42a0-85ac-350ae193d607",
+            'Content-Type': 'application/json;charset=utf-8'
+          },
+          body: JSON.stringify({
+            "to": "0x42196571b7Ba8Ad6fEA858C219980a936c546fC9",
+            "apiId": "de7f60e1-a1c0-47fb-b85f-741a56c0c9e6",
+            "params": [
+              userAddress, functionData, r, s, v
+            ],
+            "from": userAddress
+            // "gasLimit": ""
+          })
+        })
+        .then(response=>response.json())
+        .then(function(result) {
+          console.log(result);
+        })
+	      .catch(function(error) {
+	        console.log(error)
+	      });
       } catch (error) {
         console.log(error);
       }
+        // let gasLimit = await contract.methods
+        //   .executeMetaTransaction(userAddress, functionData, r, s, v)
+        //   .estimateGas({ from: userAddress });
+        // let gasPrice = await web3.eth.getGasPrice();
+        // console.log(gasLimit);
+        // console.log(gasPrice);
+        // let tx = contract.methods
+        //   .executeMetaTransaction(userAddress, functionData, r, s, v)
+        //   .send({
+        //     from: userAddress,
+        //     gasPrice:gasPrice,
+        //     gasLimit:gasLimit
+        //   });
+
+        // tx.on("transactionHash", function(hash) {
+        //   console.log(`Transaction hash is ${hash}`);
+        //   showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
+        // }).once("confirmation", function(confirmationNumber, receipt) {
+        //   console.log(receipt);
+        //   showSuccessMessage("Transaction confirmed on chain");
+        // });
+     
     }
   };
 

@@ -17,17 +17,13 @@ That's it. Pretty simple
 
 <h3>How do i use this in my client code?</h3>
 In order to execute meta transactions you just need to call 
-executeMetaTransaction(address userAddress, bytes memory functionSignature, string memory message, string memory length, bytes32 sigR, bytes32 sigS, uint8 sigV)
+executeMetaTransaction(address userAddress, bytes memory functionSignature, bytes32 sigR, bytes32 sigS, uint8 sigV)
 inherited from BasicMetaTransaction.sol
 <br/>
 
 userAddress       => externally owned address of the user eg the user address in his metamask wallet<br/>
 
 functionSignature => ABI encoding of function name with its parameter. Use web3 <a href="https://web3js.readthedocs.io/en/v1.2.4/web3-eth-contract.html#methods-mymethod-encodeabi" target="_blank" >encodeABI</a> method here
-
-message           => message that was signed by the user without the nonce and chainId
-
-length            => message length that user signed (including nonce and chainId)
 
 sigR              => 32 bytes r part of the signature
 
@@ -38,8 +34,6 @@ sigV              => integer v part of the signature
 
 r,s,v can be calculated using web3 <a href="https://web3js.readthedocs.io/en/v2.0.0-alpha/web3-utils.html#getsignatureparameters" target="_blank" >getSignatureParameters</a> utility method.
 
-Since this standard supports <a href="https://eips.ethereum.org/EIPS/eip-712" target="_blank" >EIP-712</a> so signature parameters should be generated using eth_signTypedData_v3 or eth_signTypedData_v4 JSON RPC method.
-
 Check out example front-end code <a href="https://github.com/bcnmy/metatx-standard/blob/basic-signature-metatx/example/react-ui/src/App.js" target="_blank" >here</a> and example solidity code <a href="https://github.com/bcnmy/metatx-standard/blob/basic-signature-metatx/src/contracts/TestContract.sol" target="_blank" >here</a>
 
-This repository is basic implementation of Native Meta Transactions. This reposiory will be updated as per the <a href="https://github.com/ethereum/EIPs/issues/1776" target="_blank">EIP-1776</a> to implement native meta transactions with support of batching, transaction expiry etc
+This repository is basic implementation of Native Meta Transactions.

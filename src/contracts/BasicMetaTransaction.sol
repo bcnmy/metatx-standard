@@ -25,22 +25,20 @@ contract BasicMetaTransaction {
      * personal_sign method.
      * @param userAddress Address of user trying to do meta transaction
      * @param functionSignature Signature of the actual function to be called via meta transaction
-     * @param message Message to be signed by the user
-     * @param length Length of complete message that was signed
      * @param sigR R part of the signature
      * @param sigS S part of the signature
      * @param sigV V part of the signature
      */
-    function executeMetaTransaction(address userAddress,
-        bytes memory functionSignature, string memory message, string memory length,
+    function executeMetaTransaction(address userAddress, bytes memory functionSignature,
         bytes32 sigR, bytes32 sigS, uint8 sigV) public payable returns(bytes memory) {
 
-        require(verify(userAddress, message, length, nonces[userAddress], getChainID(), sigR, sigS, sigV), "Signer and signature do not match");
-        // Append userAddress and relayer address at the end to extract it from calling context
+        require(verify(userAddress, nonces[userAddress], getChainID(), functionSignature, sigR, sigS, sigV), "Signer and signature do not match");
+        nonces[userAddress] = nonces[userAddress].add(1);
+
+        // Append userAddress at the end to extract it from calling context
         (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress));
 
         require(success, "Function call not successfull");
-        nonces[userAddress] = nonces[userAddress].add(1);
         emit MetaTransactionExecuted(userAddress, msg.sender, functionSignature);
         return returnData;
     }
@@ -49,39 +47,18 @@ contract BasicMetaTransaction {
         nonce = nonces[user];
     }
 
-
-
-    function verify(address owner, string memory message, string memory length, uint256 nonce, uint256 chainID,
-        bytes32 sigR, bytes32 sigS, uint8 sigV) public pure returns (bool) {
-
-        string memory nonceStr = uint2str(nonce);
-        string memory chainIDStr = uint2str(chainID);
-        bytes32 hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n", length, message, nonceStr, chainIDStr));
-		return (owner == ecrecover(hash, sigV, sigR, sigS));
+    // Builds a prefixed hash to mimic the behavior of eth_sign.
+    function prefixed(bytes32 hash) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
     }
 
-    /**
-     * Internal utility function used to convert an int to string.
-     * @param _i integer to be converted into a string
-     */
-    function uint2str(uint256 _i) internal pure returns (string memory _uintAsString) {
-        if (_i == 0) {
-            return "0";
-        }
-        uint j = _i;
-        uint len;
-        while (j != 0) {
-            len++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(len);
-        uint k = len - 1;
-        uint256 temp = _i;
-        while (temp != 0) {
-            bstr[k--] = byte(uint8(48 + temp % 10));
-            temp /= 10;
-        }
-        return string(bstr);
+    function verify(address owner, uint256 nonce, uint256 chainID, bytes memory functionSignature,
+        bytes32 sigR, bytes32 sigS, uint8 sigV) public view returns (bool) {
+
+        bytes32 hash = prefixed(keccak256(abi.encodePacked(nonce, this, chainID, functionSignature)));
+        address signer = ecrecover(hash, sigV, sigR, sigS);
+        require(signer != address(0), "Invalid signature");
+		return (owner == signer);
     }
 
     function msgSender() internal view returns(address sender) {
@@ -93,12 +70,7 @@ contract BasicMetaTransaction {
                 sender := and(mload(add(array, index)), 0xffffffffffffffffffffffffffffffffffffffff)
             }
         } else {
-            sender = msg.sender;
+            return msg.sender;
         }
-        return sender;
     }
-
-    // To recieve ether in contract
-    receive() external payable { }
-    fallback() external payable { }
 }

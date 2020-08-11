@@ -8,7 +8,10 @@ import {
 import "react-notifications/lib/notifications.css";
 import Biconomy from "@biconomy/mexa";
 import Web3 from "web3";
-let sigUtil = require("eth-sig-util");
+import {toBuffer} from "ethereumjs-util";
+var abi = require('ethereumjs-abi')
+
+
 const { config } = require("./config");
 let chainId = "42";
 let web3;
@@ -71,19 +74,17 @@ function App() {
         let userAddress = selectedAddress;
         let nonce = await contract.methods.getNonce(userAddress).call();
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        let message = "Please provide your signature to avail free transactions. Tracking Id ";
-        let messageToSign = `${message}${nonce}${chainId}`;
+
+        let messageToSign = constructMetaTransactionMessage(nonce, chainId, functionSignature, config.contract.address);
         const signature = await web3.eth.personal.sign(
-          messageToSign,
+          "0x" + messageToSign.toString("hex"),
           userAddress
         );
+
         console.info(`User signature is ${signature}`);
         let { r, s, v } = getSignatureParameters(signature);
-        console.log(userAddress);
-        console.log(JSON.stringify(message));
-        console.log(message);
-        console.log(getSignatureParameters(signature));
-        sendTransaction(userAddress, functionSignature, message, `${messageToSign.length}`, r, s, v);
+
+        sendTransaction(userAddress, functionSignature, r, s, v);
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -101,6 +102,14 @@ function App() {
       showErrorMessage("Please enter the quote");
     }
   };
+
+
+  const constructMetaTransactionMessage = (nonce, chainId, functionSignature, contractAddress) => {
+    return abi.soliditySHA3(
+        ["uint256","address","uint256","bytes"],
+        [nonce, contractAddress, chainId, toBuffer(functionSignature)]
+    );
+  }
 
   const getSignatureParameters = signature => {
     if (!web3.utils.isHexStrict(signature)) {
@@ -157,17 +166,17 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendTransaction = async (userAddress, functionData, message, length, r, s, v) => {
+  const sendTransaction = async (userAddress, functionData, r, s, v) => {
     if (web3 && contract) {
       try {
         let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, message, length, r, s, v)
+          .executeMetaTransaction(userAddress, functionData, r, s, v)
           .estimateGas({ from: userAddress });
         let gasPrice = await web3.eth.getGasPrice();
         console.log(gasLimit);
         console.log(gasPrice);
         let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, message, length, r, s, v)
+          .executeMetaTransaction(userAddress, functionData, r, s, v)
           .send({
             from: userAddress,
             gasPrice: web3.utils.toHex(gasPrice),

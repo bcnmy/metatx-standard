@@ -72,10 +72,4 @@ contract EIP712MetaTransaction is EIP712Base {
         }
         return sender;
     }
-
-
-
-
-    // To recieve ether in contract
-    function() external payable { }
 }

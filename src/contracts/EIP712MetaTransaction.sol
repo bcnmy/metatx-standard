@@ -33,11 +33,11 @@ contract EIP712MetaTransaction is EIP712Base {
             functionSignature: functionSignature
         });
         require(verify(userAddress, metaTx, sigR, sigS, sigV), "Signer and signature do not match");
-        // Append userAddress and relayer address at the end to extract it from calling context
+	nonces[userAddress] = nonces[userAddress].add(1);
+        // Append userAddress at the end to extract it from calling context
         (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress, msg.sender));
 
         require(success, "Function call not successfull");
-        nonces[userAddress] = nonces[userAddress].add(1);
         emit MetaTransactionExecuted(userAddress, msg.sender, functionSignature);
         return returnData;
     }
@@ -86,9 +86,4 @@ contract EIP712MetaTransaction is EIP712Base {
             relayer = address(uint160(relayerAddress));
         }
     }
-
-
-
-    // To recieve ether in contract
-    function() external payable { }
 }

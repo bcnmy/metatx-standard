@@ -55,9 +55,11 @@ contract EIP712MetaTransaction is EIP712Base {
         nonce = nonces[user];
     }
 
-    function verify(address signer, MetaTransaction memory metaTx, bytes32 sigR, bytes32 sigS, uint8 sigV) internal view returns (bool) {
-		return signer == ecrecover(toTypedMessageHash(hashMetaTransaction(metaTx)), sigV, sigR, sigS);
-	}
+    function verify(address user, MetaTransaction memory metaTx, bytes32 sigR, bytes32 sigS, uint8 sigV) internal view returns (bool) {
+        address signer = ecrecover(toTypedMessageHash(hashMetaTransaction(metaTx)), sigV, sigR, sigS);
+        require(signer != address(0), "Invalid signature");
+	return signer == user;
+    }
 
     function msgSender() internal view returns(address sender) {
         if(msg.sender == address(this)) {

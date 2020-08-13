@@ -72,20 +72,7 @@ contract EIP712MetaTransaction is EIP712Base {
             }
             sender = address(uint160(userAddress));
         } else {
-            sender = msg.sender;
-        }
-    }
-
-    function msgRelayer() internal view returns(address relayer) {
-        if(msg.sender == address(this)) {
-            bytes20 relayerAddress;
-            bytes memory data = msg.data;
-            uint256 dataLength = msg.data.length;
-            assembly {
-                calldatacopy(0x0, sub(dataLength, 20), dataLength)
-                relayerAddress := mload(0x0)
-            }
-            relayer = address(uint160(relayerAddress));
+            return msg.sender;
         }
     }
 }

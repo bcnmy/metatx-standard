@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import logo from './logo.svg';
 import './App.css';
-import Biconomy from "@biconomy/mexa";
 import Web3 from 'web3';
 // import erc20 from './erc20.js';
 const { config } = require("./config");
@@ -27,20 +26,12 @@ function App() {
         const provider = window["ethereum"];
         await provider.enable();
         if(provider.networkVersion === "4") {
-          const biconomy = new Biconomy(provider, { apiKey: "xLqd3k_kl.2e36e464-b8cc-4e19-9989-d3e571e1860c" });
-          web3 = new Web3(biconomy);
-          // web3 = new Web3(provider);
-          biconomy.onEvent(biconomy.READY, () => {
+          web3 = new Web3(provider);
             // Initialize your dapp here like getting user accounts etc
             erc20Contract = new web3.eth.Contract(
                 config.contract.abi,
                 config.contract.address
             );
-
-            //gnosisSafeMaster = new web3.eth.Contract(
-            //  safeAbi,
-            //  '0x34CfAC646f301356fAa8B21e94227e3583Fe3F5F'
-            //);
             let proxyAddress = PROXY_ADDRESS;
             if(proxyAddress) {
               proxyWallet = new web3.eth.Contract(
@@ -79,11 +70,6 @@ function App() {
               console.log("Dapp whitelisted successfully");
             });
 
-          }).onEvent(biconomy.ERROR, (error, message) => {
-            // Handle error while initializing mexa
-            console.log(error);
-            console.log("Error while initializing biconomy");
-          });
         } else {
           console.log("Please change the network in metamask to Kovan");
         }
@@ -95,7 +81,7 @@ function App() {
   }, []);
 
   const onSubmit = async event => {
-    if(erc20Contract) {
+    // if(erc20Contract) {
       const operation = 0; // CALL
       const gasPrice = 0; // If 0, then no refund to relayer
       const gasToken = '0x0000000000000000000000000000000000000000'; // ETH
@@ -131,26 +117,38 @@ function App() {
         const newSignature = `${sig.r}${sig.s.substring(2)}${Number(sig.v + 4).toString(16)}`;
 
         if(proxyWallet) {
-          let trasnaction = proxyWallet.methods.execTransaction(to, valueWei, data, operation, txGasEstimate,
-            baseGasEstimate, gasPrice, gasToken, executor, newSignature).send({ from: selectedAddress });
-
-          trasnaction.on("transactionHash", (hash) => {
-            console.log("Transaction Hash", hash);
-            console.log(`Transaction sent to blockchain with hash ${hash}`);
-          }).once("confirmation", async function (confirmationNumber, receipt) {
-            console.log("Transaction confirmed", receipt);
-            console.log("Transaction confirmed");
-          }).on("error", error => {
-            console.log(error);
-          });
-
+            try {
+                fetch(`https://api.biconomy.io/api/v2/meta-tx/native`, {
+                  method: "POST",
+                  headers: {
+                    "x-api-key" : "xLqd3k_kl.2e36e464-b8cc-4e19-9989-d3e571e1860c",
+                    'Content-Type': 'application/json;charset=utf-8'
+                  },
+                  body: JSON.stringify({
+                    "to": PROXY_ADDRESS,
+                    "apiId": "ac92a90c-d46e-4344-9487-f518e7612b42",
+                    "params": [
+                        to, valueWei, data, operation, txGasEstimate,
+                        baseGasEstimate, gasPrice, gasToken, executor, newSignature
+                    ],
+                    "from": selectedAddress
+                    
+                  })
+                })
+                .then(response=>response.json())
+                .then(function(result) {
+                  console.log(result);
+                })
+                  .catch(function(error) {
+                    console.log(error)
+                  });
+              } catch (error) {
+                console.log(error);
+              }
         } else {
           console.error("Proxy wallet is not initialized")
         }
       });
-    } else {
-      console.log("erc20 no exist");
-    }
   };
 
   const getSignatureParameters = signature => {

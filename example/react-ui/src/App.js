@@ -34,8 +34,8 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-        if (provider.networkVersion === "42") {
-          const biconomy = new Biconomy(provider,{apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"});
+        if (provider.networkVersion === "4") {
+          const biconomy = new Biconomy(provider,{apiKey: "xLqd3k_kl.2e36e464-b8cc-4e19-9989-d3e571e1860c", debug: true});
           web3 = new Web3(biconomy);
           // web3 = new Web3(provider);
           biconomy.onEvent(biconomy.READY, () => {
@@ -52,7 +52,7 @@ function App() {
               config.gnosis.safeMasterCopy.abi,
               config.gnosis.safeMasterCopy.address
             );
-            let proxyAddress = getLocalStorage(PROXY_ADDRESS);
+            let proxyAddress = "0xaDa343Cb6820F4f5001749892f6CAA9920129F2A";
             if(proxyAddress) {
               proxyWallet = new web3.eth.Contract(
                 config.gnosis.safeMasterCopy.abi,

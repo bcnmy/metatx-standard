@@ -1,6 +1,6 @@
 let config = {};
 config.contract = {
-    address: "0xF464d868Ce168d6358756C1Fb029585aFE775393",
+    address: "0x080Cf810A217BdB2380b99Dd0905534Dc31c9A79",
     abi: [{"constant":true,"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function","signature":"0x8da5cb5b"},{"constant":true,"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function","signature":"0x999b93af"},{"constant":false,"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function","signature":"0xe3de1703"},{"constant":true,"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"payable":false,"stateMutability":"view","type":"function","signature":"0x171755b1"}]
 }
 

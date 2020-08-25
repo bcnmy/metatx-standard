@@ -40,14 +40,14 @@ function App() {
   useEffect(() => {
     async function init() {
       console.log("start magic")
-      const magic = new Magic("<MAGIC_KEY>", {
+      const magic = new Magic("pk_test_631BD76761FAF031", {
         network: "ropsten"
       });
       console.log(`start magic done ${magic}`);
 
     console.log(`Initialise Biconomy`)
     const biconomy = new Biconomy(magic.rpcProvider, {
-      apiKey: "mbuXCxAWd.7d43ddeb-ee04-42a0-85ac-350ae193d607",
+      apiKey: "_MTW8kta4.f54b5bba-6095-4773-b6d4-dea517aafa38",
       debug:true
     });
     console.log(`Initialised Biconomy`);
@@ -60,7 +60,7 @@ function App() {
           config.contract.abi,
           config.contract.address
         );
-        await magic.auth.loginWithMagicLink({email: "<email>"});
+        await magic.auth.loginWithMagicLink({email: "divyanailwal73@gmail.com"});
         const isLoggedIn = await magic.user.isLoggedIn();
           if (isLoggedIn) { 
             console.log("User is logged in")
@@ -164,15 +164,15 @@ function App() {
   const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
     if (web3 && contract) {
       try {
-        fetch(`https://api.biconomy.io/api/v2/meta-tx/native`, {
+        fetch(`https://test-api.biconomy.io/api/v2/meta-tx/native`, {
           method: "POST",
           headers: {
-            "x-api-key" : "mbuXCxAWd.7d43ddeb-ee04-42a0-85ac-350ae193d607",
+            "x-api-key" : "_MTW8kta4.f54b5bba-6095-4773-b6d4-dea517aafa38",
             'Content-Type': 'application/json;charset=utf-8'
           },
           body: JSON.stringify({
             "to": "0x42196571b7Ba8Ad6fEA858C219980a936c546fC9",
-            "apiId": "de7f60e1-a1c0-47fb-b85f-741a56c0c9e6",
+            "apiId": "4000ec7a-323a-4558-a4dc-42373b6df315",
             "params": [
               userAddress, functionData, r, s, v
             ],

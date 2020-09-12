@@ -28,8 +28,8 @@ const metaTransactionType = [
 let domainData = {
   name: "TestContract",
   version: "1",
-  chainId: 16110,
-  verifyingContract: config.contract.address
+  chainId:"42",
+  verifyingContract: config.contract.address.toLowerCase()
 };
 
 let web3,getWeb3;
@@ -50,16 +50,16 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-          const biconomy = new Biconomy(provider, {
-            apiKey: "tiXGPFf7Z.a12ae5fd-6638-4848-b0e8-af7016d8cfa6",
-            debug:true
-          });
+        const biconomy = new Biconomy(provider,{apiKey: "Sj3Vql4LI.01d8bb61-704c-4566-97c9-6fa4a19d7ebb", debug:true});
           web3 = new Web3(biconomy);
-
+          getWeb3 = web3;
+          console.log("BICONOMY INTIALISE");
           biconomy
             .onEvent(biconomy.READY, () => {
               // Initialize your dapp here like getting user accounts etc
-              contract = new web3.eth.Contract(
+
+              console.log("BICONOMY INTIALISE PROPERLY");
+              contract = new getWeb3.eth.Contract(
                 config.contract.abi,
                 config.contract.address
               );
@@ -68,8 +68,13 @@ function App() {
               provider.on("accountsChanged", function(accounts) {
                 setSelectedAddress(accounts[0]);
               });
+
+              console.log(web3);
+              console.log(getWeb3);
             })
             .onEvent(biconomy.ERROR, (error, message) => {
+              console.log("ERROR WHILE INITIALISING");
+              showErrorMessage("Error while intialising Biconomy");
               // Handle error while initializing mexa
             });
       } else {
@@ -89,7 +94,7 @@ function App() {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
         let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let functionSignature = contract.methods.setQuote(newQuote,"100").encodeABI();
         let message = {};
         message.nonce = parseInt(nonce);
         message.from = userAddress;
@@ -135,16 +140,16 @@ function App() {
         );
       } else {
         console.log("Sending normal transaction");
-        contract.methods
-          .setQuote(newQuote)
-          .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
-            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-          })
-          .once("confirmation", function(confirmationNumber, receipt) {
-            showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
-          });
+        // contract.methods
+        //   .setQuote(newQuote)
+        //   .send({ from: selectedAddress })
+        //   .on("transactionHash", function(hash) {
+        //     showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
+        //   })
+        //   .once("confirmation", function(confirmationNumber, receipt) {
+        //     showSuccessMessage("Transaction confirmed");
+        //     getQuoteFromNetwork();
+        //   });
       }
     } else {
       showErrorMessage("Please enter the quote");
@@ -209,18 +214,18 @@ function App() {
   const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
     if (web3 && contract) {
       try {
-        let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .estimateGas({ from: userAddress });
+        // let gasLimit = await contract.methods
+        //   .executeMetaTransaction(userAddress, functionData, r, s, v)
+        //   .estimateGas({ from: userAddress });
         let gasPrice = await web3.eth.getGasPrice();
-        console.log(gasLimit);
+        // console.log(gasLimit);
         console.log(gasPrice);
         let tx = contract.methods
           .executeMetaTransaction(userAddress, functionData, r, s, v)
           .send({
             from: userAddress,
-            gasPrice:gasPrice,
-            gasLimit:gasLimit
+            gasPrice:gasPrice
+            // gasLimit:gasLimit
           });
 
         tx.on("transactionHash", function(hash) {

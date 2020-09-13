@@ -8,6 +8,7 @@ var abi = require('ethereumjs-abi');
 
 contract("BasicMetaTransaction", function ([_, owner, account1]) {
 
+    let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
     let publicKey = "0x726cDa2Ac26CeE89F645e55b78167203cAE5410E";
     let privateKey = "0x68619b8adb206de04f676007b2437f99ff6129b672495a6951499c6c56bc2fa6";
     let testContract;
@@ -22,7 +23,7 @@ contract("BasicMetaTransaction", function ([_, owner, account1]) {
         "stateMutability": "nonpayable",
         "type": "function"
     };
-    let networkId = chainId(); // change it to the specific network Id like 42 (kovan) or 3 (ropsten)
+    let networkId = 42; // change it to the specific network Id like 42 (kovan) or 3 (ropsten)
 
     before('before', async function () {
         basicMetaTransaction = await BasicMetaTransaction.new({
@@ -65,6 +66,98 @@ contract("BasicMetaTransaction", function ([_, owner, account1]) {
             assert.isTrue(newQoute.currentQuote == quoteToBeSet, "Unable to set quote");
         });
 
+        it("Should fail when replay transaction", async () => {
+            let quoteToBeSet = "Divya";
+
+            let nonce = await testContract.getNonce(publicKey, {
+                from: owner
+            });
+            const functionSignature = web3Abi.encodeFunctionCall(
+                setQuoteAbi,
+                [quoteToBeSet]
+            );
+
+            let messageToSign = await abi.soliditySHA3(
+                ["uint256", "address", "uint256", "bytes"],
+                [nonce.toNumber(), testContract.address, networkId, toBuffer(functionSignature)]
+            );
+            let signature = web3.eth.accounts.sign(messageToSign, privateKey);
+            signature = signature.signature;
+            let r = signature.slice(0, 66);
+            let s = "0x".concat(signature.slice(66, 130));
+            let v = "0x".concat(signature.slice(130, 132));
+            v = web3.utils.hexToNumber(v);
+            if (![27, 28].includes(v)) v += 27;
+
+            await testContract.executeMetaTransaction(publicKey, functionSignature, r, s, v);
+
+            try {
+               await testContract.executeMetaTransaction(publicKey, functionSignature, r, s, v);
+            } catch (error) {
+                assert.isTrue(error.message.includes("Signer and signature do not match"), `Wrong failure type message , got '${error.message}'`);
+            }
+        });
+
+        it("Should fail when user address is Zero", async () => {
+            let quoteToBeSet = "Divya";
+
+            let nonce = await testContract.getNonce(publicKey, {
+                from: owner
+            });
+            const functionSignature = web3Abi.encodeFunctionCall(
+                setQuoteAbi,
+                [quoteToBeSet]
+            );
+
+            let messageToSign = await abi.soliditySHA3(
+                ["uint256", "address", "uint256", "bytes"],
+                [nonce.toNumber(), testContract.address, networkId, toBuffer(functionSignature)]
+            );
+            let signature = web3.eth.accounts.sign(messageToSign, privateKey);
+            signature = signature.signature;
+            let r = signature.slice(0, 66);
+            let s = "0x".concat(signature.slice(66, 130));
+            let v = "0x".concat(signature.slice(130, 132));
+            v = web3.utils.hexToNumber(v);
+            if (![27, 28].includes(v)) v += 27;
+
+            try {
+               await testContract.executeMetaTransaction(ZERO_ADDRESS, functionSignature, r, s, v);
+            } catch (error) {
+                assert.isTrue(error.message.includes("Signer and signature do not match"), `Wrong failure type message , got '${error.message}'`);
+            }
+        });
+
+        it("Should fail when Signature is in wrong format", async () => {
+            let quoteToBeSet = "Divya";
+
+            let nonce = await testContract.getNonce(publicKey, {
+                from: owner
+            });
+            const functionSignature = web3Abi.encodeFunctionCall(
+                setQuoteAbi,
+                [quoteToBeSet]
+            );
+
+            let messageToSign = await abi.soliditySHA3(
+                ["uint256", "address", "uint256", "bytes"],
+                [nonce.toNumber(), testContract.address, networkId, toBuffer(functionSignature)]
+            );
+            let signature = web3.eth.accounts.sign(messageToSign, privateKey);
+            signature = signature.signature;
+            let r = signature.slice(0, 66);
+            let s = "0x".concat(signature.slice(66, 130));
+            let v = "0x".concat(signature.slice(130, 132));
+            v = web3.utils.hexToNumber(v);
+            if (![27, 28].includes(v)) v += 27;
+
+            try {
+               await testContract.executeMetaTransaction(ZERO_ADDRESS, functionSignature, "0x0", s, v);
+            } catch (error) {
+                assert.isTrue(error.message.includes("Invalid signature"), `Wrong failure type message , got '${error.message}'`);
+            }
+        });
+
         it("Should fail", async () => {
             let quoteToBeSet = "Divya";
 
@@ -97,7 +190,7 @@ contract("BasicMetaTransaction", function ([_, owner, account1]) {
     });
 
     describe("Call verify method", function () {
-        it("Should be able verify the signature", async () => {
+        it("Should be able to verify the signature", async () => {
             let quoteToBeSet = "Divya";
 
             let nonce = await testContract.getNonce(publicKey, {

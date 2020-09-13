@@ -36,4 +36,10 @@ r,s,v can be calculated using web3 <a href="https://web3js.readthedocs.io/en/v2.
 
 Check out example front-end code <a href="https://github.com/bcnmy/metatx-standard/blob/basic-signature-metatx/example/react-ui/src/App.js" target="_blank" >here</a> and example solidity code <a href="https://github.com/bcnmy/metatx-standard/blob/basic-signature-metatx/src/contracts/TestContract.sol" target="_blank" >here</a>
 
+<h3>How to Run test cases</h3>
+
+1. Hardcode the `chainId()` in BasicMetaTransaction.sol to the specific network Id e.g 42 for Kovan etc.
+2. Similarly add the same networkId as above in `BasicMetaTransaction.test.js` at line 13.
+
+
 This repository is basic implementation of Native Meta Transactions.

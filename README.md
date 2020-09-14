@@ -39,7 +39,10 @@ Check out example front-end code <a href="https://github.com/bcnmy/metatx-standa
 <h3>How to Run test cases</h3>
 
 1. Hardcode the `chainId()` in BasicMetaTransaction.sol to the specific network Id e.g 42 for Kovan etc.
-2. Similarly add the same networkId as above in `BasicMetaTransaction.test.js` at line 13.
+2. Similarly change the same networkId as above in `BasicMetaTransaction.test.js` at line 13.
+3. Run `npm install` command to install all the dependencies
+4. Run `ganache-cli` in cmd/terminal to run ganache client
+5. At last, Run `truffle test` to run all the test cases.
 
 
 This repository is basic implementation of Native Meta Transactions.

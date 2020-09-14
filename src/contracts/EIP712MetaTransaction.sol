@@ -1,5 +1,4 @@
-pragma solidity ^0.5.13;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.5.13;
 
 import "./lib/EIP712Base.sol";
 import "./lib/SafeMath.sol";
@@ -9,7 +8,7 @@ contract EIP712MetaTransaction is EIP712Base {
     bytes32 private constant META_TRANSACTION_TYPEHASH = keccak256(bytes("MetaTransaction(uint256 nonce,address from,bytes functionSignature)"));
 
     event MetaTransactionExecuted(address userAddress, address payable relayerAddress, bytes functionSignature);
-    mapping(address => uint256) nonces;
+    mapping(address => uint256) private nonces;
 
     /*
      * Meta transaction structure.
@@ -37,12 +36,12 @@ contract EIP712MetaTransaction is EIP712Base {
         // Append userAddress at the end to extract it from calling context
         (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress));
 
-        require(success, "Function call not successfull");
+        require(success, "Function call not successful");
         emit MetaTransactionExecuted(userAddress, msg.sender, functionSignature);
         return returnData;
     }
 
-    function hashMetaTransaction(MetaTransaction memory metaTx) internal view returns (bytes32) {
+    function hashMetaTransaction(MetaTransaction memory metaTx) internal pure returns (bytes32) {
 		return keccak256(abi.encode(
             META_TRANSACTION_TYPEHASH,
             metaTx.nonce,
@@ -51,7 +50,7 @@ contract EIP712MetaTransaction is EIP712Base {
         ));
 	}
 
-    function getNonce(address user) public view returns(uint256 nonce) {
+    function getNonce(address user) external view returns(uint256 nonce) {
         nonce = nonces[user];
     }
 

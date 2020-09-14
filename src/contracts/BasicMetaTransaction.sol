@@ -1,5 +1,4 @@
-pragma solidity ^0.6.0;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.6.0;
 
 import "./lib/SafeMath.sol";
 
@@ -8,7 +7,7 @@ contract BasicMetaTransaction {
     using SafeMath for uint256;
 
     event MetaTransactionExecuted(address userAddress, address payable relayerAddress, bytes functionSignature);
-    mapping(address => uint256) nonces;
+    mapping(address => uint256) private nonces;
 
     function getChainID() public pure returns (uint256) {
         uint256 id;
@@ -38,12 +37,12 @@ contract BasicMetaTransaction {
         // Append userAddress at the end to extract it from calling context
         (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress));
 
-        require(success, "Function call not successfull");
+        require(success, "Function call not successful");
         emit MetaTransactionExecuted(userAddress, msg.sender, functionSignature);
         return returnData;
     }
 
-    function getNonce(address user) public view returns(uint256 nonce) {
+    function getNonce(address user) external view returns(uint256 nonce) {
         nonce = nonces[user];
     }
 

@@ -35,6 +35,14 @@ r,s,v can be calculated using web3 <a href="https://web3js.readthedocs.io/en/v2.
 
 Since this standard supports <a href="https://eips.ethereum.org/EIPS/eip-712" target="_blank" >EIP-712</a> so signature parameters should be generated using eth_signTypedData_v3 or eth_signTypedData_v4 JSON RPC method.
 
+<h3>How to Run test cases</h3>
+
+1. Hardcode the `chainId()` at line 28 in EIP712Base.sol to the specific network Id e.g 42 for Kovan etc.
+2. Similarly change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.
+3. Run `npm install` command to install all the dependencies
+4. Run `ganache-cli` in cmd/terminal to run ganache client
+5. At last, Run `truffle test` to run all the test cases.
+
 Check out example front-end code <a href="https://github.com/bcnmy/metatx-standard/blob/master/example/react-ui/src/App.js" target="_blank" >here</a> and example solidity code <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/TestContract.sol" target="_blank" >here</a>
 
 This repository is basic implementation of Native Meta Transactions. This reposiory will be updated as per the <a href="https://github.com/ethereum/EIPs/issues/1776" target="_blank">EIP-1776</a> to implement native meta transactions with support of batching, transaction expiry etc

@@ -88,7 +88,7 @@ const metaTransactionType = [{
 
 let domainData;
 
-const returnTransactionData = async (nonce) => {
+const getTransactionData = async (nonce) => {
 
     const functionSignature = web3Abi.encodeFunctionCall(
         setQuoteAbi,
@@ -157,7 +157,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
                 s,
                 v,
                 functionSignature
-            } = await returnTransactionData(nonce);
+            } = await getTransactionData(nonce);
 
             let sendTransactionData = web3Abi.encodeFunctionCall(
                 executeMetaTransactionABI,
@@ -185,7 +185,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
                 s,
                 v,
                 functionSignature
-            } = await returnTransactionData(nonce);
+            } = await getTransactionData(nonce);
 
             const sendTransactionData = web3Abi.encodeFunctionCall(
                 executeMetaTransactionABI,
@@ -221,7 +221,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
                 s,
                 v,
                 functionSignature
-            } = await returnTransactionData(nonce);
+            } = await getTransactionData(nonce);
 
             const sendTransactionData = web3Abi.encodeFunctionCall(
                 executeMetaTransactionABI,
@@ -249,7 +249,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
                 s,
                 v,
                 functionSignature
-            } = await returnTransactionData(nonce);
+            } = await getTransactionData(nonce);
 
             const sendTransactionData = web3Abi.encodeFunctionCall(
                 executeMetaTransactionABI,

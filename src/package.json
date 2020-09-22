@@ -1,0 +1,30 @@
+{
+  "name": "basic-meta-transaction",
+  "version": "1.0.0",
+  "description": "Biconomy meta transaction contracts with personal sign signatures.",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test",
+    "coverage": "npx truffle run coverage"
+  },
+  "keywords": [
+    "meta-transaction",
+    "mexa",
+    "biconomy"
+  ],
+  "author": "Sachin Tomar",
+  "license": "ISC",
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.0.0",
+    "eth-sig-util": "^2.5.3",
+    "ganache-cli": "^6.10.2",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "web3": "^1.3.0"
+  },
+  "devDependencies": {
+    "solidity-coverage": "^0.7.10"
+  }
+}

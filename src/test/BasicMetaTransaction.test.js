@@ -66,6 +66,21 @@ contract("BasicMetaTransaction", function ([_, owner, account1]) {
             assert.isTrue(newQoute.currentQuote == quoteToBeSet, "Unable to set quote");
         });
 
+        it("Should call the contract method directly", async() => {
+            let quoteToBeSet = "New quote";
+
+            let oldNonce = await testContract.getNonce(publicKey, {
+                from: owner
+            });
+            await testContract.setQuote(quoteToBeSet, {from: owner});
+
+            var newNonce = await testContract.getNonce(publicKey);
+            assert.isTrue(newNonce.toNumber() == oldNonce.toNumber(), "Nonce got changed");
+            let newQoute = await testContract.getQuote();
+            assert.isTrue(newQoute.currentQuote == quoteToBeSet, "Unable to set quote");
+            assert.isTrue(newQoute.currentOwner == owner, "Unable to set owner");
+        })
+
         it("Should fail when replay transaction", async () => {
             let quoteToBeSet = "Divya";
 

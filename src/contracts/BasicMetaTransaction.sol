@@ -1,6 +1,6 @@
 pragma solidity 0.6.0;
 
-import "./lib/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract BasicMetaTransaction {
 
@@ -12,7 +12,7 @@ contract BasicMetaTransaction {
     function getChainID() public pure returns (uint256) {
         uint256 id;
         assembly {
-            id := chainid()
+            id := 42
         }
         return id;
     }

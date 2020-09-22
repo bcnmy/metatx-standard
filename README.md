@@ -37,6 +37,9 @@ Since this standard supports <a href="https://eips.ethereum.org/EIPS/eip-712" ta
 
 <h3>How to Run test cases</h3>
 
+<h5>Setup</h5>
+Rename .secret.example to .secret and add 12 word mnemonic string in the first line<br/><br/>
+
 NOTE: Make sure you have nodejs version > 12.0.0 <br/>
 1. Hardcode the `chainId()` at line 28 in EIP712Base.sol to the specific network Id e.g 42 for Kovan etc.
 2. Similarly change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.

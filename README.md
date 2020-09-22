@@ -45,6 +45,7 @@ NOTE: Make sure you have nodejs version > 12.0.0 <br/>
 5. At last, Run `npm run test` to run all the test cases.
 
 <h3>How to get test coverage</h3>
+
 1. Hardcode the `chainId()` at line 28 in EIP712Base.sol to the specific network Id e.g 42 for Kovan etc.
 2. Similarly change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.
 3. Run `npm install` command to install all the dependencies

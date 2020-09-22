@@ -176,6 +176,29 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
             assert.isTrue(newQoute.currentQuote == quoteToBeSet, "Unable to set quote");
         });
 
+        it("Call the contract method directly", async() => {
+
+            let newQuoteToSet = "New Quote";
+            var oldNonce = await testContract.getNonce(publicKey);
+            let sendTransactionData = web3Abi.encodeFunctionCall(
+                setQuoteAbi,
+                [newQuoteToSet]
+            );
+
+            await testContract.sendTransaction({
+                value: 0,
+                from: owner,
+                gas: 500000,
+                data: sendTransactionData
+            });
+
+            var newNonce = await testContract.getNonce(publicKey);
+            assert.isTrue(newNonce.toNumber() == oldNonce.toNumber(), "Nonce are not same");
+            let updatedQuote = await testContract.getQuote();
+            assert.isTrue(updatedQuote.currentQuote == newQuoteToSet, "Unable to set quote");
+            assert.isTrue(updatedQuote.currentOwner == owner, "Owner does not match");
+        })
+
         it("Should fail when replay transaction", async () => {
             let nonce = await testContract.getNonce(publicKey, {
                 from: owner

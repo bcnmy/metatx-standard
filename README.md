@@ -1,6 +1,6 @@
 # Generalized Meta Transaction
 
-Repository containing a gas cost effective standard for meta transaction to be used by any contract to enable native meta transaction feature on any function. 
+Repository containing a gas cost effective standard for meta transaction to be used by any contract to enable native meta transaction feature on any function.
 The approach support signed typed messages so that while signing the data on client side user see a human readable message instead of scary hex string.
 
 You can see the LIVE DEMO <a href="https://metatx.biconomy.io" target="_blank" >Here</a>(works on Ropsten)
@@ -11,11 +11,11 @@ Biconomy was selected as one of the finalist in the hackathon. Read <a href="htt
 
 <h3>How do i use this in my Smart Contracts?</h3>
 
-1. Inherit <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/EIP712MetaTransaction.sol" target="_blank" >EIP712MetaTransaction</a> contract 
+1. Inherit <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/EIP712MetaTransaction.sol" target="_blank" >EIP712MetaTransaction</a> contract
 2. Use msgSender() method where ever you were using msg.sender
 
 <h3>How do i use this in my client code?</h3>
-In order to execute meta transactions you just need to call 
+In order to execute meta transactions you just need to call
 executeMetaTransaction(address userAddress, bytes memory functionSignature, bytes32 sigR, bytes32 sigS, uint8 sigV)
 inherited from EIP712MetaTransaction.sol
 <br/>
@@ -37,11 +37,19 @@ Since this standard supports <a href="https://eips.ethereum.org/EIPS/eip-712" ta
 
 <h3>How to Run test cases</h3>
 
+NOTE: Make sure you have nodejs version > 12.0.0 <br/>
 1. Hardcode the `chainId()` at line 28 in EIP712Base.sol to the specific network Id e.g 42 for Kovan etc.
 2. Similarly change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.
 3. Run `npm install` command to install all the dependencies
-4. Run `ganache-cli` in cmd/terminal to run ganache client
-5. At last, Run `truffle test` to run all the test cases.
+4. Run `ganache-cli` in separate cmd/terminal to run ganache client
+5. At last, Run `npm run test` to run all the test cases.
+
+<h3>How to get test coverage</h3>
+1. Hardcode the `chainId()` at line 28 in EIP712Base.sol to the specific network Id e.g 42 for Kovan etc.
+2. Similarly change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.
+3. Run `npm install` command to install all the dependencies
+4. Run `ganache-cli` in separate cmd/terminal to run ganache client
+5. At last, Run `npm run coverage` to get test coverage report
 
 Check out example front-end code <a href="https://github.com/bcnmy/metatx-standard/blob/master/example/react-ui/src/App.js" target="_blank" >here</a> and example solidity code <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/TestContract.sol" target="_blank" >here</a>
 

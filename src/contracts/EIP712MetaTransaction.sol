@@ -1,7 +1,7 @@
 pragma solidity 0.5.13;
 
 import "./lib/EIP712Base.sol";
-import "./lib/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract EIP712MetaTransaction is EIP712Base {
     using SafeMath for uint256;

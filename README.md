@@ -39,7 +39,7 @@ Check out example front-end code <a href="https://github.com/bcnmy/metatx-standa
 <h3>How to Run test cases</h3>
 
 <h5>Setup</h5>
-Rename .secret.example to .secret and add 12 word mnemonic string in the first line<br/>
+Rename .secret.example to .secret and add 12 word mnemonic string in the first line<br/><br/>
 
 NOTE: Make sure you have nodejs version > 12.0.0<br/>
 1. Hardcode the `chainId()` in BasicMetaTransaction.sol to the specific network Id e.g 42 for Kovan etc.

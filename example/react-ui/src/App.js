@@ -6,7 +6,6 @@ import {
   NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
-import Biconomy from "@biconomy/mexa";
 
 import Web3 from "web3";
 let sigUtil = require("eth-sig-util");
@@ -37,9 +36,8 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-        biconomy = new Biconomy(provider,{apiKey: "rvMCFPRfp.9e0d1764-6da2-484f-8ddf-08f70b67124d"});
         if (provider.networkVersion === "42") {
-          web3 = new Web3(biconomy);
+          web3 = new Web3(provider);
 
           contract = new web3.eth.Contract(
             config.contract.abi,
@@ -167,24 +165,6 @@ function App() {
     }
   }
 
-  const getSignatureParameters = signature => {
-    if (!web3.utils.isHexStrict(signature)) {
-      throw new Error(
-        'Given value "'.concat(signature, '" is not a valid hex string.')
-      );
-    }
-    var r = signature.slice(0, 66);
-    var s = "0x".concat(signature.slice(66, 130));
-    var v = "0x".concat(signature.slice(130, 132));
-    v = web3.utils.hexToNumber(v);
-    if (![27, 28].includes(v)) v += 27;
-    return {
-      r: r,
-      s: s,
-      v: v
-    };
-  };
-
   const getTokenBalance = (userAddress) => {
     if(web3 && contract) {
       contract.methods
@@ -210,35 +190,6 @@ function App() {
 
   const showInfoMessage = message => {
     NotificationManager.info(message, "Info", 3000);
-  };
-
-  const sendTransaction = async (userAddress, functionData, r, s, v) => {
-    if (web3 && contract) {
-      try {
-        let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .estimateGas({ from: userAddress });
-        let gasPrice = await web3.eth.getGasPrice();
-        console.log(gasLimit);
-        console.log(gasPrice);
-        let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .send({
-            from: userAddress
-          });
-
-        tx.on("transactionHash", function(hash) {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-        }).once("confirmation", function(confirmationNumber, receipt) {
-          console.log(receipt);
-          showSuccessMessage("Transaction confirmed on chain");
-          getTokenBalance(selectedAddress);
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    }
   };
 
   return (

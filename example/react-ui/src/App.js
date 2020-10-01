@@ -11,25 +11,8 @@ import Biconomy from "@biconomy/mexa";
 import Web3 from "web3";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
-
-const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" }
-];
-
-const metaTransactionType = [
-  { name: "nonce", type: "uint256" },
-  { name: "from", type: "address" },
-  { name: "functionSignature", type: "bytes" }
-];
-
-let domainData = {
-  name: "AletheaToken",
-  version: "1",
-  verifyingContract: config.contract.address
-};
+const PENDING = "pending";
+const CONFIRMED = "confirmed";
 
 let web3;
 let contract;
@@ -38,8 +21,12 @@ let biconomy;
 function App() {
   const [selectedAddress, setSelectedAddress] = useState("");
   const [tokenAmount, setTokenAmount] = useState("");
-  const [recipientAddress, setRecipientAddress] = useState("");
+  const [symbol, setSymbol] = useState("");
+  const [decimal, setDecimal] = useState(0);
+  const [recipientAddress, setRecipientAddress] = useState("0x837DEb7B906fbcE871E80CF833f76f8562f598B3");
   const [tokenBalance, setTokenBalance] = useState(0);
+  const [transactionState, setTransactionState] = useState("");
+  const [transactionHash, setTransactionHash] = useState("");
 
   useEffect(() => {
     async function init() {
@@ -52,7 +39,6 @@ function App() {
         await provider.enable();
         biconomy = new Biconomy(provider,{apiKey: "rvMCFPRfp.9e0d1764-6da2-484f-8ddf-08f70b67124d"});
         if (provider.networkVersion === "42") {
-          domainData.chainId = 42;
           web3 = new Web3(biconomy);
 
           contract = new web3.eth.Contract(
@@ -60,13 +46,16 @@ function App() {
             config.contract.address
           );
           setSelectedAddress(provider.selectedAddress);
+          setTokenSymbol();
+          setTokenDecimal();
           getTokenBalance(provider.selectedAddress);
+
           provider.on("accountsChanged", function(accounts) {
             setSelectedAddress(accounts[0]);
             getTokenBalance(accounts[0]);
           });
         } else {
-          showErrorMessage("Please change the network in metamask to Ropsten");
+          showErrorMessage("Please change the network in metamask to Kovan");
         }
       } else {
         showErrorMessage("Metamask not installed");
@@ -75,59 +64,109 @@ function App() {
     init();
   }, []);
 
+  const setTokenDecimal = async () => {
+    if(contract) {
+      let decimal = await contract.methods.decimals().call();
+      if(decimal) {
+        setDecimal(decimal);
+      } else {
+        console.error("Unable to get token decimals");
+      }
+    } else {
+      console.error("Contract is not initialised");
+    }
+  }
+
+  const setTokenSymbol = async () => {
+    if(contract) {
+      let symbol = await contract.methods.symbol().call();
+      if(symbol) {
+        setSymbol(symbol);
+      } else {
+        console.error("Unable to get token symbol");
+      }
+    } else {
+      console.error("Contract is not initialised");
+    }
+  }
+
   const onTokenChange = event => {
     setTokenAmount(event.target.value);
+    setTransactionState("");
+    setTransactionHash("");
   };
+
   const onRecipientChange = event => {
     setRecipientAddress(event.target.value);
+    setTransactionState("");
+    setTransactionHash("");
+  }
+
+
+  const onTokenMint = async event => {
+    if(selectedAddress) {
+      let userAddress = recipientAddress;
+      let tokenToTransfer = tokenAmount;
+      if(!userAddress) {
+        return showErrorMessage("Please enter the recipient address");
+      }
+      if(!tokenToTransfer) {
+        return showErrorMessage("Please enter tokens to transfer");
+      }
+
+      if(contract && decimal) {
+        tokenToTransfer = tokenToTransfer*Math.pow(10, decimal);
+        let result = contract.methods.mint(userAddress, tokenToTransfer.toString()).send({
+          from: selectedAddress
+        });
+
+        result.on("transactionHash", (hash)=>{
+          setTransactionHash(hash);
+          setTransactionState(PENDING);
+        }).once("confirmation", (confirmation, recipet) => {
+          setTransactionState(CONFIRMED);
+          getTokenBalance(selectedAddress);
+        })
+
+      }
+    } else {
+      showErrorMessage("User account not initialized");
+    }
   }
 
   const onTokenTransfer = async event => {
-    if(recipientAddress && tokenAmount) {
-      let userAddress = selectedAddress;
-      let nonce = await contract.methods.getNonce(userAddress).call();
-      let functionSignature = contract.methods.transfer(recipientAddress, (tokenAmount*1e18).toString()).encodeABI();
-      let message = {};
-      message.nonce = parseInt(nonce);
-      message.from = userAddress;
-      message.functionSignature = functionSignature;
+    if(selectedAddress) {
+      let userAddress = recipientAddress;
+      let tokenToTransfer = tokenAmount;
+      if(!userAddress) {
+        return showErrorMessage("Please enter the recipient address");
+      }
+      if(!tokenToTransfer) {
+        return showErrorMessage("Please enter tokens to transfer");
+      }
 
-      const dataToSign = JSON.stringify({
-        types: {
-          EIP712Domain: domainType,
-          MetaTransaction: metaTransactionType
-        },
-        domain: domainData,
-        primaryType: "MetaTransaction",
-        message: message
-      });
-      console.log(domainData);
-      console.log();
-      web3.currentProvider.send(
-        {
-          jsonrpc: "2.0",
-          id: 999999999999,
-          method: "eth_signTypedData_v4",
-          params: [userAddress, dataToSign]
-        },
-        function(error, response) {
-          console.info(`User signature is ${response.result}`);
-          if (error || (response && response.error)) {
-            showErrorMessage("Could not get user signature");
-          } else if (response && response.result) {
-            let { r, s, v } = getSignatureParameters(response.result);
-            const recovered = sigUtil.recoverTypedSignature_v4({
-              data: JSON.parse(dataToSign),
-              sig: response.result
-            });
-            console.log(`Recovered ${recovered}`);
-            sendTransaction(userAddress, functionSignature, r, s, v);
-          }
-        }
-      );
+      if(contract && decimal) {
+        tokenToTransfer = tokenToTransfer*Math.pow(10, decimal);
+        let result = contract.methods.transfer(userAddress, tokenToTransfer.toString()).send({
+          from: selectedAddress
+        });
+
+        result.on("transactionHash", (hash)=>{
+          setTransactionHash(hash);
+          setTransactionState(PENDING);
+          showInfoMessage(`Transaction sent successfully`);
+        }).once("confirmation", (confirmation, recipet) => {
+          setTransactionState(CONFIRMED);
+          showInfoMessage(`Transaction Confirmed.`);
+          getTokenBalance(selectedAddress);
+        })
+
+      }
+    } else {
+      showErrorMessage("User account not initialized");
     }
   }
-  
+
   const getSignatureParameters = signature => {
     if (!web3.utils.isHexStrict(signature)) {
       throw new Error(
@@ -205,8 +244,18 @@ function App() {
   return (
     <div className="App">
       <section>
+        {transactionHash && transactionState === PENDING &&
+          <div className="pending_tx status">Transaction sent with hash <a target="_blank" href={`https://kovan.etherscan.io/tx/${transactionHash}`}>{transactionHash}</a></div>
+        }
+
+        {transactionHash && transactionState === CONFIRMED &&
+          <div className="confirmed_tx status">Transaction confirmed with hash <a target="_blank" href={`https://kovan.etherscan.io/tx/${transactionHash}`}>{transactionHash}</a></div>
+        }
+
+      </section>
+      <section>
         <div className="token-row">
-          <span>Token Balance : </span> {tokenBalance} ALTH
+          <span>Token Balance : </span> {tokenBalance} {symbol}
         </div>
       </section>
       <section>
@@ -217,6 +266,10 @@ function App() {
         <div className="token-row">
           <Button variant="contained" color="primary" onClick={onTokenTransfer}>
             Transfer
+          </Button>
+
+          <Button className="action_button" variant="contained" color="primary" onClick={onTokenMint}>
+            Mint
           </Button>
         </div>
       </section>

@@ -147,3 +147,42 @@ cite.owner {
 cite:hover {
   color : #D48158;
 }
+
+.status {
+  color: white;
+  font-family: Helvetica;
+  padding: 15px 30px;
+  font-size: 19px;
+  width: fit-content;
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 5px;
+}
+
+.pending_tx {
+  background: #3C85F6;
+}
+
+.confirmed_tx {
+  background: #23551D;
+}
+
+.pending_tx a {
+  text-decoration: underline;
+  color: white;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.confirmed_tx a {
+  text-decoration: underline;
+  color: white;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+
+.action_button {
+  margin-left: 10px!important;
+}

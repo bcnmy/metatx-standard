@@ -151,10 +151,8 @@ function App() {
         result.on("transactionHash", (hash)=>{
           setTransactionHash(hash);
           setTransactionState(PENDING);
-          showInfoMessage(`Transaction sent successfully`);
         }).once("confirmation", (confirmation, recipet) => {
           setTransactionState(CONFIRMED);
-          showInfoMessage(`Transaction Confirmed.`);
           getTokenBalance(selectedAddress);
         })
 
@@ -166,12 +164,13 @@ function App() {
 
   const getTokenBalance = (userAddress) => {
     if(web3 && contract) {
+      console.log("Getting token balance");
       contract.methods
         .balanceOf(userAddress)
         .call()
         .then(function(result) {
           if (result) {
-            setTokenBalance(result/1e18);
+            setTokenBalance(result/Math.pow(10, decimal));
           } else {
             showErrorMessage("Not able to get token balance from Network");
           }

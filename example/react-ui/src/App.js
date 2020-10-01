@@ -170,7 +170,7 @@ function App() {
         .call()
         .then(function(result) {
           if (result) {
-            setTokenBalance(result/Math.pow(10, decimal));
+            setTokenBalance(result/1e18);
           } else {
             showErrorMessage("Not able to get token balance from Network");
           }

@@ -134,9 +134,8 @@ function App() {
 
   const onTokenTransfer = async event => {
     if(selectedAddress) {
-      let userAddress = recipientAddress;
       let tokenToTransfer = tokenAmount;
-      if(!userAddress) {
+      if(!recipientAddress) {
         return showErrorMessage("Please enter the recipient address");
       }
       if(!tokenToTransfer) {
@@ -145,7 +144,7 @@ function App() {
 
       if(contract && decimal) {
         tokenToTransfer = tokenToTransfer*Math.pow(10, decimal);
-        let result = contract.methods.transfer(userAddress, tokenToTransfer.toString()).send({
+        let result = contract.methods.transfer(recipientAddress, tokenToTransfer.toString()).send({
           from: selectedAddress
         });
 

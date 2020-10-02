@@ -12,7 +12,7 @@ contract BasicMetaTransaction {
     function getChainID() public pure returns (uint256) {
         uint256 id;
         assembly {
-            id := 42
+            id := chainid()
         }
         return id;
     }

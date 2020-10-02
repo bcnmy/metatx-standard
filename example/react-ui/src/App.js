@@ -6,6 +6,10 @@ import {
   NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
+import {toBuffer} from "ethereumjs-util";
+import abi from "ethereumjs-abi";
+import events from "events";
+import Biconomy from "@biconomy/mexa";
 
 import Web3 from "web3";
 let sigUtil = require("eth-sig-util");
@@ -36,17 +40,24 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
+        biconomy = new Biconomy(provider,{apiKey: "SvLGfv-Tb.f53a653b-8a1e-4c0f-950f-fa6553efee43"});
         if (provider.networkVersion === "42") {
-          web3 = new Web3(provider);
+          web3 = new Web3(biconomy);
 
-          contract = new web3.eth.Contract(
-            config.contract.abi,
-            config.contract.address
-          );
-          setSelectedAddress(provider.selectedAddress);
-          setTokenSymbol();
-          setTokenDecimal();
-          getTokenBalance(provider.selectedAddress);
+          biconomy.onEvent(biconomy.READY, () => {
+            // Initialize your dapp here like getting user accounts etc
+            contract = new web3.eth.Contract(
+              config.contract.abi,
+              config.contract.address
+            );
+            setSelectedAddress(provider.selectedAddress);
+            setTokenSymbol();
+            setTokenDecimal();
+            getTokenBalance(provider.selectedAddress);
+          }).onEvent(biconomy.ERROR, (error, message) => {
+            // Handle error while initializing mexa
+          });
+
 
           provider.on("accountsChanged", function(accounts) {
             setSelectedAddress(accounts[0]);
@@ -100,6 +111,64 @@ function App() {
     setTransactionHash("");
   }
 
+  const executeMetaTransaciton = async (userAddress, functionSignature, contract, contractAddress, chainId) => {
+    var eventEmitter = new events.EventEmitter();
+    if(contract && userAddress && functionSignature, chainId, contractAddress) {
+      let nonce = await contract.methods.getNonce(userAddress).call();
+      let messageToSign = constructMetaTransactionMessage(nonce, chainId, functionSignature, contractAddress);
+
+      const signature = await web3.eth.personal.sign(
+        "0x" + messageToSign.toString("hex"),
+        userAddress
+      );
+
+      console.info(`User signature is ${signature}`);
+      let { r, s, v } = getSignatureParameters(signature);
+
+      console.log("before transaction listener");
+      // No need to calculate gas limit or gas price here
+      let transactionListener = contract.methods.executeMetaTransaction(userAddress, functionSignature, r, s, v).send({
+          from: userAddress
+      });
+
+      transactionListener.on("transactionHash", (hash)=>{
+        eventEmitter.emit("transactionHash", hash);
+      }).once("confirmation", (confirmation, recipet) => {
+        eventEmitter.emit("confirmation", confirmation, recipet);
+      }).on("error", error => {
+        eventEmitter.emit("error", error);
+      });
+
+      return eventEmitter;
+    } else {
+      console.log("All params userAddress, functionSignature, chainId, contract address and contract object are mandatory");
+    }
+  }
+
+  const constructMetaTransactionMessage = (nonce, chainId, functionSignature, contractAddress) => {
+    return abi.soliditySHA3(
+        ["uint256","address","uint256","bytes"],
+        [nonce, contractAddress, chainId, toBuffer(functionSignature)]
+    );
+  }
+
+  const getSignatureParameters = signature => {
+    if (!web3.utils.isHexStrict(signature)) {
+      throw new Error(
+        'Given value "'.concat(signature, '" is not a valid hex string.')
+      );
+    }
+    var r = signature.slice(0, 66);
+    var s = "0x".concat(signature.slice(66, 130));
+    var v = "0x".concat(signature.slice(130, 132));
+    v = web3.utils.hexToNumber(v);
+    if (![27, 28].includes(v)) v += 27;
+    return {
+      r: r,
+      s: s,
+      v: v
+    };
+  };
 
   const onTokenMint = async event => {
     if(selectedAddress) {
@@ -114,16 +183,17 @@ function App() {
 
       if(contract && decimal) {
         tokenToTransfer = tokenToTransfer*Math.pow(10, decimal);
-        let result = contract.methods.mint(userAddress, tokenToTransfer.toString()).send({
-          from: selectedAddress
-        });
+        let functionSignature = contract.methods.mint(userAddress, tokenToTransfer.toString()).encodeABI();
 
+        let result = await executeMetaTransaciton(selectedAddress, functionSignature, contract, config.contract.address, "42");
         result.on("transactionHash", (hash)=>{
           setTransactionHash(hash);
           setTransactionState(PENDING);
         }).once("confirmation", (confirmation, recipet) => {
           setTransactionState(CONFIRMED);
           getTokenBalance(selectedAddress);
+        }).on("error", (error)=>{
+          console.log(error);
         })
 
       }
@@ -144,16 +214,17 @@ function App() {
 
       if(contract && decimal) {
         tokenToTransfer = tokenToTransfer*Math.pow(10, decimal);
-        let result = contract.methods.transfer(recipientAddress, tokenToTransfer.toString()).send({
-          from: selectedAddress
-        });
+        let functionSignature = contract.methods.transfer(recipientAddress, tokenToTransfer.toString()).encodeABI();
 
+        let result = await executeMetaTransaciton(selectedAddress, functionSignature, contract, config.contract.address, "42");
         result.on("transactionHash", (hash)=>{
           setTransactionHash(hash);
           setTransactionState(PENDING);
         }).once("confirmation", (confirmation, recipet) => {
           setTransactionState(CONFIRMED);
           getTokenBalance(selectedAddress);
+        }).on("error", (error)=>{
+          console.log(error);
         })
 
       }

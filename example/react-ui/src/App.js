@@ -6,11 +6,9 @@ import {
   NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
-import Biconomy from "@biconomy/mexa";
 import Web3 from "web3";
 import {toBuffer} from "ethereumjs-util";
 var abi = require('ethereumjs-abi')
-
 
 const { config } = require("./config");
 let chainId = "42";
@@ -31,12 +29,12 @@ function App() {
       ) {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
-        const biconomy = new Biconomy(provider,{apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", debug: true});
+        // const biconomy = new Biconomy(provider,{apiKey: "YQ45IuL1p.664e2911-02b3-4920-98ac-f9e872f4e577", debug: true});
         await provider.enable();
         if (provider.networkVersion === chainId) {
-          web3 = new Web3(biconomy);
+          web3 = new Web3(provider);
 
-          biconomy.onEvent(biconomy.READY, () => {
+          // biconomy.onEvent(biconomy.READY, () => {
             // Initialize your dapp here like getting user accounts etc
             contract = new web3.eth.Contract(
               config.contract.abi,
@@ -47,12 +45,12 @@ function App() {
             provider.on("accountsChanged", function(accounts) {
               setSelectedAddress(accounts[0]);
             });
-          }).onEvent(biconomy.ERROR, (error, message) => {
-            console.error(error);
-            setError(JSON.stringify(error));
-            showErrorMessage("Error while initializing Biconomy. Please contact Biconomy team.");
-            // Handle error while initializing mexa
-          });
+          // }).onEvent(biconomy.ERROR, (error, message) => {
+          //   console.error(error);
+          //   setError(JSON.stringify(error));
+          //   showErrorMessage("Error while initializing Biconomy. Please contact Biconomy team.");
+          //   // Handle error while initializing mexa
+          // });
         } else {
           showErrorMessage("Please change the network in metamask to Kovan");
         }
@@ -86,20 +84,10 @@ function App() {
 
         sendTransaction(userAddress, functionSignature, r, s, v);
       } else {
-        console.log("Sending normal transaction");
-        contract.methods
-          .setQuote(newQuote)
-          .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
-            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-          })
-          .once("confirmation", function(confirmationNumber, receipt) {
-            showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
-          });
+        showSuccessMessage("Transaction confirmed");    
       }
     } else {
-      showErrorMessage("Please enter the quote");
+      showErrorMessage("Error while sending");
     }
   };
 
@@ -169,28 +157,30 @@ function App() {
   const sendTransaction = async (userAddress, functionData, r, s, v) => {
     if (web3 && contract) {
       try {
-        let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .estimateGas({ from: userAddress });
-        let gasPrice = await web3.eth.getGasPrice();
-        console.log(gasLimit);
-        console.log(gasPrice);
-        let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .send({
-            from: userAddress,
-            gasPrice: web3.utils.toHex(gasPrice),
-            gasLimit: web3.utils.toHex(gasLimit)
-          });
+        fetch(`https://api.biconomy.io/api/v2/meta-tx/native`, {
+          method: "POST",
+          headers: {
+            "x-api-key" : "YQ45IuL1p.664e2911-02b3-4920-98ac-f9e872f4e577",
+            'Content-Type': 'application/json;charset=utf-8'
+          },
+          body: JSON.stringify({
+            "to": "0x1E1c36546F6ddD71e8e6aEDf135B82F7EEaA08b9",
+            "apiId": "7417bfd3-39d3-4b53-9b38-58c8a1e92351",
+            "params": [
+              userAddress, functionData, r, s, v
+            ],
+            "from": userAddress
+          })
+        })
+        .then(response=>response.json())
+        .then(function(result) {
+          console.log(result);
+          showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
 
-        tx.on("transactionHash", function(hash) {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-        }).once("confirmation", function(confirmationNumber, receipt) {
-          console.log(receipt);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
-        });
+        })
+	      .catch(function(error) {
+	        console.log(error)
+	      });
       } catch (error) {
         console.log(error);
       }

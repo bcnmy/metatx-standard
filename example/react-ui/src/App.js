@@ -31,7 +31,7 @@ function App() {
       ) {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
-        const biconomy = new Biconomy(provider,{apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", debug: true});
+        const biconomy = new Biconomy(provider,{apiKey: "_jAWDZ4jD.163f58ff-03fa-4af2-ae83-5723385f1d13", debug: true});
         await provider.enable();
         if (provider.networkVersion === chainId) {
           web3 = new Web3(biconomy);

@@ -1,10 +1,12 @@
-pragma solidity 0.6.2;
+pragma solidity 0.6.8;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "./BasicMetaTransaction.sol";
 
-contract GasLessToken is IERC20, BasicMetaTransaction {
+contract GasLessToken is IERC20, BaseRelayRecipient {
 
     using SafeMath for uint256;
 
@@ -27,13 +29,16 @@ contract GasLessToken is IERC20, BasicMetaTransaction {
      * All three of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor (string memory name, string memory symbol, uint256 totalSupply, address owner) public {
+    constructor (string memory name, string memory symbol, uint256 totalSupply, address owner, address _trustedForwarder) public {
         _name = name;
         _symbol = symbol;
         _decimals = 18;
         _totalSupply = totalSupply;
         _balances[owner] = _totalSupply;
+        trustedForwarder = _trustedForwarder;
     }
+
+    function versionRecipient() external virtual view override returns (string memory){ return "1";}
 
     /**
      * @dev Returns the name of the token.

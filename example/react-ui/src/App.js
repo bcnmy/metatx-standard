@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import Button from "@material-ui/core/Button";
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+
 import {
   NotificationContainer,
   NotificationManager
@@ -12,6 +18,7 @@ import events from "events";
 import Biconomy from "@biconomy/mexa";
 
 import Web3 from "web3";
+import { Typography } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 const PENDING = "pending";
@@ -19,6 +26,8 @@ const CONFIRMED = "confirmed";
 
 let web3;
 let contract;
+let erc20FeeProxy;
+let forwarder;
 let biconomy;
 
 function App() {
@@ -30,6 +39,10 @@ function App() {
   const [tokenBalance, setTokenBalance] = useState(0);
   const [transactionState, setTransactionState] = useState("");
   const [transactionHash, setTransactionHash] = useState("");
+  const [open, setOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
+
+  const [request, setRequest] = useState(null);
 
   useEffect(() => {
     async function init() {
@@ -40,7 +53,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-        biconomy = new Biconomy(provider,{apiKey: "SvLGfv-Tb.f53a653b-8a1e-4c0f-950f-fa6553efee43"});
+        biconomy = new Biconomy(provider,{apiKey: "SvLGfv-Tb.f53a653b-8a1e-4c0f-950f-fa6553efee43", debug: true});
         if (provider.networkVersion === "42") {
           web3 = new Web3(biconomy);
 
@@ -50,6 +63,17 @@ function App() {
               config.contract.abi,
               config.contract.address
             );
+
+            erc20FeeProxy = new web3.eth.Contract(
+              config.erc20FeeProxy.abi,
+              config.erc20FeeProxy.address
+            );
+
+            forwarder = new web3.eth.Contract(
+              config.forwarder.abi,
+              config.forwarder.address
+            );
+
             setSelectedAddress(provider.selectedAddress);
             setTokenSymbol();
             setTokenDecimal();
@@ -72,6 +96,10 @@ function App() {
     }
     init();
   }, []);
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const setTokenDecimal = async () => {
     if(contract) {
@@ -111,23 +139,60 @@ function App() {
     setTransactionHash("");
   }
 
-  const executeMetaTransaciton = async (userAddress, functionSignature, contract, contractAddress, chainId) => {
-    var eventEmitter = new events.EventEmitter();
-    if(contract && userAddress && functionSignature, chainId, contractAddress) {
-      let nonce = await contract.methods.getNonce(userAddress).call();
-      let messageToSign = constructMetaTransactionMessage(nonce, chainId, functionSignature, contractAddress);
+  let onConfirmDialog = async ()=>{
 
+    if(request) {
+      setOpen(false);
+      let result = await executeMetaTransaciton(request.selectedAddress, request.functionSignature, contract, request.contractAddress, "42", request.gas, request.price);
+      result.on("transactionHash", (hash)=>{
+        setTransactionHash(hash);
+        setTransactionState(PENDING);
+      }).once("confirmation", (confirmation, recipet) => {
+        setTransactionState(CONFIRMED);
+        getTokenBalance(selectedAddress);
+      }).on("error", (error)=>{
+        console.log(error);
+      })
+    } else {
+      alert("Reqeust not set");
+    }
+  };
+
+  const executeMetaTransaciton = async (userAddress, functionSignature, contract, contractAddress, chainId, gas, price) => {
+    var eventEmitter = new events.EventEmitter();
+    if(contract && erc20FeeProxy && userAddress && functionSignature, chainId, contractAddress) {
+      let nonce = await erc20FeeProxy.methods.getNonce(userAddress).call();
+      let from = userAddress;
+      let tokenAddress = config.contract.address;
+      let feeReceiver = "0x66323386A237EFAf78993F6F95fAf73578901D29";
+      let feeMultiplierManager = "0x66b3B32d3fd0cC3FF9912F29764fD1c826ee67B4";
+      let msgValue = 0;
+      let messageToSign = constructMetaTransactionMessage(from, contractAddress, tokenAddress, feeReceiver, feeMultiplierManager, msgValue, gas, price, nonce, functionSignature);
+
+      let request = {
+        from: userAddress,
+        to: contractAddress,
+        token: tokenAddress,
+        feeReceiver: feeReceiver,
+        feeMultiplierManager: feeMultiplierManager,
+        msgValue: msgValue,
+        gas: gas,
+        price: price,
+        nonce: parseInt(nonce),
+        data: functionSignature
+      };
       const signature = await web3.eth.personal.sign(
         "0x" + messageToSign.toString("hex"),
         userAddress
       );
 
       console.info(`User signature is ${signature}`);
-      let { r, s, v } = getSignatureParameters(signature);
-
       console.log("before transaction listener");
       // No need to calculate gas limit or gas price here
-      let transactionListener = contract.methods.executeMetaTransaction(userAddress, functionSignature, r, s, v).send({
+
+      console.log(request);
+
+      let transactionListener = erc20FeeProxy.methods.executePersonalSign(request, signature).send({
           from: userAddress
       });
 
@@ -145,10 +210,10 @@ function App() {
     }
   }
 
-  const constructMetaTransactionMessage = (nonce, chainId, functionSignature, contractAddress) => {
+  const constructMetaTransactionMessage = (from, to, tokenAddress, feeReceiver, feeMultiplierManager, msgValue, gas, price, nonce, data) => {
     return abi.soliditySHA3(
-        ["uint256","address","uint256","bytes"],
-        [nonce, contractAddress, chainId, toBuffer(functionSignature)]
+        ["address","address","address","address","address","uint256","uint256","uint256","uint256","bytes"],
+        [from, to, tokenAddress, feeReceiver, feeMultiplierManager, msgValue, gas, price, nonce, toBuffer(data)]
     );
   }
 
@@ -184,9 +249,41 @@ function App() {
       if(contract && decimal) {
         tokenToTransfer = tokenToTransfer*Math.pow(10, decimal);
         let functionSignature = contract.methods.mint(userAddress, tokenToTransfer.toString()).encodeABI();
+        let gas = await contract.methods.mint(userAddress, tokenToTransfer.toString()).estimateGas();
 
-        let result = await executeMetaTransaciton(selectedAddress, functionSignature, contract, config.contract.address, "42");
-        result.on("transactionHash", (hash)=>{
+        let nonce = await erc20FeeProxy.methods.getNonce(userAddress).call();
+        let from = userAddress;
+        let tokenAddress = config.contract.address;
+        let feeReceiver = "0x66323386A237EFAf78993F6F95fAf73578901D29";
+        let feeMultiplierManager = "0x66b3B32d3fd0cC3FF9912F29764fD1c826ee67B4";
+        let msgValue = 0;
+        let price = 3780000000000; // 30,000,000,000 * 378
+        let messageToSign = constructMetaTransactionMessage(from, config.contract.address, tokenAddress, feeReceiver, feeMultiplierManager, msgValue, gas, price, nonce, functionSignature);
+
+        let request = {
+          from: userAddress,
+          to: config.contract.address,
+          token: tokenAddress,
+          feeReceiver: feeReceiver,
+          feeMultiplierManager: feeMultiplierManager,
+          msgValue: msgValue,
+          gas: gas,
+          price: price,
+          nonce: parseInt(nonce),
+          data: functionSignature
+        };
+        const signature = await web3.eth.personal.sign(
+          "0x" + messageToSign.toString("hex"),
+          userAddress
+        );
+
+        console.info(`User signature is ${signature}`);
+
+        let transactionListener = forwarder.methods.executePersonalSign(request, signature).send({
+            from: userAddress
+        });
+
+        transactionListener.on("transactionHash", (hash)=>{
           setTransactionHash(hash);
           setTransactionState(PENDING);
         }).once("confirmation", (confirmation, recipet) => {
@@ -203,21 +300,104 @@ function App() {
   }
 
   const onTokenTransfer = async event => {
+    try {
+      if(selectedAddress) {
+        let tokenToTransfer = tokenAmount;
+        if(!recipientAddress) {
+          return showErrorMessage("Please enter the recipient address");
+        }
+        if(!tokenToTransfer) {
+          return showErrorMessage("Please enter tokens to transfer");
+        }
+
+        if(contract && decimal) {
+          tokenToTransfer = tokenToTransfer*Math.pow(10, decimal);
+
+          let functionSignature = contract.methods.transfer(recipientAddress, tokenToTransfer.toString()).encodeABI();
+          console.log("Before the gas");
+          let gas = await contract.methods.transfer(recipientAddress, tokenToTransfer.toString()).estimateGas({
+            from: selectedAddress
+          });
+          let price = 3780000000000; // 30,000,000,000 * 378
+          let gasOverhead = 85000;
+          console.log("After the gas");
+
+
+          setRequest({
+            functionSignature, gas, price, selectedAddress, contractAddress: config.contract.address, chainId: "42"
+          });
+
+          setConfirmMessage(parseFloat((((gas+ gasOverhead)* price)/Math.pow(10, decimal))).toFixed(2));
+          setOpen(true);
+
+
+          // let result = await executeMetaTransaciton(selectedAddress, functionSignature, contract, config.contract.address, "42", gas, price);
+          // result.on("transactionHash", (hash)=>{
+          //   setTransactionHash(hash);
+          //   setTransactionState(PENDING);
+          // }).once("confirmation", (confirmation, recipet) => {
+          //   setTransactionState(CONFIRMED);
+          //   getTokenBalance(selectedAddress);
+          // }).on("error", (error)=>{
+          //   console.log(error);
+          // })
+
+        }
+      } else {
+        showErrorMessage("User account not initialized");
+      }
+    } catch(error) {
+      console.log("çathc error")
+      console.log(error);
+    }
+  }
+
+  const onTokenApprove = async () => {
+
     if(selectedAddress) {
+      let userAddress = selectedAddress;
       let tokenToTransfer = tokenAmount;
-      if(!recipientAddress) {
-        return showErrorMessage("Please enter the recipient address");
-      }
-      if(!tokenToTransfer) {
-        return showErrorMessage("Please enter tokens to transfer");
-      }
 
       if(contract && decimal) {
         tokenToTransfer = tokenToTransfer*Math.pow(10, decimal);
-        let functionSignature = contract.methods.transfer(recipientAddress, tokenToTransfer.toString()).encodeABI();
+        let functionSignature = contract.methods.approve(config.erc20FeeProxy.address,"10000000000000000000000000000").encodeABI();
+        let gas = await contract.methods.approve(config.erc20FeeProxy.address,"10000000000000000000000000000").estimateGas({
+          from: selectedAddress
+        });
 
-        let result = await executeMetaTransaciton(selectedAddress, functionSignature, contract, config.contract.address, "42");
-        result.on("transactionHash", (hash)=>{
+        let nonce = await forwarder.methods.getNonce(userAddress).call();
+        let from = userAddress;
+        let tokenAddress = config.contract.address;
+        let feeReceiver = "0x66323386A237EFAf78993F6F95fAf73578901D29";
+        let feeMultiplierManager = "0x66b3B32d3fd0cC3FF9912F29764fD1c826ee67B4";
+        let msgValue = 0;
+        let price = 3780000000000; // 30,000,000,000 * 378
+        let messageToSign = constructMetaTransactionMessage(from, config.contract.address, tokenAddress, feeReceiver, feeMultiplierManager, msgValue, gas, price, nonce, functionSignature);
+
+        let request = {
+          from: userAddress,
+          to: config.contract.address,
+          token: tokenAddress,
+          feeReceiver: feeReceiver,
+          feeMultiplierManager: feeMultiplierManager,
+          msgValue: msgValue,
+          gas: gas,
+          price: price,
+          nonce: parseInt(nonce),
+          data: functionSignature
+        };
+        const signature = await web3.eth.personal.sign(
+          "0x" + messageToSign.toString("hex"),
+          userAddress
+        );
+
+        console.info(`User signature is ${signature}`);
+
+        let transactionListener = forwarder.methods.executePersonalSign(request, signature).send({
+            from: userAddress
+        });
+
+        transactionListener.on("transactionHash", (hash)=>{
           setTransactionHash(hash);
           setTransactionState(PENDING);
         }).once("confirmation", (confirmation, recipet) => {
@@ -291,8 +471,36 @@ function App() {
           <Button className="action_button" variant="contained" color="primary" onClick={onTokenMint}>
             Mint
           </Button>
+
+          <Button className="action_button" variant="contained" color="primary" onClick={onTokenApprove}>
+            Approve
+          </Button>
         </div>
       </section>
+
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm to pay the gas"}</DialogTitle>
+        <DialogContent>
+
+            <Typography className="confirm-message">
+              You will be charged an estimated amount of <span className="token-amount">{confirmMessage}</span> tokens as gas fee.
+            </Typography>
+
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            Disagree
+          </Button>
+          <Button onClick={onConfirmDialog} color="primary" autoFocus>
+            Agree
+          </Button>
+        </DialogActions>
+      </Dialog>
       <NotificationContainer />
     </div>
   );

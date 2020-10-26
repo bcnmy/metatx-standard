@@ -40,7 +40,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-        biconomy = new Biconomy(provider,{apiKey: "SvLGfv-Tb.f53a653b-8a1e-4c0f-950f-fa6553efee43"});
+        biconomy = new Biconomy(provider,{apiKey: "SvLGfv-Tb.f53a653b-8a1e-4c0f-950f-fa6553efee43", debug: true});
         if (provider.networkVersion === "42") {
           web3 = new Web3(biconomy);
 

@@ -15,23 +15,23 @@ contract EIP712Base {
 
     constructor(string memory name, string memory version) public {
         domainSeperator = keccak256(abi.encode(
-			EIP712_DOMAIN_TYPEHASH,
-			keccak256(bytes(name)),
-			keccak256(bytes(version)),
-			getChainID(),
-			address(this)
-		));
+            EIP712_DOMAIN_TYPEHASH,
+            keccak256(bytes(name)),
+            keccak256(bytes(version)),
+            getChainID(),
+            address(this)
+        ));
     }
 
     function getChainID() internal pure returns (uint256 id) {
-		assembly {
-			id := chainid()
-		}
-	}
+        assembly {
+            id := chainid()
+        }
+    }
 
     function getDomainSeperator() private view returns(bytes32) {
-		return domainSeperator;
-	}
+        return domainSeperator;
+    }
 
     /**
     * Accept message hash and returns hash message in EIP712 compatible form

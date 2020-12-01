@@ -88,11 +88,11 @@ const metaTransactionType = [{
 
 let domainData;
 
-const getTransactionData = async (nonce) => {
+const getTransactionData = async (nonce, abi, params) => {
 
     const functionSignature = web3Abi.encodeFunctionCall(
-        setQuoteAbi,
-        [quoteToBeSet]
+        abi,
+        params
     );
 
     let message = {};
@@ -143,7 +143,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
             name: "TestContract",
             version: "1",
             verifyingContract: testContract.address,
-            chainId: 42
+            chainId: 99999
         };
     });
 
@@ -157,7 +157,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
                 s,
                 v,
                 functionSignature
-            } = await getTransactionData(nonce);
+            } = await getTransactionData(nonce, setQuoteAbi, [quoteToBeSet]);
 
             let sendTransactionData = web3Abi.encodeFunctionCall(
                 executeMetaTransactionABI,
@@ -199,6 +199,31 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
             assert.isTrue(updatedQuote.currentOwner == owner, "Owner does not match");
         })
 
+        it("Should fail when try to call executeMetaTransaction method itself", async () => {
+            let nonce = await testContract.getNonce(publicKey, {
+                from: owner
+            });
+            let setQuoteData = await getTransactionData(nonce, setQuoteAbi, [quoteToBeSet]);
+            let {r, s, v, functionSignature} = await getTransactionData(nonce,
+                executeMetaTransactionABI,
+                [publicKey, setQuoteData.functionSignature, setQuoteData.r, setQuoteData.s, setQuoteData.v])
+            const sendTransactionData = web3Abi.encodeFunctionCall(
+                executeMetaTransactionABI,
+                [publicKey, functionSignature, r, s, v]
+            );
+
+            try {
+                await testContract.sendTransaction({
+                    value: 0,
+                    from: owner,
+                    gas: 500000,
+                    data: sendTransactionData
+                });
+            } catch (error) {
+                assert.isTrue(error.message.includes("functionSignature can not be of executeMetaTransaction method"), `Wrong failure type`);
+            }
+        });
+
         it("Should fail when replay transaction", async () => {
             let nonce = await testContract.getNonce(publicKey, {
                 from: owner
@@ -208,7 +233,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
                 s,
                 v,
                 functionSignature
-            } = await getTransactionData(nonce);
+            } = await getTransactionData(nonce, setQuoteAbi, [quoteToBeSet]);
 
             const sendTransactionData = web3Abi.encodeFunctionCall(
                 executeMetaTransactionABI,
@@ -244,7 +269,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
                 s,
                 v,
                 functionSignature
-            } = await getTransactionData(nonce);
+            } = await getTransactionData(nonce, setQuoteAbi, [quoteToBeSet]);
 
             const sendTransactionData = web3Abi.encodeFunctionCall(
                 executeMetaTransactionABI,
@@ -272,7 +297,7 @@ contract("EIP712MetaTransaction", function ([_, owner, account1]) {
                 s,
                 v,
                 functionSignature
-            } = await getTransactionData(nonce);
+            } = await getTransactionData(nonce, setQuoteAbi, [quoteToBeSet]);
 
             const sendTransactionData = web3Abi.encodeFunctionCall(
                 executeMetaTransactionABI,

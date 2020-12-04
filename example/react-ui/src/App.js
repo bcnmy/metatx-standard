@@ -7,13 +7,17 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import Biconomy from "@biconomy/mexa";
+import helpers from "@biconomy/mexa"; // have to update a bix so there is no breaking changes
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
+
+/* temp fix for imports */
+const Biconomy = helpers.Biconomy;
+const ERC20ForwarderClient = helpers.ERC20ForwarderClient;
 
 const domainType = [
   { name: "name", type: "string" },
@@ -31,6 +35,7 @@ const metaTransactionType = [
 let domainData = {
   name: "TestContract",
   version: "1",
+  chainId: 42,
   verifyingContract: config.contract.address
 };
 
@@ -67,9 +72,11 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          if (provider.networkVersion == "80001") {
-            domainData.chainId = 80001;
-          const biconomy = new Biconomy(provider,{apiKey: "emxBQWVss.dba9922c-1cd9-49d3-bfab-90d9dba77c53", debug: true});
+         // if (provider.networkVersion == "80001") {
+         //   domainData.chainId = 80001;
+         //console.log(Biconomy);
+          const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+
           web3 = new Web3(biconomy);
 
           biconomy.onEvent(biconomy.READY, () => {
@@ -86,9 +93,9 @@ function App() {
           }).onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
           });
-        } else {
-           showErrorMessage("Please change the network in metamask to Mumbai Testnet");
-        }
+      //  } else {
+      //     showErrorMessage("Please change the network in metamask to Mumbai Testnet");
+      //  }
       } else {
         showErrorMessage("Metamask not installed");
       }
@@ -106,51 +113,8 @@ function App() {
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
-        let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        let message = {};
-        message.nonce = parseInt(nonce);
-        message.from = userAddress;
-        message.functionSignature = functionSignature;
-
-        const dataToSign = JSON.stringify({
-          types: {
-            EIP712Domain: domainType,
-            MetaTransaction: metaTransactionType
-          },
-          domain: domainData,
-          primaryType: "MetaTransaction",
-          message: message
-        });
-        console.log(domainData);
-        console.log();
-        web3.currentProvider.send(
-          {
-            jsonrpc: "2.0",
-            id: 999999999999,
-            method: "eth_signTypedData_v4",
-            params: [userAddress, dataToSign]
-          },
-          function(error, response) {
-            console.info(`User signature is ${response.result}`);
-            if (error || (response && response.error)) {
-              showErrorMessage("Could not get user signature");
-            } else if (response && response.result) {
-              let { r, s, v } = getSignatureParameters(response.result);
-              console.log(userAddress);
-              console.log(JSON.stringify(message));
-              console.log(message);
-              console.log(getSignatureParameters(response.result));
-
-              const recovered = sigUtil.recoverTypedSignature_v4({
-                data: JSON.parse(dataToSign),
-                sig: response.result
-              });
-              console.log(`Recovered ${recovered}`);
-              sendSignedTransaction(userAddress, functionSignature, r, s, v);
-            }
-          }
-        );
+        //let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        sendSignedTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -168,24 +132,6 @@ function App() {
     } else {
       showErrorMessage("Please enter the quote");
     }
-  };
-
-  const getSignatureParameters = signature => {
-    if (!web3.utils.isHexStrict(signature)) {
-      throw new Error(
-        'Given value "'.concat(signature, '" is not a valid hex string.')
-      );
-    }
-    var r = signature.slice(0, 66);
-    var s = "0x".concat(signature.slice(66, 130));
-    var v = "0x".concat(signature.slice(130, 132));
-    v = web3.utils.hexToNumber(v);
-    if (![27, 28].includes(v)) v += 27;
-    return {
-      r: r,
-      s: s,
-      v: v
-    };
   };
 
   const getQuoteFromNetwork = () => {
@@ -225,21 +171,20 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
+  const sendSignedTransaction = async (userAddress, arg) => {
     if (web3 && contract) {
       try {
         let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
+          .setQuote(arg)
           .estimateGas({ from: userAddress });
         let gasPrice = await web3.eth.getGasPrice();
         console.log(gasLimit);
         console.log(gasPrice);
         let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
+          .setQuote(arg)
           .send({
             from: userAddress,
-            gasPrice:gasPrice,
-            gasLimit:gasLimit
+            gasPrice:gasPrice
           });
 
         tx.on("transactionHash", function(hash) {
@@ -280,7 +225,7 @@ function App() {
         {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
           <Typography>
             Check your transaction hash
-            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}/internal_transactions`} target="_blank"
+            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
             className={classes.link}>
               here
             </Link>

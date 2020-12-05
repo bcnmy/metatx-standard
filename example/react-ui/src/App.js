@@ -147,7 +147,9 @@ function App() {
     setNewQuote(event.target.value);
   };
 
-  const onSubmit = async event => {
+  /* this app does not need to use @biconomy/mexa */
+  /* for quotes dapp demo with erc20 forwarder and api call check the branch -  from repo - */
+  const onForward = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
@@ -343,7 +345,7 @@ function App() {
         {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
           <Typography>
             Check your transaction hash
-            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}/internal_transactions`} target="_blank"
+            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}/internal_transactions`} target="_blank"
             className={classes.link}>
               here
             </Link>
@@ -359,8 +361,8 @@ function App() {
               onChange={onQuoteChange}
               value={newQuote}
             />
-            <Button variant="contained" color="primary" onClick={onSubmit}>
-              Submit
+            <Button variant="contained" color="primary" onClick={onForward}>
+              Submit with Biconomy Forwarder
             </Button>
           </div>
         </div>

@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy, ERC20ForwarderClient} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
+import {Biconomy, ERC20ForwarderClient, PermitClient} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -35,8 +35,30 @@ let domainData = {
   verifyingContract: config.contract.address
 };
 
+let daiDomainData = {
+  name : "Dai Stablecoin",
+  version : "1",
+  chainId : 42,
+  verifyingContract : "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa"
+};
+
+const feeProxyAddress = "0x1E13cbCb6B695D10B68b2f83D71F0D201504C598";
+const transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0"; // todo // yet to make optional and handle in the client 
+const tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
+
+// todo
+// make clients pass the chainId instead of feeProxyDomainData
+let feeProxyDomainData = {
+  name : "TEST",
+  version : "1",
+  chainId : 42,
+  verifyingContract : "0xBFA21CD2F21a8E581E77942B2831B378d2378E69"
+};
+
+
 let web3;
-let contract;
+let contract,daiContract;
+let ercForwarderClient,permitClient;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -71,17 +93,38 @@ function App() {
         
           
           const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          // todo
+          // make clients pass the chainId instead of feeProxyDomainData
+          ercForwarderClient = await ERC20ForwarderClient.factory(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",feeProxyDomainData:feeProxyDomainData,feeProxyAddress:feeProxyAddress,transferHandlerAddress:transferHandlerAddress});
+          permitClient = new PermitClient(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209"});
+          console.log(PermitClient);
+          //web3 = new Web3(biconomy);
+          web3 = new Web3(provider);
+          console.log(web3);
+          daiContract = new web3.eth.Contract(
+            config.tokenAbi,
+            tokenAddress
+          );
+           
+          //contract should have been registered on the dashboard as erc20 fee proxy 
+          contract = new web3.eth.Contract(
+            config.contract.abi,
+            config.contract.address
+          );
 
-          web3 = new Web3(biconomy);
+          console.log(contract);
+          setSelectedAddress(provider.selectedAddress);
+          getQuoteFromNetwork();
+          provider.on("accountsChanged", function(accounts) {
+            setSelectedAddress(accounts[0]);
+          });
 
           biconomy.onEvent(biconomy.READY, () => {
             // Initialize your dapp here like getting user accounts etc
-            contract = new web3.eth.Contract(
-              config.contract.abi,
-              config.contract.address
-            );
+            
+            /*console.log(contract);
             setSelectedAddress(provider.selectedAddress);
-            getQuoteFromNetwork();
+            getQuoteFromNetwork();*/
             provider.on("accountsChanged", function(accounts) {
               setSelectedAddress(accounts[0]);
             });
@@ -104,10 +147,25 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
-        console.log("Sending meta transaction");
+        
         let userAddress = selectedAddress;
-        //let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        sendSignedTransaction(userAddress, newQuote);
+        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        console.log(functionSignature);
+        console.log("getting permit to spend dai");
+        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${feeProxyAddress}`);
+        await permitFeeProxy();
+        console.log("Sending meta transaction");
+        showInfoMessage("Building transaction to forward");
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,100000,functionSignature);
+        const tx = builtTx.request;
+        const fee = builtTx.cost;
+        console.log(tx);
+        console.log(fee);
+        showInfoMessage(`Signing message for meta transaction`);
+        const txHash = await ercForwarderClient.sendTxEIP712(tx);
+        console.log(txHash);
+        
+        //sendSignedTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -126,6 +184,14 @@ function App() {
       showErrorMessage("Please enter the quote");
     }
   };
+  
+  //todo
+  //for forwarder client build tx ocnfirm once for getting the nonce from fee proxy or biconomy forwarder
+
+  const permitFeeProxy =  async() => {
+    const nonce = await daiContract.methods.nonces(selectedAddress).call();
+    await permitClient.daiPermit(daiDomainData,nonce,feeProxyAddress,Math.floor(Date.now() / 1000 + 3600),true);
+}
 
   const getQuoteFromNetwork = () => {
     if (web3 && contract) {

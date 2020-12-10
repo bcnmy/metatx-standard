@@ -7,17 +7,13 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import helpers from "@biconomy/mexa"; // have to update a bix so there is no breaking changes
-import { makeStyles } from '@material-ui/core/styles';
+import {Biconomy, ERC20ForwarderClient} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
+import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
-
-/* temp fix for imports */
-const Biconomy = helpers.Biconomy;
-const ERC20ForwarderClient = helpers.ERC20ForwarderClient;
 
 const domainType = [
   { name: "name", type: "string" },
@@ -72,9 +68,8 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-         // if (provider.networkVersion == "80001") {
-         //   domainData.chainId = 80001;
-         //console.log(Biconomy);
+        
+          
           const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
 
           web3 = new Web3(biconomy);
@@ -93,9 +88,7 @@ function App() {
           }).onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
           });
-      //  } else {
-      //     showErrorMessage("Please change the network in metamask to Mumbai Testnet");
-      //  }
+      
       } else {
         showErrorMessage("Metamask not installed");
       }
@@ -184,7 +177,8 @@ function App() {
           .setQuote(arg)
           .send({
             from: userAddress,
-            gasPrice:gasPrice
+            gasPrice:gasPrice,
+            signatureType:"EIP712Sign"
           });
 
         tx.on("transactionHash", function(hash) {

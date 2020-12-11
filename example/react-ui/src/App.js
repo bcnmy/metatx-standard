@@ -7,8 +7,8 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import Biconomy from "@biconomy/mexa";
-import { makeStyles } from '@material-ui/core/styles';
+import {Biconomy, ERC20ForwarderClient, PermitClient} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
+import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
@@ -31,11 +31,34 @@ const metaTransactionType = [
 let domainData = {
   name: "TestContract",
   version: "1",
+  chainId: 42,
   verifyingContract: config.contract.address
 };
 
+let daiDomainData = {
+  name : "Dai Stablecoin",
+  version : "1",
+  chainId : 42,
+  verifyingContract : "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa"
+};
+
+const feeProxyAddress = "0x1E13cbCb6B695D10B68b2f83D71F0D201504C598";
+const transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0"; // todo // yet to make optional and handle in the client 
+const tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
+
+// todo
+// make clients pass the chainId instead of feeProxyDomainData
+let feeProxyDomainData = {
+  name : "TEST",
+  version : "1",
+  chainId : 42,
+  verifyingContract : "0xBFA21CD2F21a8E581E77942B2831B378d2378E69"
+};
+
+
 let web3;
-let contract;
+let contract,daiContract;
+let ercForwarderClient,permitClient;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -67,28 +90,48 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          if (provider.networkVersion == "80001") {
-            domainData.chainId = 80001;
-          const biconomy = new Biconomy(provider,{apiKey: "emxBQWVss.dba9922c-1cd9-49d3-bfab-90d9dba77c53", debug: true});
-          web3 = new Web3(biconomy);
+        
+          
+          const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          // todo
+          // make clients pass the chainId instead of feeProxyDomainData
+          ercForwarderClient = await ERC20ForwarderClient.factory(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",feeProxyDomainData:feeProxyDomainData,feeProxyAddress:feeProxyAddress,transferHandlerAddress:transferHandlerAddress});
+          permitClient = new PermitClient(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209"});
+          console.log(PermitClient);
+          //web3 = new Web3(biconomy);
+          web3 = new Web3(provider);
+          console.log(web3);
+          daiContract = new web3.eth.Contract(
+            config.tokenAbi,
+            tokenAddress
+          );
+           
+          //contract should have been registered on the dashboard as erc20 fee proxy 
+          contract = new web3.eth.Contract(
+            config.contract.abi,
+            config.contract.address
+          );
+
+          console.log(contract);
+          setSelectedAddress(provider.selectedAddress);
+          getQuoteFromNetwork();
+          provider.on("accountsChanged", function(accounts) {
+            setSelectedAddress(accounts[0]);
+          });
 
           biconomy.onEvent(biconomy.READY, () => {
             // Initialize your dapp here like getting user accounts etc
-            contract = new web3.eth.Contract(
-              config.contract.abi,
-              config.contract.address
-            );
+            
+            /*console.log(contract);
             setSelectedAddress(provider.selectedAddress);
-            getQuoteFromNetwork();
+            getQuoteFromNetwork();*/
             provider.on("accountsChanged", function(accounts) {
               setSelectedAddress(accounts[0]);
             });
           }).onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
           });
-        } else {
-           showErrorMessage("Please change the network in metamask to Mumbai Testnet");
-        }
+      
       } else {
         showErrorMessage("Metamask not installed");
       }
@@ -104,53 +147,25 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
-        console.log("Sending meta transaction");
+        
         let userAddress = selectedAddress;
-        let nonce = await contract.methods.getNonce(userAddress).call();
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        let message = {};
-        message.nonce = parseInt(nonce);
-        message.from = userAddress;
-        message.functionSignature = functionSignature;
-
-        const dataToSign = JSON.stringify({
-          types: {
-            EIP712Domain: domainType,
-            MetaTransaction: metaTransactionType
-          },
-          domain: domainData,
-          primaryType: "MetaTransaction",
-          message: message
-        });
-        console.log(domainData);
-        console.log();
-        web3.currentProvider.send(
-          {
-            jsonrpc: "2.0",
-            id: 999999999999,
-            method: "eth_signTypedData_v4",
-            params: [userAddress, dataToSign]
-          },
-          function(error, response) {
-            console.info(`User signature is ${response.result}`);
-            if (error || (response && response.error)) {
-              showErrorMessage("Could not get user signature");
-            } else if (response && response.result) {
-              let { r, s, v } = getSignatureParameters(response.result);
-              console.log(userAddress);
-              console.log(JSON.stringify(message));
-              console.log(message);
-              console.log(getSignatureParameters(response.result));
-
-              const recovered = sigUtil.recoverTypedSignature_v4({
-                data: JSON.parse(dataToSign),
-                sig: response.result
-              });
-              console.log(`Recovered ${recovered}`);
-              sendSignedTransaction(userAddress, functionSignature, r, s, v);
-            }
-          }
-        );
+        console.log(functionSignature);
+        console.log("getting permit to spend dai");
+        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${feeProxyAddress}`);
+        await permitFeeProxy();
+        console.log("Sending meta transaction");
+        showInfoMessage("Building transaction to forward");
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,100000,functionSignature);
+        const tx = builtTx.request;
+        const fee = builtTx.cost;
+        console.log(tx);
+        console.log(fee);
+        showInfoMessage(`Signing message for meta transaction`);
+        const txHash = await ercForwarderClient.sendTxEIP712(tx);
+        console.log(txHash);
+        
+        //sendSignedTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -169,24 +184,14 @@ function App() {
       showErrorMessage("Please enter the quote");
     }
   };
+  
+  //todo
+  //for forwarder client build tx ocnfirm once for getting the nonce from fee proxy or biconomy forwarder
 
-  const getSignatureParameters = signature => {
-    if (!web3.utils.isHexStrict(signature)) {
-      throw new Error(
-        'Given value "'.concat(signature, '" is not a valid hex string.')
-      );
-    }
-    var r = signature.slice(0, 66);
-    var s = "0x".concat(signature.slice(66, 130));
-    var v = "0x".concat(signature.slice(130, 132));
-    v = web3.utils.hexToNumber(v);
-    if (![27, 28].includes(v)) v += 27;
-    return {
-      r: r,
-      s: s,
-      v: v
-    };
-  };
+  const permitFeeProxy =  async() => {
+    const nonce = await daiContract.methods.nonces(selectedAddress).call();
+    await permitClient.daiPermit(daiDomainData,nonce,feeProxyAddress,Math.floor(Date.now() / 1000 + 3600),true);
+}
 
   const getQuoteFromNetwork = () => {
     if (web3 && contract) {
@@ -225,21 +230,21 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
+  const sendSignedTransaction = async (userAddress, arg) => {
     if (web3 && contract) {
       try {
         let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
+          .setQuote(arg)
           .estimateGas({ from: userAddress });
         let gasPrice = await web3.eth.getGasPrice();
         console.log(gasLimit);
         console.log(gasPrice);
         let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
+          .setQuote(arg)
           .send({
             from: userAddress,
             gasPrice:gasPrice,
-            gasLimit:gasLimit
+            signatureType:"EIP712Sign"
           });
 
         tx.on("transactionHash", function(hash) {
@@ -280,7 +285,7 @@ function App() {
         {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
           <Typography>
             Check your transaction hash
-            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}/internal_transactions`} target="_blank"
+            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
             className={classes.link}>
               here
             </Link>

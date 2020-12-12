@@ -92,10 +92,10 @@ function App() {
           await provider.enable();
         
           
-          const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          //const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           // todo
           // make clients pass the chainId instead of feeProxyDomainData
-          ercForwarderClient = await ERC20ForwarderClient.factory(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",feeProxyDomainData:feeProxyDomainData,feeProxyAddress:feeProxyAddress,transferHandlerAddress:transferHandlerAddress});
+          ercForwarderClient = await ERC20ForwarderClient.factory(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209"});
           permitClient = new PermitClient(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209"});
           console.log(PermitClient);
           //web3 = new Web3(biconomy);
@@ -119,18 +119,20 @@ function App() {
             setSelectedAddress(accounts[0]);
           });
 
+          /*
           biconomy.onEvent(biconomy.READY, () => {
             // Initialize your dapp here like getting user accounts etc
             
             /*console.log(contract);
             setSelectedAddress(provider.selectedAddress);
-            getQuoteFromNetwork();*/
+            getQuoteFromNetwork();
             provider.on("accountsChanged", function(accounts) {
               setSelectedAddress(accounts[0]);
             });
           }).onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
           });
+          */
       
       } else {
         showErrorMessage("Metamask not installed");
@@ -153,9 +155,10 @@ function App() {
         console.log(functionSignature);
         console.log("getting permit to spend dai");
         showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${feeProxyAddress}`);
-        await permitFeeProxy();
+        await permitClient.daiPermit(feeProxyAddress,Math.floor(Date.now() / 1000 + 3600),true);
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
+        //txGas should be calculated and passed here or calculate within the method
         const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,100000,functionSignature);
         const tx = builtTx.request;
         const fee = builtTx.cost;
@@ -187,11 +190,7 @@ function App() {
   
   //todo
   //for forwarder client build tx ocnfirm once for getting the nonce from fee proxy or biconomy forwarder
-
-  const permitFeeProxy =  async() => {
-    const nonce = await daiContract.methods.nonces(selectedAddress).call();
-    await permitClient.daiPermit(daiDomainData,nonce,feeProxyAddress,Math.floor(Date.now() / 1000 + 3600),true);
-}
+    
 
   const getQuoteFromNetwork = () => {
     if (web3 && contract) {

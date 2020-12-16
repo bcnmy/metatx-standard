@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy, ERC20ForwarderClient, PermitClient} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
+import {Biconomy} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -92,12 +92,12 @@ function App() {
           await provider.enable();
         
           
-          //const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           // todo
           // make clients pass the chainId instead of feeProxyDomainData
-          ercForwarderClient = await ERC20ForwarderClient.factory(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209"});
-          permitClient = new PermitClient(provider,{apiKey:"du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209"});
-          console.log(PermitClient);
+          ercForwarderClient = biconomy.erc20ForwarderClient;
+          permitClient = biconomy.permitClient;
+          console.log(permitClient);
           //web3 = new Web3(biconomy);
           web3 = new Web3(provider);
           console.log(web3);
@@ -112,18 +112,18 @@ function App() {
             config.contract.address
           );
 
-          console.log(contract);
+          /*console.log(contract);
           setSelectedAddress(provider.selectedAddress);
           getQuoteFromNetwork();
           provider.on("accountsChanged", function(accounts) {
             setSelectedAddress(accounts[0]);
-          });
+          });*/
 
-          /*
+          
           biconomy.onEvent(biconomy.READY, () => {
             // Initialize your dapp here like getting user accounts etc
             
-            /*console.log(contract);
+            console.log(contract);
             setSelectedAddress(provider.selectedAddress);
             getQuoteFromNetwork();
             provider.on("accountsChanged", function(accounts) {
@@ -132,7 +132,7 @@ function App() {
           }).onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
           });
-          */
+          
       
       } else {
         showErrorMessage("Metamask not installed");

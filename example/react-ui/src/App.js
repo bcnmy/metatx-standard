@@ -90,16 +90,9 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-        
-          
           const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
-          // todo
-          // make clients pass the chainId instead of feeProxyDomainData
-          ercForwarderClient = biconomy.erc20ForwarderClient;
-          permitClient = biconomy.permitClient;
-          console.log(permitClient);
-          //web3 = new Web3(biconomy);
-          web3 = new Web3(provider);
+          web3 = new Web3(biconomy);
+          //web3 = new Web3(provider);
           console.log(web3);
           daiContract = new web3.eth.Contract(
             config.tokenAbi,
@@ -112,17 +105,11 @@ function App() {
             config.contract.address
           );
 
-          /*console.log(contract);
-          setSelectedAddress(provider.selectedAddress);
-          getQuoteFromNetwork();
-          provider.on("accountsChanged", function(accounts) {
-            setSelectedAddress(accounts[0]);
-          });*/
-
           
           biconomy.onEvent(biconomy.READY, () => {
             // Initialize your dapp here like getting user accounts etc
-            
+            ercForwarderClient = biconomy.erc20ForwarderClient;
+            permitClient = biconomy.permitClient;
             console.log(contract);
             setSelectedAddress(provider.selectedAddress);
             getQuoteFromNetwork();
@@ -159,7 +146,12 @@ function App() {
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
         //txGas should be calculated and passed here or calculate within the method
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,100000,functionSignature);
+
+        let gasLimit = await contract.methods
+        .setQuote(newQuote)
+        .estimateGas({ from: userAddress });        
+
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
         const fee = builtTx.cost;
         console.log(tx);
@@ -188,10 +180,6 @@ function App() {
     }
   };
   
-  //todo
-  //for forwarder client build tx ocnfirm once for getting the nonce from fee proxy or biconomy forwarder
-    
-
   const getQuoteFromNetwork = () => {
     if (web3 && contract) {
       contract.methods

@@ -136,13 +136,19 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
+
+        const daiPermitOptions = {
+          spender: feeProxyAddress,
+          expiry: Math.floor(Date.now() / 1000 + 3600),
+          allowed: true
+        };
         
         let userAddress = selectedAddress;
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
         console.log("getting permit to spend dai");
         showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${feeProxyAddress}`);
-        await permitClient.daiPermit(feeProxyAddress,Math.floor(Date.now() / 1000 + 3600),true);
+        await permitClient.daiPermit(daiPermitOptions);
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
         //txGas should be calculated and passed here or calculate within the method

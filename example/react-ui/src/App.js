@@ -4,42 +4,13 @@ import Button from "@material-ui/core/Button";
 import {NotificationContainer, NotificationManager} from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy, ERC20ForwarderClient} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
-import {makeStyles, responsiveFontSizes} from '@material-ui/core/styles';
+import {Biconomy} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
+import {makeStyles} from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import {Box} from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const {config} = require("./config");
-
-const domainType = [
-    {
-        name: "name",
-        type: "string"
-    }, {
-        name: "version",
-        type: "string"
-    }, {
-        name: "chainId",
-        type: "uint256"
-    }, {
-        name: "verifyingContract",
-        type: "address"
-    }
-];
-
-const metaTransactionType = [
-    {
-        name: "nonce",
-        type: "uint256"
-    }, {
-        name: "from",
-        type: "address"
-    }, {
-        name: "functionSignature",
-        type: "bytes"
-    }
-];
 
 let domainData = {
     name: "TestContract",
@@ -61,6 +32,7 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: "5px"
     }
 }));
+let biconomy;
 
 function App() {
     const classes = useStyles();
@@ -79,8 +51,8 @@ function App() {
                 await provider.enable();
 
 
-                const biconomy = new Biconomy(provider, {
-                    apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
+                biconomy = new Biconomy(provider, {
+                    apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2",
                     debug: true
                 });
 
@@ -114,8 +86,8 @@ function App() {
                 console.log("Sending meta transaction");
                 let userAddress = selectedAddress;
                 // let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-                // sendSignedRawTransaction(userAddress, newQuote);
-                sendTransaction(userAddress, newQuote);
+                sendSignedRawTransaction(userAddress, newQuote);
+                // sendTransaction(userAddress, newQuote);
             } else {
                 console.log("Sending normal transaction");
                 contract.methods.setQuote(newQuote).send({from: selectedAddress}).on("transactionHash", function (hash) {
@@ -170,7 +142,7 @@ function App() {
         let txParams = {
             "from": userAddress,
             "gasLimit": web3.utils.toHex(gasLimit),
-            "to": contractAddress,
+            "to": config.contract.address,
             "value": "0x0",
             "data": functionSignature
         };
@@ -180,6 +152,7 @@ function App() {
 
         // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
         const dataToSign = await biconomy.getForwardRequestMessageToSign(signedTx.rawTransaction);
+        console.log(dataToSign);
         const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), {
             data: dataToSign.eip712Format
         }, 'V4');

@@ -14,6 +14,7 @@ import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
+const abi = require("ethereumjs-abi");
 
 const domainType = [
   { name: "name", type: "string" },
@@ -149,7 +150,7 @@ function App() {
 
   /* this app does not need to use @biconomy/mexa */
   /* for quotes dapp demo with erc20 forwarder and api call check the branch -  from repo - */
-  const onForward = async event => {
+  const onForwardWithEIP712Signature = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
 
@@ -225,7 +226,7 @@ function App() {
 
         promi.then(function(sig){
           console.log('signature ' + sig);
-          sendTransaction(userAddress, req, domainSeparator, sig);
+          sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712Sign"});
         }).catch(function(error) {
           console.log('could not get signature error ' + error);
           showErrorMessage("Could not get user signature");
@@ -239,6 +240,80 @@ function App() {
     }
   };
 
+  const onForwardWithPersonalSignature = async event => {
+    if (newQuote != "" && contract) {
+      setTransactionHash("");
+
+      /**
+       * create an instance of BiconomyForwarder <= ABI, Address
+       * create functionSignature
+       * create txGas param which is gas estimation of his function call
+       * get nonce from biconomyForwarder instance
+       * create a forwarder request
+       * create dataToSign as per signature scheme used (EIP712 or personal)
+       * get the signature from user
+       * create the domain separator
+       * Now call the meta tx API
+       */
+      if (metaTxEnabled) {
+        console.log("Sending meta transaction");
+        let userAddress = selectedAddress;
+
+        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
+        let message = {};
+
+        //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
+        const batchNonce = await biconomyForwarder.methods.getNonce(userAddress,0).call();
+        console.log(batchNonce);
+        const req = {
+         from : userAddress,
+         to : config.contract.address,
+         token : config.ZERO_ADDRESS,
+         txGas : Number(txGas),
+         tokenGasPrice : "0",
+         batchId : 0,
+         batchNonce : parseInt(batchNonce),
+         deadline : Math.floor((Date.now()/1000)+3600),
+         data : functionSignature
+        };
+
+        console.log(req);
+
+        const hashToSign = abi.soliditySHA3([
+            "address",
+            "address",
+            "address",
+            "uint256",
+            "uint256",
+            "uint256",
+            "uint256",
+            "uint256",
+            "bytes32",
+        ], [
+            req.from,
+            req.to,
+            req.token,
+            req.txGas,
+            req.tokenGasPrice,
+            req.batchId,
+            req.batchNonce,
+            req.deadline,
+            ethers.utils.keccak256(req.data)
+        ]);
+
+        const sig = await web3.eth.personal.sign("0x" + hashToSign.toString("hex"), userAddress);
+
+        console.log('signature ' + sig);
+        sendTransaction({userAddress, req, sig, signatureType:"personalSign"});
+
+      } else {
+        showErrorMessage("Meta Transaction disabled");
+      }
+    } else {
+      showErrorMessage("Error while sending");
+    }
+  };
 
   const signMessage = async (addr, data) => {
     let signature;
@@ -261,8 +336,14 @@ function App() {
     );
   }
 
-  const sendTransaction = async (userAddress, req, domainSeparator, sig) => {
+  const sendTransaction = async ({userAddress, req, sig, domainSeparator, signatureType}) => {
     if (web3 && contract) {
+      let params;
+      if(domainSeparator) {
+          params = [req, domainSeparator, sig]
+      } else {
+          params = [req, sig]
+      }
       try {
         fetch(`https://localhost:80/api/v2/meta-tx/native`, {
           method: "POST",
@@ -273,12 +354,10 @@ function App() {
           body: JSON.stringify({
             "to": config.contract.address,
             "apiId": "d1975758-fbf7-4f6d-96b4-2daff372f2b3",
-            "params": [
-              req, domainSeparator, sig
-            ],
+            "params": params,
             "from": userAddress,
             // "gasLimit":1000000,
-            "signatureType":"EIP712Sign"
+            "signatureType": signatureType
           })
         })
         .then(response=>response.json())
@@ -372,8 +451,12 @@ function App() {
               onChange={onQuoteChange}
               value={newQuote}
             />
-            <Button variant="contained" color="primary" onClick={onForward}>
-              Submit with Biconomy Forwarder
+            <Button variant="contained" color="primary" onClick={onForwardWithEIP712Signature}>
+              Submit with Biconomy Forwarder (EIP712 Sig)
+            </Button>
+
+            <Button variant="contained" color="primary" onClick={onForwardWithPersonalSignature}>
+              Submit with Biconomy Forwarder (Personal Sig)
             </Button>
           </div>
         </div>

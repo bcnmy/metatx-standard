@@ -45,7 +45,7 @@ const erc20ForwardRequestType = [
   {name:'batchId',type:'uint256'},
   {name:'batchNonce',type:'uint256'},
   {name:'deadline',type:'uint256'},
-  {name:'dataHash',type:'bytes32'}
+  {name:'data',type:'bytes'}
 ];
 
 let domainData = {
@@ -66,14 +66,14 @@ let feeProxyDomainData = {
   name : "TEST",
   version : "1",
   chainId : 42,
-  verifyingContract : "0xBFA21CD2F21a8E581E77942B2831B378d2378E69"
+  verifyingContract : "0x656a7B1B1E4525dB80bca5e80F4777F4b0C599b7"
 };
 
 let biconomyForwarderDomainData = {
   name : "TEST",
   version : "1",
   chainId : 42,
-  verifyingContract : "0xBFA21CD2F21a8E581E77942B2831B378d2378E69"
+  verifyingContract : config.biconomyForwarderAddress
 };
 
 
@@ -152,21 +152,34 @@ function App() {
   const onForward = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
+
+      /**
+       * create an instance of BiconomyForwarder <= ABI, Address
+       * create functionSignature
+       * create txGas param which is gas estimation of his function call
+       * get nonce from biconomyForwarder instance
+       * create a forwarder request
+       * create dataToSign as per signature scheme used (EIP712 or personal)
+       * get the signature from user
+       * create the domain separator
+       * Now call the meta tx API
+       */
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
-     
+
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
         let message = {};
-        
+
         //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
         const batchNonce = await biconomyForwarder.methods.getNonce(userAddress,0).call();
-        console.log(batchNonce); 
+        console.log(batchNonce);
         const req = {
          from : userAddress,
          to : config.contract.address,
          token : config.ZERO_ADDRESS,
-         txGas : 75000,
+         txGas : Number(txGas),
          tokenGasPrice : "0",
          batchId : 0,
          batchNonce : parseInt(batchNonce),
@@ -184,20 +197,16 @@ function App() {
 
         console.log(domainSeparator);
 
-        const erc20fr = Object.assign({}, req);
-        erc20fr.dataHash = ethers.utils.keccak256(erc20fr.data);
-        delete erc20fr.data;
-
         const dataToSign = JSON.stringify({
-          types: {
-        EIP712Domain: domainType,
-        ERC20ForwardRequest: erc20ForwardRequestType
-        },
-        domain: biconomyForwarderDomainData,
-        primaryType: "ERC20ForwardRequest",
-        message: erc20fr
+            types: {
+                EIP712Domain: domainType,
+                ERC20ForwardRequest: erc20ForwardRequestType
+            },
+            domain: biconomyForwarderDomainData,
+            primaryType: "ERC20ForwardRequest",
+            message: req
         });
-        
+
         const promi = new Promise(async function(resolve, reject) {
           await web3.currentProvider.send(
             {
@@ -212,7 +221,7 @@ function App() {
               resolve(res.result);
             }
           });
-        }); 
+        });
 
         promi.then(function(sig){
           console.log('signature ' + sig);
@@ -221,7 +230,7 @@ function App() {
           console.log('could not get signature error ' + error);
           showErrorMessage("Could not get user signature");
         });
-   
+
       } else {
         showErrorMessage("Meta Transaction disabled");
       }
@@ -252,29 +261,31 @@ function App() {
     );
   }
 
-  const sendTransaction = async (userAddress, req, ds, sig) => {
+  const sendTransaction = async (userAddress, req, domainSeparator, sig) => {
     if (web3 && contract) {
       try {
-        fetch(`https://localhost:4000/api/v2/meta-tx/native`, {
+        fetch(`https://localhost:80/api/v2/meta-tx/native`, {
           method: "POST",
           headers: {
-            "x-api-key" : "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
+            "x-api-key" : "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2",
             'Content-Type': 'application/json;charset=utf-8'
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "4273f80a-e7f5-4cd1-a40c-8eee032d40a3",
+            "apiId": "d1975758-fbf7-4f6d-96b4-2daff372f2b3",
             "params": [
-              req, ds, sig
+              req, domainSeparator, sig
             ],
-            "from": userAddress
+            "from": userAddress,
+            // "gasLimit":1000000,
+            "signatureType":"EIP712Sign"
           })
         })
         .then(response=>response.json())
         .then(function(result) {
           console.log(result);
-          showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`); 
-          // todo - fetch mined transaction receipt, show tx confirmed and update quotes 
+          showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
+          // todo - fetch mined transaction receipt, show tx confirmed and update quotes
         })
 	      .catch(function(error) {
 	        console.log(error)

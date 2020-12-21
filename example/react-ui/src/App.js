@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
+import {Biconomy} from "@biconomy/mexa"; 
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -43,7 +43,7 @@ let daiDomainData = {
 };
 
 const feeProxyAddress = "0x1E13cbCb6B695D10B68b2f83D71F0D201504C598";
-const transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0"; // todo // yet to make optional and handle in the client 
+const transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0"; 
 const tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 
 // todo
@@ -52,11 +52,12 @@ let feeProxyDomainData = {
   name : "TEST",
   version : "1",
   chainId : 42,
-  verifyingContract : "0xBFA21CD2F21a8E581E77942B2831B378d2378E69"
+  verifyingContract : "0x656a7B1B1E4525dB80bca5e80F4777F4b0C599b7"
 };
 
 
 let web3;
+let biconomy;
 let contract,daiContract;
 let ercForwarderClient,permitClient;
 
@@ -90,16 +91,17 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           web3 = new Web3(biconomy);
           //web3 = new Web3(provider);
           console.log(web3);
+
           daiContract = new web3.eth.Contract(
             config.tokenAbi,
             tokenAddress
           );
            
-          //contract should have been registered on the dashboard as erc20 fee proxy 
+          //contract should have been registered on the dashboard as ERC20_FORWARDER
           contract = new web3.eth.Contract(
             config.contract.abi,
             config.contract.address
@@ -132,7 +134,7 @@ function App() {
     setNewQuote(event.target.value);
   };
 
-  const onSubmit = async event => {
+  const onSubmitEIP712 = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
@@ -185,6 +187,63 @@ function App() {
       showErrorMessage("Please enter the quote");
     }
   };
+
+  const onSubmitPersonalSign = async event => {
+    if (newQuote != "" && contract) {
+      setTransactionHash("");
+      if (metaTxEnabled) {
+
+        const daiPermitOptions = {
+          spender: feeProxyAddress,
+          expiry: Math.floor(Date.now() / 1000 + 3600),
+          allowed: true
+        };
+        
+        let userAddress = selectedAddress;
+        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        console.log(functionSignature);
+        console.log("getting permit to spend dai");
+        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${feeProxyAddress}`);
+        await permitClient.daiPermit(daiPermitOptions);
+        console.log("Sending meta transaction");
+        showInfoMessage("Building transaction to forward");
+        //txGas should be calculated and passed here or calculate within the method
+
+        let gasLimit = await contract.methods
+        .setQuote(newQuote)
+        .estimateGas({ from: userAddress });        
+
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,Number(gasLimit),functionSignature);
+        const tx = builtTx.request;
+        const fee = builtTx.cost;
+
+        console.log(tx);
+        console.log(fee);
+
+        showInfoMessage(`Signing message for meta transaction`);
+        const txHash = await ercForwarderClient.sendTxPersonalSign(tx);
+        console.log(txHash);
+        
+        //sendSignedTransaction(userAddress, newQuote);
+      } else {
+        console.log("Sending normal transaction");
+        contract.methods
+          .setQuote(newQuote)
+          .send({ from: selectedAddress })
+          .on("transactionHash", function(hash) {
+            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
+          })
+          .once("confirmation", function(confirmationNumber, receipt) {
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed");
+            getQuoteFromNetwork();
+          });
+      }
+    } else {
+      showErrorMessage("Please enter the quote");
+    }
+  };
+
   
   const getQuoteFromNetwork = () => {
     if (web3 && contract) {
@@ -223,21 +282,22 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendSignedTransaction = async (userAddress, arg) => {
+  const sendSignedRawTransaction = async (userAddress, arg) => {
     if (web3 && contract) {
       try {
         let gasLimit = await contract.methods
           .setQuote(arg)
           .estimateGas({ from: userAddress });
         let gasPrice = await web3.eth.getGasPrice();
+
         console.log(gasLimit);
         console.log(gasPrice);
+
         let tx = contract.methods
           .setQuote(arg)
           .send({
             from: userAddress,
-            gasPrice:gasPrice,
-            signatureType:"EIP712Sign"
+            gasPrice:gasPrice
           });
 
         tx.on("transactionHash", function(hash) {
@@ -294,8 +354,11 @@ function App() {
               onChange={onQuoteChange}
               value={newQuote}
             />
-            <Button variant="contained" color="primary" onClick={onSubmit}>
-              Submit
+            <Button variant="contained" color="primary" onClick={onSubmitEIP712}>
+              Submit with EIP712
+            </Button>
+            <Button variant="contained" color="primary" onClick={onSubmitPersonalSign}>
+              Submit with Personal
             </Button>
           </div>
         </div>

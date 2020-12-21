@@ -125,7 +125,7 @@ config.biconomyForwarderAbi = [{"anonymous":false,"inputs":[{"indexed":true,"int
 
 config.biconomyForwarderAddress = "0x656a7B1B1E4525dB80bca5e80F4777F4b0C599b7";
 config.tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
-config.feeProxyAddress = "0x78122426ee7a6D35f15c4095b4Aa72A2A6418202";
+config.feeProxyAddress = "0xFd5EEb7D07f37090ed3bD08E6B1FBC0E21C52FEF";
 config.transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0";
 config.oracleAggregatorAddress = "0x025d39AA202A552487ac9282dC343773cb60bbB5";
 config.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";

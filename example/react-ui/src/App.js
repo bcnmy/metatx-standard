@@ -386,7 +386,7 @@ const getTokenGasPrice = async (tokenAddress, networkId) => {
             "apiId": "4d527596-cc9b-490a-969e-0f7167a161de",
             "params": params,
             "from": userAddress,
-            // "gasLimit":1000000,
+            "gasLimit":1000000,
             "signatureType": signatureType
           })
         })

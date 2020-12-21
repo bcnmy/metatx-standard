@@ -8,6 +8,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "eth-sig-util": "^2.5.2",
+    "ethereumjs-abi": "^0.6.8",
     "ethereumjs-tx": "^2.1.2",
     "ethers": "^5.0.19",
     "react": "^16.12.0",

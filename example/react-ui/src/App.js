@@ -14,6 +14,7 @@ import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
+const abi = require("ethereumjs-abi");
 
 const domainType = [
   { name: "name", type: "string" },
@@ -168,8 +169,8 @@ const getGasPrice = async (networkId) => {
 
 const getTokenGasPrice = async (tokenAddress, networkId) => {
   const gasPrice = ethers.BigNumber.from(await getGasPrice(networkId));
-  const tokenPrice = await oracleAggregator.getTokenPrice(tokenAddress);
-  const tokenOracleDecimals = await this.oracleAggregator.getTokenOracleDecimals(tokenAddress);
+  const tokenPrice = await oracleAggregator.methods.getTokenPrice(tokenAddress).call();
+  const tokenOracleDecimals = await oracleAggregator.methods.getTokenOracleDecimals(tokenAddress).call();
   return gasPrice.mul(ethers.BigNumber.from(10).pow(tokenOracleDecimals)).div(tokenPrice).toString();
 }
 
@@ -374,15 +375,15 @@ const getTokenGasPrice = async (tokenAddress, networkId) => {
           params = [req, sig]
       }
       try {
-        fetch(`https://localhost:80/api/v2/meta-tx/native`, {
+        fetch(`https://localhost:4000/api/v2/meta-tx/native`, {
           method: "POST",
           headers: {
-            "x-api-key" : "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2",
+            "x-api-key" : "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
             'Content-Type': 'application/json;charset=utf-8'
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "d1975758-fbf7-4f6d-96b4-2daff372f2b3",
+            "apiId": "4d527596-cc9b-490a-969e-0f7167a161de",
             "params": params,
             "from": userAddress,
             // "gasLimit":1000000,

@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy} from "@biconomy/mexa"; 
+import {Biconomy} from "@biconomy/mexa";
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -42,8 +42,8 @@ let daiDomainData = {
   verifyingContract : "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa"
 };
 
-const feeProxyAddress = "0x1E13cbCb6B695D10B68b2f83D71F0D201504C598";
-const transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0"; 
+const feeProxyAddress = "0xFd5EEb7D07f37090ed3bD08E6B1FBC0E21C52FEF";
+const transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0";
 const tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 
 // todo
@@ -91,7 +91,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2", debug: true});
           web3 = new Web3(biconomy);
           //web3 = new Web3(provider);
           console.log(web3);
@@ -100,14 +100,14 @@ function App() {
             config.tokenAbi,
             tokenAddress
           );
-           
+
           //contract should have been registered on the dashboard as ERC20_FORWARDER
           contract = new web3.eth.Contract(
             config.contract.abi,
             config.contract.address
           );
 
-          
+
           biconomy.onEvent(biconomy.READY, () => {
             // Initialize your dapp here like getting user accounts etc
             ercForwarderClient = biconomy.erc20ForwarderClient;
@@ -121,8 +121,8 @@ function App() {
           }).onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
           });
-          
-      
+
+
       } else {
         showErrorMessage("Metamask not installed");
       }
@@ -140,11 +140,11 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-          spender: feeProxyAddress,
+        //   spender: feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
-        
+
         let userAddress = selectedAddress;
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
@@ -153,11 +153,11 @@ function App() {
         await permitClient.daiPermit(daiPermitOptions);
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
-        //txGas should be calculated and passed here or calculate within the method
+        // txGas should be calculated and passed here or calculate within the method
 
         let gasLimit = await contract.methods
         .setQuote(newQuote)
-        .estimateGas({ from: userAddress });        
+        .estimateGas({ from: userAddress });
 
         const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
@@ -167,7 +167,7 @@ function App() {
         showInfoMessage(`Signing message for meta transaction`);
         const txHash = await ercForwarderClient.sendTxEIP712(tx);
         console.log(txHash);
-        
+
         //sendSignedTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
@@ -198,7 +198,7 @@ function App() {
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
-        
+
         let userAddress = selectedAddress;
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
@@ -211,7 +211,7 @@ function App() {
 
         let gasLimit = await contract.methods
         .setQuote(newQuote)
-        .estimateGas({ from: userAddress });        
+        .estimateGas({ from: userAddress });
 
         const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
@@ -223,7 +223,7 @@ function App() {
         showInfoMessage(`Signing message for meta transaction`);
         const txHash = await ercForwarderClient.sendTxPersonalSign(tx);
         console.log(txHash);
-        
+
         //sendSignedTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
@@ -244,7 +244,7 @@ function App() {
     }
   };
 
-  
+
   const getQuoteFromNetwork = () => {
     if (web3 && contract) {
       contract.methods
@@ -292,7 +292,7 @@ function App() {
       let txParams = {
           "from": userAddress,
           "gasLimit": web3.utils.toHex(gasLimit),
-          "to": contractAddress,
+          "to": config.contract.address,
           "value": "0x0",
           "data": functionSignature
       };

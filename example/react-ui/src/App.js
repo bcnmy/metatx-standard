@@ -282,37 +282,46 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendSignedRawTransaction = async (userAddress, arg) => {
-    if (web3 && contract) {
-      try {
-        let gasLimit = await contract.methods
-          .setQuote(arg)
-          .estimateGas({ from: userAddress });
-        let gasPrice = await web3.eth.getGasPrice();
+    // contract should be registered as erc20 forwarder
+    // get user signature and send raw tx along with signature type
+    const sendSignedRawTransaction = async (userAddress, arg) => {
+      let privateKey = "a0d8fface04545793ef670d0aa6c78a3cdb935a4bb5d55f3061f7558e51b4570"; // process.env.privKey
+      let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
 
-        console.log(gasLimit);
-        console.log(gasPrice);
+      let gasLimit = await contract.methods.setQuote(arg).estimateGas({from: userAddress});
+      let txParams = {
+          "from": userAddress,
+          "gasLimit": web3.utils.toHex(gasLimit),
+          "to": contractAddress,
+          "value": "0x0",
+          "data": functionSignature
+      };
 
-        let tx = contract.methods
-          .setQuote(arg)
-          .send({
-            from: userAddress,
-            gasPrice:gasPrice
-          });
+      const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
+      console.log(signedTx.rawTransaction);
 
-        tx.on("transactionHash", function(hash) {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-        }).once("confirmation", function(confirmationNumber, receipt) {
-          console.log(receipt);
-          setTransactionHash(receipt.transactionHash);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    }
+      // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
+      const dataToSign = await biconomy.getForwardRequestMessageToSign(signedTx.rawTransaction);
+      const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), {
+          data: dataToSign.eip712Format
+      }, 'V4');
+
+      let rawTransaction = signedTx.rawTransaction;
+
+      let data = {
+          signature: signature,
+          rawTransaction: rawTransaction,
+          signatureType: biconomy.EIP712_SIGN
+      };
+
+      // Use any one of the methods below to check for transaction confirmation
+      // USING PROMISE
+      let receipt = await web3.eth.sendSignedTransaction(data, (error, txHash) => {
+          if (error) {
+              return console.error(error);
+          }
+          console.log(txHash);
+      })
   };
 
   return (

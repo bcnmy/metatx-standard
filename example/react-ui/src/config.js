@@ -129,5 +129,6 @@ config.feeProxyAddress = "0x78122426ee7a6D35f15c4095b4Aa72A2A6418202";
 config.transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0";
 config.oracleAggregatorAddress = "0x025d39AA202A552487ac9282dC343773cb60bbB5";
 config.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+config.baseURL = "https://localhost:4000";
 
 module.exports = {config}

@@ -82,6 +82,7 @@ let web3;
 let contract;
 let biconomyForwarder;
 let ercFeeProxy;
+let biconomy;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -114,7 +115,7 @@ function App() {
           const provider = window["ethereum"];
           await provider.enable();
 
-          //const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          //biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           web3 = new Web3(provider);
 
             contract = new web3.eth.Contract(
@@ -226,7 +227,7 @@ function App() {
 
         promi.then(function(sig){
           console.log('signature ' + sig);
-          sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712Sign"});
+          sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712_SIGN"});
         }).catch(function(error) {
           console.log('could not get signature error ' + error);
           showErrorMessage("Could not get user signature");
@@ -305,7 +306,7 @@ function App() {
         const sig = await web3.eth.personal.sign("0x" + hashToSign.toString("hex"), userAddress);
 
         console.log('signature ' + sig);
-        sendTransaction({userAddress, req, sig, signatureType:"personalSign"});
+        sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
 
       } else {
         showErrorMessage("Meta Transaction disabled");

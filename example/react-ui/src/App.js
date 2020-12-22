@@ -12,77 +12,23 @@ import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
+import {
+  helperAttributes,
+  getDomainSeperator,
+  getDataToSignForPersonalSign,
+  getDataToSignForEIP712,
+  buildForwardTxRequest,
+  getBiconomyForwarder
+} from './biconomyForwarderHelpers';
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 const abi = require("ethereumjs-abi");
 
-const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" }
-];
-
-const metaTransactionType = [
-  { name: "nonce", type: "uint256" },
-  { name: "from", type: "address" },
-  { name: "functionSignature", type: "bytes" }
-];
-
-const permitType = [
-  { name: "holder", type: "address" },
-  { name: "spender", type: "address" },
-  { name: "nonce", type: "uint256" },
-  { name: "expiry", type: "uint256" },
-  { name: "allowed", type: "bool" }
-];
-
-const erc20ForwardRequestType = [
-  {name:'from',type:'address'},
-  {name:'to',type:'address'},
-  {name:'token',type:'address'},
-  {name:'txGas',type:'uint256'},
-  {name:'tokenGasPrice',type:'uint256'},
-  {name:'batchId',type:'uint256'},
-  {name:'batchNonce',type:'uint256'},
-  {name:'deadline',type:'uint256'},
-  {name:'data',type:'bytes'}
-];
-
-let domainData = {
-  name: "TestContract",
-  version: "1",
-  chainId: "42",
-  verifyingContract: config.contract.address
-};
-
-let daiDomainData = {
-  name : "Dai Stablecoin",
-  version : "1",
-  chainId : 42,
-  verifyingContract : "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa"
-};
-
-let feeProxyDomainData = {
-  name : "TEST",
-  version : "1",
-  chainId : 42,
-  verifyingContract : "0x656a7B1B1E4525dB80bca5e80F4777F4b0C599b7"
-};
-
-let biconomyForwarderDomainData = {
-  name : "TEST",
-  version : "1",
-  chainId : 42,
-  verifyingContract : config.biconomyForwarderAddress
-};
-
 
 let web3;
 let contract;
-let biconomyForwarder;
-let ercFeeProxy;
-let biconomy;
+let provider;
+//let biconomy;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -94,6 +40,12 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "5px"
   }
 }));
+
+//todo
+//review for dev perspective more or less freedom
+//review config
+//get contract address map for network id
+//seperation of ethers and web3 
 
 function App() {
   const classes = useStyles();
@@ -112,7 +64,7 @@ function App() {
         window.ethereum.isMetaMask
       ) {
         // Ethereum user detected. You can now use the provider.
-          const provider = window["ethereum"];
+          provider = window["ethereum"];
           await provider.enable();
 
           //biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
@@ -121,16 +73,6 @@ function App() {
             contract = new web3.eth.Contract(
               config.contract.abi,
               config.contract.address
-            );
-
-            biconomyForwarder = new web3.eth.Contract(
-              config.biconomyForwarderAbi,
-              config.biconomyForwarderAddress
-            );
-
-            ercFeeProxy = new web3.eth.Contract(
-              config.feeProxyAbi,
-              config.feeProxyAddress
             );
 
             setSelectedAddress(provider.selectedAddress);
@@ -172,42 +114,19 @@ function App() {
 
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
-        let message = {};
 
         //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
-        const batchNonce = await biconomyForwarder.methods.getNonce(userAddress,0).call();
+        let forwarder = await getBiconomyForwarder(provider,42);
+        const batchNonce = await forwarder.getNonce(userAddress,0);
         console.log(batchNonce);
-        const req = {
-         from : userAddress,
-         to : config.contract.address,
-         token : config.ZERO_ADDRESS,
-         txGas : Number(txGas),
-         tokenGasPrice : "0",
-         batchId : 0,
-         batchNonce : parseInt(batchNonce),
-         deadline : Math.floor((Date.now()/1000)+3600),
-         data : functionSignature
-        };
 
+        const req = await buildForwardTxRequest(userAddress,config.contract.address,Number(txGas),0,batchNonce,functionSignature);
         console.log(req);
 
-        const domainSeparator = ethers.utils.keccak256((ethers.utils.defaultAbiCoder).
-				encode(['bytes32','bytes32','bytes32','uint256','address'],
-				[ethers.utils.id("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-		        ethers.utils.id(biconomyForwarderDomainData.name),ethers.utils.id(biconomyForwarderDomainData.version),
-        biconomyForwarderDomainData.chainId,biconomyForwarderDomainData.verifyingContract]));
-
+        const domainSeparator = getDomainSeperator(helperAttributes.biconomyForwarderDomainData);
         console.log(domainSeparator);
 
-        const dataToSign = JSON.stringify({
-            types: {
-                EIP712Domain: domainType,
-                ERC20ForwardRequest: erc20ForwardRequestType
-            },
-            domain: biconomyForwarderDomainData,
-            primaryType: "ERC20ForwardRequest",
-            message: req
-        });
+        const dataToSign = getDataToSignForEIP712(req);
 
         const promi = new Promise(async function(resolve, reject) {
           await web3.currentProvider.send(
@@ -225,9 +144,9 @@ function App() {
           });
         });
 
-        promi.then(function(sig){
+        promi.then(async function(sig){
           console.log('signature ' + sig);
-          sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712_SIGN"});
+          await sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712_SIGN"});
         }).catch(function(error) {
           console.log('could not get signature error ' + error);
           showErrorMessage("Could not get user signature");
@@ -262,51 +181,21 @@ function App() {
 
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
-        let message = {};
-
+    
+        let forwarder = await getBiconomyForwarder(provider,42);
         //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
-        const batchNonce = await biconomyForwarder.methods.getNonce(userAddress,0).call();
+        const batchNonce = await forwarder.getNonce(userAddress,0);
         console.log(batchNonce);
-        const req = {
-         from : userAddress,
-         to : config.contract.address,
-         token : config.ZERO_ADDRESS,
-         txGas : Number(txGas),
-         tokenGasPrice : "0",
-         batchId : 0,
-         batchNonce : parseInt(batchNonce),
-         deadline : Math.floor((Date.now()/1000)+3600),
-         data : functionSignature
-        };
 
+        const req = await buildForwardTxRequest(userAddress,config.contract.address,Number(txGas),0,batchNonce,functionSignature);
         console.log(req);
 
-        const hashToSign = abi.soliditySHA3([
-            "address",
-            "address",
-            "address",
-            "uint256",
-            "uint256",
-            "uint256",
-            "uint256",
-            "uint256",
-            "bytes32",
-        ], [
-            req.from,
-            req.to,
-            req.token,
-            req.txGas,
-            req.tokenGasPrice,
-            req.batchId,
-            req.batchNonce,
-            req.deadline,
-            ethers.utils.keccak256(req.data)
-        ]);
+        const hashToSign =  getDataToSignForPersonalSign(req);
 
         const sig = await web3.eth.personal.sign("0x" + hashToSign.toString("hex"), userAddress);
 
         console.log('signature ' + sig);
-        sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
+        await sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
 
       } else {
         showErrorMessage("Meta Transaction disabled");
@@ -346,15 +235,15 @@ function App() {
           params = [req, sig]
       }
       try {
-        fetch(`https://localhost:80/api/v2/meta-tx/native`, {
+        fetch(`https://localhost:4000/api/v2/meta-tx/native`, {
           method: "POST",
           headers: {
-            "x-api-key" : "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2",
+            "x-api-key" : "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
             'Content-Type': 'application/json;charset=utf-8'
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "d1975758-fbf7-4f6d-96b4-2daff372f2b3",
+            "apiId": "aeecd3f0-b0da-449f-9a65-b8a16fe0cc9e",
             "params": params,
             "from": userAddress,
             // "gasLimit":1000000,

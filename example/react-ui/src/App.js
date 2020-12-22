@@ -11,78 +11,24 @@ import { ethers } from "ethers";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
+import {  helperAttributes,
+  getDomainSeperator,
+  getDataToSignForPersonalSign,
+  getDataToSignForEIP712,
+  buildForwardTxRequest,
+  getBiconomyForwarder,
+  getTokenGasPrice,
+  getDaiPermit} from "./erc2ForwarderHelpers";
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 const abi = require("ethereumjs-abi");
 
-const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" }
-];
-
-const metaTransactionType = [
-  { name: "nonce", type: "uint256" },
-  { name: "from", type: "address" },
-  { name: "functionSignature", type: "bytes" }
-];
-
-const permitType = [
-  { name: "holder", type: "address" },
-  { name: "spender", type: "address" },
-  { name: "nonce", type: "uint256" },
-  { name: "expiry", type: "uint256" },
-  { name: "allowed", type: "bool" }
-];
-
-const erc20ForwardRequestType = [
-  {name:'from',type:'address'},
-  {name:'to',type:'address'},
-  {name:'token',type:'address'},
-  {name:'txGas',type:'uint256'},
-  {name:'tokenGasPrice',type:'uint256'},
-  {name:'batchId',type:'uint256'},
-  {name:'batchNonce',type:'uint256'},
-  {name:'deadline',type:'uint256'},
-  {name:'data',type:'bytes'}
-];
-
-let domainData = {
-  name: "TestContract",
-  version: "1",
-  chainId: "42",
-  verifyingContract: config.contract.address
-};
-
-let daiDomainData = {
-  name : "Dai Stablecoin",
-  version : "1",
-  chainId : 42,
-  verifyingContract : "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa"
-};
-
-let feeProxyDomainData = {
-  name : "TEST",
-  version : "1",
-  chainId : 42,
-  verifyingContract : "0x656a7B1B1E4525dB80bca5e80F4777F4b0C599b7"
-};
-
-let biconomyForwarderDomainData = {
-  name : "TEST",
-  version : "1",
-  chainId : 42,
-  verifyingContract : config.biconomyForwarderAddress
-};
-
 
 let web3;
 let contract;
-let oracleAggregator;
-let biconomyForwarder;
-let ercFeeProxy;
+let provider;
+let ethersProvider;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -94,6 +40,18 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "5px"
   }
 }));
+
+
+//todo
+//add comments for each helpers
+//review input paramters for helpers
+//review the flow and requirement from devloper's point of view
+//build address map for easy access
+//add cost calculation and access to fee manager, fee proxy and oracle aggregator read variables (like biconomy forwarder)
+//review and easy permit flow
+//increase or decrease freedom in current steps
+//separation for web3 and ethers 
+
 
 function App() {
   const classes = useStyles();
@@ -112,7 +70,7 @@ function App() {
         window.ethereum.isMetaMask
       ) {
         // Ethereum user detected. You can now use the provider.
-          const provider = window["ethereum"];
+          provider = window["ethereum"];
           await provider.enable();
 
           //const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
@@ -123,20 +81,7 @@ function App() {
               config.contract.address
             );
 
-            biconomyForwarder = new web3.eth.Contract(
-              config.biconomyForwarderAbi,
-              config.biconomyForwarderAddress
-            );
-
-            ercFeeProxy = new web3.eth.Contract(
-              config.feeProxyAbi,
-              config.feeProxyAddress
-            );
-
-            oracleAggregator = new web3.eth.Contract(
-              config.oracleAggregatorAbi,
-              config.oracleAggregatorAddress
-            );
+            ethersProvider = new ethers.providers.Web3Provider(provider);
 
             setSelectedAddress(provider.selectedAddress);
             getQuoteFromNetwork();
@@ -153,27 +98,6 @@ function App() {
   const onQuoteChange = event => {
     setNewQuote(event.target.value);
   };
-
-
-  // pass the networkId to get gas price
-const getGasPrice = async (networkId) => {
-  const apiInfo = `${
-      config.baseURL
-  }/api/v1/gas-price?networkId=${networkId}`;
-  const response = await fetch(apiInfo);
-  const responseJson = await response.json();
-  console.log("Response JSON " + JSON.stringify(responseJson));
-  return ethers.utils.parseUnits(responseJson.gasPrice.value.toString(), "gwei").toString();
-};
-
-
-const getTokenGasPrice = async (tokenAddress, networkId) => {
-  const gasPrice = ethers.BigNumber.from(await getGasPrice(networkId));
-  const tokenPrice = await oracleAggregator.methods.getTokenPrice(tokenAddress).call();
-  const tokenOracleDecimals = await oracleAggregator.methods.getTokenOracleDecimals(tokenAddress).call();
-  return gasPrice.mul(ethers.BigNumber.from(10).pow(tokenOracleDecimals)).div(tokenPrice).toString();
-}
-
 
    /* this app does not need to use @biconomy/mexa */
   /* for quotes dapp demo with erc20 forwarder and api call check the branch -  from repo - */
@@ -198,43 +122,31 @@ const getTokenGasPrice = async (tokenAddress, networkId) => {
 
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
-        let message = {};
 
-        //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
-        const batchNonce = await biconomyForwarder.methods.getNonce(userAddress,0).call();
-        const tokGasPrice = await getTokenGasPrice(config.tokenAddress,42);
-        console.log(batchNonce);
-        const req = {
-         from : userAddress,
-         to : config.contract.address,
-         token : config.tokenAddress,
-         txGas : Number(txGas),
-         tokenGasPrice : tokGasPrice,
-         batchId : 0,
-         batchNonce : parseInt(batchNonce),
-         deadline : Math.floor((Date.now()/1000)+3600),
-         data : functionSignature
+        const daiPermitOptions = {
+          spender: config.feeProxyAddress,
+          expiry: Math.floor(Date.now() / 1000 + 3600),
+          allowed: true,
+          networkId: 42
         };
 
-        console.log(req);
+        await getDaiPermit(provider,userAddress,daiPermitOptions);
+      
+        let biconomyForwarder = getBiconomyForwarder(provider,42);
 
-        const domainSeparator = ethers.utils.keccak256((ethers.utils.defaultAbiCoder).
-				encode(['bytes32','bytes32','bytes32','uint256','address'],
-				[ethers.utils.id("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-		        ethers.utils.id(biconomyForwarderDomainData.name),ethers.utils.id(biconomyForwarderDomainData.version),
-        biconomyForwarderDomainData.chainId,biconomyForwarderDomainData.verifyingContract]));
+        //const batchId = await biconomyForwarder.getBatch(userAddress);
+        const batchNonce = await biconomyForwarder.getNonce(userAddress,0);
+        const tokGasPrice = await getTokenGasPrice(provider,42,config.tokenAddress);
+        console.log(batchNonce);
+
+        const req = buildForwardTxRequest(userAddress,config.contract.address,Number(txGas),0,batchNonce,tokGasPrice,functionSignature,config.tokenAddress);
+      
+
+        const domainSeparator = getDomainSeperator(helperAttributes.biconomyForwarderDomainData);
 
         console.log(domainSeparator);
 
-        const dataToSign = JSON.stringify({
-            types: {
-                EIP712Domain: domainType,
-                ERC20ForwardRequest: erc20ForwardRequestType
-            },
-            domain: biconomyForwarderDomainData,
-            primaryType: "ERC20ForwardRequest",
-            message: req
-        });
+        const dataToSign = getDataToSignForEIP712(req);
 
         const promi = new Promise(async function(resolve, reject) {
           await web3.currentProvider.send(
@@ -252,9 +164,10 @@ const getTokenGasPrice = async (tokenAddress, networkId) => {
           });
         });
 
-        promi.then(function(sig){
+        promi.then(async function(sig){
           console.log('signature ' + sig);
-          sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712_SIGN"});
+          console.log(req);
+          await sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712_SIGN"});
         }).catch(function(error) {
           console.log('could not get signature error ' + error);
           showErrorMessage("Could not get user signature");
@@ -277,64 +190,46 @@ const getTokenGasPrice = async (tokenAddress, networkId) => {
        * create functionSignature
        * create txGas param which is gas estimation of his function call
        * get nonce from biconomyForwarder instance
+       * get gasPrice and tokenGasPrice
+       * get token address based on symbol?
        * create a forwarder request
        * create dataToSign as per signature scheme used (EIP712 or personal)
        * get the signature from user
        * create the domain separator
        * Now call the meta tx API
-       */
+       * */
+       
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
 
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
-        let message = {};
-
-        //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
-        const batchNonce = await biconomyForwarder.methods.getNonce(userAddress,0).call();
-        const tokGasPrice = await getTokenGasPrice(config.tokenAddress,42);
-        console.log(batchNonce);
-        const req = {
-         from : userAddress,
-         to : config.contract.address,
-         token : config.tokenAddress,
-         txGas : Number(txGas),
-         tokenGasPrice : tokGasPrice,
-         batchId : 0,
-         batchNonce : parseInt(batchNonce),
-         deadline : Math.floor((Date.now()/1000)+3600),
-         data : functionSignature
+        
+        const daiPermitOptions = {
+          spender: config.feeProxyAddress,
+          expiry: Math.floor(Date.now() / 1000 + 3600),
+          allowed: true,
+          networkId: 42
         };
 
-        console.log(req);
+        await getDaiPermit(provider,userAddress,daiPermitOptions);
+      
+        let biconomyForwarder = getBiconomyForwarder(provider,42);
 
-        const hashToSign = abi.soliditySHA3([
-            "address",
-            "address",
-            "address",
-            "uint256",
-            "uint256",
-            "uint256",
-            "uint256",
-            "uint256",
-            "bytes32",
-        ], [
-            req.from,
-            req.to,
-            req.token,
-            req.txGas,
-            req.tokenGasPrice,
-            req.batchId,
-            req.batchNonce,
-            req.deadline,
-            ethers.utils.keccak256(req.data)
-        ]);
+        //const batchId = await biconomyForwarder.getBatch(userAddress);
+        const batchNonce = await biconomyForwarder.getNonce(userAddress,0);
+        const tokGasPrice = await getTokenGasPrice(provider,42,config.tokenAddress);
+        console.log(batchNonce);
+
+        const req = buildForwardTxRequest(userAddress,config.contract.address,Number(txGas),0,batchNonce,tokGasPrice,functionSignature,config.tokenAddress);
+
+        const hashToSign = getDataToSignForPersonalSign(req);
 
         const sig = await web3.eth.personal.sign("0x" + hashToSign.toString("hex"), userAddress);
 
         console.log('signature ' + sig);
-        sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
+        await sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
 
       } else {
         showErrorMessage("Meta Transaction disabled");
@@ -386,7 +281,7 @@ const getTokenGasPrice = async (tokenAddress, networkId) => {
             "apiId": "4d527596-cc9b-490a-969e-0f7167a161de",
             "params": params,
             "from": userAddress,
-            "gasLimit":1000000,
+            //"gasLimit":1000000,
             "signatureType": signatureType
           })
         })

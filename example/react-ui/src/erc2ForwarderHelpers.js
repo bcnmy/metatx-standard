@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 const abi = require("ethereumjs-abi");
-const { config } = require("./config");
+const { config } = require("./config"); //remove config and hardcode biconomy API
 let helperAttributes = {};
 let supportedNetworks = [42];
 helperAttributes.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -20,7 +20,7 @@ oracleAggregatorAddressMap[42] = "0x025d39AA202A552487ac9282dC343773cb60bbB5";
 // any other constants needed goes in helperAttributes
 
 helperAttributes.biconomyForwarderDomainData = {
-    name : "TEST",
+    name : "TEST", // Biconomy Transaction
     version : "1",
   };
 
@@ -99,6 +99,8 @@ const getTokenGasPrice = async (provider, networkId, tokenAddress) => {
   }
 
 
+// rather than multiple parameters get the object  
+// deadLine optional paramter and default value inside 
 const buildForwardTxRequest = (account, to, gasLimitNum, batchId, batchNonce, tokenGasPrice, data, token) => {
     const req = {
         from: account,
@@ -123,6 +125,7 @@ const buildForwardTxRequest = (account, to, gasLimitNum, batchId, batchNonce, to
     return req;
 };
 
+// make this method independently callable 
 const getDataToSignForEIP712 = (request) => {
     console.log(helperAttributes.biconomyForwarderDomainData);
     const dataToSign = JSON.stringify({
@@ -162,6 +165,7 @@ const getDataToSignForPersonalSign = (request) => {
     return hashToSign;
 }
 
+// get networkId based values here
 const getDomainSeperator = (biconomyForwarderDomainData) => {
     const domainSeparator = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
         "bytes32",

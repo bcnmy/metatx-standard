@@ -91,7 +91,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           web3 = new Web3(biconomy);
           //web3 = new Web3(provider);
           console.log(web3);
@@ -188,6 +188,45 @@ function App() {
     }
   };
 
+  const onSendRawTxFromBackend = async event => {
+    if (newQuote != "" && contract) {
+      setTransactionHash("");
+      if (metaTxEnabled) {
+
+        const daiPermitOptions = {
+          spender: feeProxyAddress,
+          expiry: Math.floor(Date.now() / 1000 + 3600),
+          allowed: true
+        };
+
+        await permitClient.daiPermit(daiPermitOptions);
+
+        let userAddress = selectedAddress;
+        //let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        //console.log(functionSignature);
+
+        sendSignedRawTransaction(userAddress,newQuote);
+      }
+      else {
+        console.log("Sending normal transaction");
+        contract.methods
+          .setQuote(newQuote)
+          .send({ from: selectedAddress })
+          .on("transactionHash", function(hash) {
+            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
+          })
+          .once("confirmation", function(confirmationNumber, receipt) {
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed");
+            getQuoteFromNetwork();
+          });
+      }
+    }
+     else {
+      showErrorMessage("Please enter the quote");
+    }
+  };
+
   const onSubmitPersonalSign = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
@@ -224,7 +263,7 @@ function App() {
         const txHash = await ercForwarderClient.sendTxPersonalSign(tx);
         console.log(txHash);
 
-        //sendSignedTransaction(userAddress, newQuote);
+        //sendSignedRawTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -285,7 +324,7 @@ function App() {
     // contract should be registered as erc20 forwarder
     // get user signature and send raw tx along with signature type
     const sendSignedRawTransaction = async (userAddress, arg) => {
-      let privateKey = "a0d8fface04545793ef670d0aa6c78a3cdb935a4bb5d55f3061f7558e51b4570"; // process.env.privKey
+      let privateKey = "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // process.env.privKey
       let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
 
       let gasLimit = await contract.methods.setQuote(arg).estimateGas({from: userAddress});
@@ -302,6 +341,8 @@ function App() {
 
       // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
       const dataToSign = await biconomy.getForwardRequestMessageToSign(signedTx.rawTransaction);
+      console.log('data to sign');
+      console.log(dataToSign);
       const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), {
           data: dataToSign.eip712Format
       }, 'V4');
@@ -368,6 +409,9 @@ function App() {
             </Button>
             <Button variant="contained" color="primary" onClick={onSubmitPersonalSign}>
               Submit with Personal
+            </Button>
+            <Button variant="contained" color="primary" onClick={onSendRawTxFromBackend}>
+              send backend signed Tx
             </Button>
           </div>
         </div>

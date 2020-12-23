@@ -112,21 +112,23 @@ function App() {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
 
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let data = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
 
         //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
         let forwarder = await getBiconomyForwarder(provider,42);
         const batchNonce = await forwarder.getNonce(userAddress,0);
         console.log(batchNonce);
-
-        const req = await buildForwardTxRequest(userAddress,config.contract.address,Number(txGas),0,batchNonce,functionSignature);
+        const to = config.contract.address;
+        const gasLimitNum = Number(txGas);
+        const batchId = 0;
+        const req = await buildForwardTxRequest({account:userAddress,to,gasLimitNum,batchId,batchNonce,data});
         console.log(req);
 
-        const domainSeparator = getDomainSeperator(helperAttributes.biconomyForwarderDomainData);
+        const domainSeparator = getDomainSeperator(42);
         console.log(domainSeparator);
 
-        const dataToSign = getDataToSignForEIP712(req);
+        const dataToSign = getDataToSignForEIP712(req,42);
 
         const promi = new Promise(async function(resolve, reject) {
           await web3.currentProvider.send(
@@ -179,7 +181,7 @@ function App() {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
 
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let data = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
     
         let forwarder = await getBiconomyForwarder(provider,42);
@@ -187,7 +189,10 @@ function App() {
         const batchNonce = await forwarder.getNonce(userAddress,0);
         console.log(batchNonce);
 
-        const req = await buildForwardTxRequest(userAddress,config.contract.address,Number(txGas),0,batchNonce,functionSignature);
+        const to = config.contract.address;
+        const gasLimitNum = Number(txGas);
+        const batchId = 0;
+        const req = await buildForwardTxRequest({account:userAddress,to,gasLimitNum,batchId,batchNonce,data});
         console.log(req);
 
         const hashToSign =  getDataToSignForPersonalSign(req);

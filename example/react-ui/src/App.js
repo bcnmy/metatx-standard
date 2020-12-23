@@ -8,12 +8,17 @@ import {
 import "react-notifications/lib/notifications.css";
 import { ethers } from "ethers";
 import {Biconomy} from "@biconomy/mexa";
+import abi from "ethereumjs-abi";
+import {toBuffer} from "ethereumjs-util";
+
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
+const EIP712_SIGN = "EIP712_SIGN";
+const PERSONAL_SIGN = "PERSONAL_SIGN";
 
 const domainType = [
   { name: "name", type: "string" },
@@ -33,9 +38,10 @@ let domainData = {
   version: "1",
   verifyingContract: config.contract.address
 };
+let chainId = 42;
 
 let ethersProvider, signer;
-let contract, contractInterface;
+let contract, contractInterface, contractWithBasicSign;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -67,8 +73,8 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          if (provider.networkVersion == "42") {
-            domainData.chainId = 42;
+          if (provider.networkVersion == chainId.toString()) {
+            domainData.chainId = chainId;
 
           const biconomy = new Biconomy(provider,{apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2", debug: true});
           ethersProvider = new ethers.providers.Web3Provider(biconomy);
@@ -79,7 +85,12 @@ function App() {
             contract = new ethers.Contract(
               config.contract.address,
               config.contract.abi,
-              signer
+              signer.connectUnchecked()
+            );
+            contractWithBasicSign = new ethers.Contract(
+              config.contractWithBasicSign.address,
+              config.contractWithBasicSign.abi,
+              signer.connectUnchecked()
             );
             contractInterface = new ethers.utils.Interface(config.contract.abi);
             setSelectedAddress(await signer.getAddress());
@@ -106,12 +117,12 @@ function App() {
     setNewQuote(event.target.value);
   };
 
-  const onSubmit = async event => {
+  const onSubmitWithEIP712Sign = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
         let userAddress = selectedAddress;
-        let nonce = await contract.callStatic.getNonce(userAddress);
+        let nonce = await contract.getNonce(userAddress);
         let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
         let message = {};
         message.nonce = parseInt(nonce);
@@ -129,10 +140,10 @@ function App() {
         });
         let signature = await ethersProvider.send("eth_signTypedData_v4", [userAddress, dataToSign])
         let { r, s, v } = getSignatureParameters(signature);
-        sendSignedTransaction(userAddress, functionSignature, r, s, v);
+        sendSignedTransaction(userAddress, functionSignature, r, s, v, EIP712_SIGN);
       } else {
         console.log("Sending normal transaction");
-        let tx = await contract.executeMetaTransaction(userAddress, functionData, r, s, v);
+        let tx = await contract.setQuote(newQuote);
         console.log("Transaction hash : ", tx.hash);
         showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
         let confirmation = await tx.wait();
@@ -144,6 +155,37 @@ function App() {
       }
     } else {
       showErrorMessage("Please enter the quote");
+    }
+  };
+
+  const onSubmitWithPersonalSign = async event => {
+    if (newQuote != "" && contractWithBasicSign && signer) {
+      setTransactionHash("");
+      if (metaTxEnabled) {
+        let userAddress = selectedAddress;
+        let nonce = await contractWithBasicSign.getNonce(userAddress);
+        let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
+        let messageToSign = abi.soliditySHA3(
+            ["uint256","address","uint256","bytes"],
+            [parseInt(nonce), config.contractWithBasicSign.address, chainId, toBuffer(functionSignature)]
+        );
+        const signature = await signer.signMessage(messageToSign);
+        let { r, s, v } = getSignatureParameters(signature);
+        sendSignedTransaction(userAddress, functionSignature, r, s, v, PERSONAL_SIGN);
+      } else {
+        console.log("Sending normal transaction");
+        let tx = await contractWithBasicSign.setQuote(newQuote);
+        console.log("Transaction hash : ", tx.hash);
+        showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+        let confirmation = await tx.wait();
+        console.log(confirmation);
+        setTransactionHash(tx.hash);
+
+        showSuccessMessage("Transaction confirmed on chain");
+        getQuoteFromNetwork();
+      }
+    } else {
+      showErrorMessage("Please enter the quote or check contract and signer object");
     }
   };
 
@@ -165,12 +207,14 @@ function App() {
     };
   };
 
-  const getQuoteFromNetwork = async () => {
+  const getQuoteFromNetwork = async (signType) => {
     if (contract) {
-      let result = await contract.getQuote();
-      let nonce = await contract.getNonce("0x7f3B192Ab3220940D66236792F3EBDB0e4E74138");
-      console.log(nonce);
-      console.log(result);
+      let result;
+      if(signType == PERSONAL_SIGN) {
+        result = await contractWithBasicSign.getQuote();
+      } else {
+        result = await contract.getQuote();
+      }
       if (
         result &&
         result.currentQuote != undefined &&
@@ -200,11 +244,15 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
+  const sendSignedTransaction = async (userAddress, functionData, r, s, v, signType) => {
     if (contract) {
       try {
-
-        let tx = await contract.executeMetaTransaction(userAddress, functionData, r, s, v);
+        let tx;
+        if(signType == PERSONAL_SIGN) {
+          tx = await contractWithBasicSign.executeMetaTransaction(userAddress, functionData, r, s, v);
+        } else {
+          tx = await contract.executeMetaTransaction(userAddress, functionData, r, s, v);
+        }
         console.log("Transaction hash : ", tx.hash);
         showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
         let confirmation = await tx.wait();
@@ -212,7 +260,7 @@ function App() {
         setTransactionHash(tx.hash);
 
         showSuccessMessage("Transaction confirmed on chain");
-        getQuoteFromNetwork();
+        getQuoteFromNetwork(signType);
 
       } catch (error) {
         console.log(error);
@@ -259,8 +307,11 @@ function App() {
               onChange={onQuoteChange}
               value={newQuote}
             />
-            <Button variant="contained" color="primary" onClick={onSubmit}>
-              Submit
+            <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign}>
+              Submit (EIP-712 Sign)
+            </Button>
+            <Button variant="contained" color="primary" onClick={onSubmitWithPersonalSign} style={{marginLeft: "10px"}}>
+              Submit (Persoanl Sign)
             </Button>
           </div>
         </div>

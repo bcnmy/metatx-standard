@@ -18,7 +18,7 @@ import {  helperAttributes,
   buildForwardTxRequest,
   getBiconomyForwarder,
   getTokenGasPrice,
-  getDaiPermit} from "./erc2ForwarderHelpers";
+  getDaiPermit} from "./erc20ForwarderHelpers";
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
@@ -123,7 +123,6 @@ function App() {
         await getDaiPermit(provider,userAddress,daiPermitOptions);
       
         let biconomyForwarder = getBiconomyForwarder(provider,networkId);
-
         //const batchId = await biconomyForwarder.getBatch(userAddress);
         const batchNonce = await biconomyForwarder.getNonce(userAddress,0);
         const tokGasPrice = await getTokenGasPrice(provider,networkId,config.tokenAddress);

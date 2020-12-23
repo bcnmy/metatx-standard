@@ -4,7 +4,7 @@ const { config } = require("./config"); //remove config and hardcode biconomy AP
 let helperAttributes = {};
 let supportedNetworks = [42];
 helperAttributes.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-helperAttributes.baseURL = "https://localhost:4000";
+helperAttributes.baseURL = "https://api.biconomy.io";
 let daiTokenAddressMap = {},
   usdtTokenAddressMap = {},
   usdcTokenAddressMap = {},
@@ -247,6 +247,7 @@ const getDaiPermit = async(provider,account,daiPermitOptions) => {
 export {
     helperAttributes,
     getDomainSeperator,
+    erc20FeeProxyAddressMap,
     getDataToSignForPersonalSign,
     getDataToSignForEIP712,
     buildForwardTxRequest,

@@ -100,6 +100,70 @@ function App() {
     setNewQuote(event.target.value);
   };
 
+  const onSubmitWithPrivateKey = async () => {
+    if (newQuote != "" && contract) {
+      setTransactionHash("");
+      if (metaTxEnabled) {
+        console.log("Sending meta transaction");
+        let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
+        let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
+        let nonce = await contract.methods.getNonce(userAddress).call();
+        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let message = {};
+        message.nonce = parseInt(nonce);
+        message.from = userAddress;
+        message.functionSignature = functionSignature;
+
+        const dataToSign = {
+          types: {
+            EIP712Domain: domainType,
+            MetaTransaction: metaTransactionType
+          },
+          domain: domainData,
+          primaryType: "MetaTransaction",
+          message: message
+        };
+
+        const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), {data: dataToSign}, 'V4');
+        let { r, s, v } = getSignatureParameters(signature);
+        let executeMetaTransactionData = contract.methods.executeMetaTransaction(userAddress, functionSignature, r, s, v).encodeABI();
+        let txParams = {
+          "from": userAddress,
+          "to": config.contract.address,
+          "value": "0x0",
+          "gas": "100000",
+          "data": executeMetaTransactionData
+        };
+        const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
+        let receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction, (error, txHash) => {
+          if (error) {
+              return console.error(error);
+          }
+          console.log("Transaction hash is ", txHash);
+          showInfoMessage(`Transaction sent to blockchain with hash ${txHash}`);
+        });
+        setTransactionHash(receipt.transactionHash);
+        showSuccessMessage("Transaction confirmed");
+        getQuoteFromNetwork();
+      } else {
+        console.log("Sending normal transaction");
+        contract.methods
+          .setQuote(newQuote)
+          .send({ from: selectedAddress })
+          .on("transactionHash", function(hash) {
+            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
+          })
+          .once("confirmation", function(confirmationNumber, receipt) {
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed");
+            getQuoteFromNetwork();
+          });
+      }
+    } else {
+      showErrorMessage("Please enter the quote");
+    }
+  }
+
   const onSubmit = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
@@ -280,7 +344,7 @@ function App() {
         {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
           <Typography>
             Check your transaction hash
-            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}/internal_transactions`} target="_blank"
+            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}`} target="_blank"
             className={classes.link}>
               here
             </Link>
@@ -298,6 +362,9 @@ function App() {
             />
             <Button variant="contained" color="primary" onClick={onSubmit}>
               Submit
+            </Button>
+            <Button variant="contained" color="primary" onClick={onSubmitWithPrivateKey} style={{marginLeft: "10px"}}>
+              Submit (using private key)
             </Button>
           </div>
         </div>

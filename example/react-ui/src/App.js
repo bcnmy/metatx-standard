@@ -105,23 +105,13 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
 
-      /**
-       * create an instance of BiconomyForwarder <= ABI, Address
-       * create functionSignature
-       * create txGas param which is gas estimation of his function call
-       * get nonce from biconomyForwarder instance
-       * create a forwarder request
-       * create dataToSign as per signature scheme used (EIP712 or personal)
-       * get the signature from user
-       * create the domain separator
-       * Now call the meta tx API
-       */
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
 
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
+        let networkId = 42;
 
         const daiPermitOptions = {
           spender: config.feeProxyAddress,
@@ -132,21 +122,25 @@ function App() {
 
         await getDaiPermit(provider,userAddress,daiPermitOptions);
       
-        let biconomyForwarder = getBiconomyForwarder(provider,42);
+        let biconomyForwarder = getBiconomyForwarder(provider,networkId);
 
         //const batchId = await biconomyForwarder.getBatch(userAddress);
         const batchNonce = await biconomyForwarder.getNonce(userAddress,0);
-        const tokGasPrice = await getTokenGasPrice(provider,42,config.tokenAddress);
+        const tokGasPrice = await getTokenGasPrice(provider,networkId,config.tokenAddress);
         console.log(batchNonce);
 
-        const req = buildForwardTxRequest(userAddress,config.contract.address,Number(txGas),0,batchNonce,tokGasPrice,functionSignature,config.tokenAddress);
+        let request = await buildForwardTxRequest(provider,networkId,{account:userAddress,to:config.contract.address,gasLimitNum:Number(txGas),batchId:0,batchNonce,tokenGasPrice:tokGasPrice,data:functionSignature,token:config.tokenAddress});
+        const req = request.request;
+        console.log(req);
+        const cost = request.cost;
+        console.log(cost);
       
 
-        const domainSeparator = getDomainSeperator(helperAttributes.biconomyForwarderDomainData);
+        const domainSeparator = getDomainSeperator(networkId);
 
         console.log(domainSeparator);
 
-        const dataToSign = getDataToSignForEIP712(req);
+        const dataToSign = getDataToSignForEIP712(req,networkId);
 
         const promi = new Promise(async function(resolve, reject) {
           await web3.currentProvider.send(
@@ -205,24 +199,29 @@ function App() {
 
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
+        let networkId = 42;
         
         const daiPermitOptions = {
           spender: config.feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true,
-          networkId: 42
+          networkId: networkId
         };
 
         await getDaiPermit(provider,userAddress,daiPermitOptions);
       
-        let biconomyForwarder = getBiconomyForwarder(provider,42);
+        let biconomyForwarder = getBiconomyForwarder(provider,networkId);
 
         //const batchId = await biconomyForwarder.getBatch(userAddress);
         const batchNonce = await biconomyForwarder.getNonce(userAddress,0);
         const tokGasPrice = await getTokenGasPrice(provider,42,config.tokenAddress);
         console.log(batchNonce);
 
-        const req = buildForwardTxRequest(userAddress,config.contract.address,Number(txGas),0,batchNonce,tokGasPrice,functionSignature,config.tokenAddress);
+        let request = await buildForwardTxRequest(provider,networkId,{account:userAddress,to:config.contract.address,gasLimitNum:Number(txGas),batchId:0,batchNonce,tokenGasPrice:tokGasPrice,data:functionSignature,token:config.tokenAddress});
+        const req = request.request;
+        console.log(req);
+        const cost = request.cost;
+        console.log(cost);
 
         const hashToSign = getDataToSignForPersonalSign(req);
 
@@ -278,7 +277,7 @@ function App() {
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "4d527596-cc9b-490a-969e-0f7167a161de",
+            "apiId": "8bbf8cf9-0e03-4137-b794-d7eb86da460b",
             "params": params,
             "from": userAddress,
             //"gasLimit":1000000,

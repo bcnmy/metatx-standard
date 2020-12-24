@@ -116,6 +116,7 @@ const buildForwardTxRequest = async (provider,networkId,{account, to, gasLimitNu
     const feeManager = new ethers.Contract(feeManagerAddress, helperAttributes.feeManagerAbi, signer);
     const feeMultiplier = await feeManager.getFeeMultiplier(account, token);
     const transferHandlerGas = await feeProxy.transferHandlerGas();
+    //todo transfer handler gas based on token address 
 
     const req = {
         from: account,

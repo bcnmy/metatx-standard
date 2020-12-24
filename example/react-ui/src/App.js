@@ -81,8 +81,6 @@ function App() {
               config.contract.address
             );
 
-            ethersProvider = new ethers.providers.Web3Provider(provider);
-
             setSelectedAddress(provider.selectedAddress);
             getQuoteFromNetwork();
             provider.on("accountsChanged", function(accounts) {
@@ -120,15 +118,15 @@ function App() {
           networkId: 42
         };
 
-        await getDaiPermit(provider,userAddress,daiPermitOptions);
+        await getDaiPermit(userAddress,daiPermitOptions);
       
-        let biconomyForwarder = getBiconomyForwarder(provider,networkId);
+        let biconomyForwarder = await getBiconomyForwarder(networkId);
         //const batchId = await biconomyForwarder.getBatch(userAddress);
         const batchNonce = await biconomyForwarder.getNonce(userAddress,0);
-        const tokGasPrice = await getTokenGasPrice(provider,networkId,config.tokenAddress);
+        const tokGasPrice = await getTokenGasPrice(networkId,config.tokenAddress);
         console.log(batchNonce);
 
-        let request = await buildForwardTxRequest(provider,networkId,{account:userAddress,to:config.contract.address,gasLimitNum:Number(txGas),batchId:0,batchNonce,tokenGasPrice:tokGasPrice,data:functionSignature,token:config.tokenAddress});
+        let request = await buildForwardTxRequest(networkId,{account:userAddress,to:config.contract.address,gasLimitNum:Number(txGas),batchId:0,batchNonce,tokenGasPrice:tokGasPrice,data:functionSignature,token:config.tokenAddress});
         const req = request.request;
         console.log(req);
         const cost = request.cost;

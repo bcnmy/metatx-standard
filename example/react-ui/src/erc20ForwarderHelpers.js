@@ -4,7 +4,7 @@ const { config } = require("./config"); //remove config and hardcode biconomy AP
 let helperAttributes = {};
 let supportedNetworks = [42];
 helperAttributes.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-helperAttributes.baseURL = "https://api.biconomy.io";
+helperAttributes.baseURL = "https://localhost:4000";
 let daiTokenAddressMap = {},
   usdtTokenAddressMap = {},
   usdcTokenAddressMap = {},
@@ -67,10 +67,11 @@ helperAttributes.forwardRequestType = [
   //add new tokens
 
 // pass the networkId to get biconomy forwarder instance and populate domain data
-const getBiconomyForwarder = (provider,networkId) => {
+const getBiconomyForwarder = async (networkId) => {
      //get trusted forwarder contract address from network id
      const forwarderAddress = biconomyForwarderAddressMap[networkId];
-     const ethersProvider = new ethers.providers.Web3Provider(provider);
+     await window["ethereum"].enable();
+     const ethersProvider = new ethers.providers.Web3Provider(window["ethereum"]);
      const signer = ethersProvider.getSigner();
      const forwarder = new ethers.Contract(forwarderAddress, helperAttributes.biconomyForwarderAbi, signer);
      return forwarder;
@@ -88,11 +89,12 @@ const getGasPrice = async (networkId) => {
   };
   
   
-const getTokenGasPrice = async (provider, networkId, tokenAddress) => {
+const getTokenGasPrice = async (networkId, tokenAddress) => {
+    await window["ethereum"].enable();
+    const ethersProvider = new ethers.providers.Web3Provider(window["ethereum"]);
+    const signer = ethersProvider.getSigner();
     const gasPrice = ethers.BigNumber.from(await getGasPrice(networkId));
     const oracleAggregatorAddress = oracleAggregatorAddressMap[networkId];
-    const ethersProvider = new ethers.providers.Web3Provider(provider);
-    const signer = ethersProvider.getSigner();
     const oracleAggregator = new ethers.Contract(oracleAggregatorAddress, helperAttributes.oracleAggregatorAbi, signer);
     const tokenPrice = await oracleAggregator.getTokenPrice(tokenAddress);
     const tokenOracleDecimals = await oracleAggregator.getTokenOracleDecimals(tokenAddress);
@@ -102,9 +104,10 @@ const getTokenGasPrice = async (provider, networkId, tokenAddress) => {
 
 // rather than multiple parameters get the object  
 // deadLine optional paramter and default value inside 
-const buildForwardTxRequest = async (provider,networkId,{account, to, gasLimitNum, batchId, batchNonce, tokenGasPrice, data, token}) => {
+const buildForwardTxRequest = async (networkId,{account, to, gasLimitNum, batchId, batchNonce, tokenGasPrice, data, token}) => {
+    await window["ethereum"].enable();
+    const ethersProvider = new ethers.providers.Web3Provider(window["ethereum"]);
 
-    const ethersProvider = new ethers.providers.Web3Provider(provider);
     const signer = ethersProvider.getSigner();
 
     const oracleAggregatorAddress = oracleAggregatorAddressMap[networkId];
@@ -207,7 +210,11 @@ const getDomainSeperator = (networkId) => {
     return domainSeparator;
 };
 
-const getDaiPermit = async(provider,account,daiPermitOptions) => {
+const getDaiPermit = async(account,daiPermitOptions) => {
+
+    await window["ethereum"].enable();
+    const ethersProvider = new ethers.providers.Web3Provider(window["ethereum"]);
+    const signer = ethersProvider.getSigner();
 
     const spender = daiPermitOptions.spender;
     const expiry = daiPermitOptions.expiry;
@@ -215,9 +222,7 @@ const getDaiPermit = async(provider,account,daiPermitOptions) => {
     const chainId = daiPermitOptions.networkId;
     const daiDomainData = helperAttributes.daiDomainData;
     daiDomainData.verifyingContract = daiTokenAddressMap[chainId];
-    daiDomainData.chainId = chainId;
-    const ethersProvider = new ethers.providers.Web3Provider(provider);
-    const signer = ethersProvider.getSigner();
+    daiDomainData.chainId = chainId;   
     const dai = new ethers.Contract(daiDomainData.verifyingContract, helperAttributes.daiAbi, signer);
     const nonce = await dai.nonces(account);
     const permitDataToSign = {

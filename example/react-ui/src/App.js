@@ -6,7 +6,7 @@ import {
   NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
-import Web3 from "web3";
+import {ethers} from "ethers";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -33,8 +33,8 @@ let domainData = {
   verifyingContract: config.contract.address
 };
 
-let web3;
-let contract;
+let ethersProvider, signer;
+let contract, contractInterface;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -69,12 +69,15 @@ function App() {
           if (provider.networkVersion == "42") {
             domainData.chainId = 42;
 
-          web3 = new Web3(provider);
+          ethersProvider = new ethers.providers.Web3Provider(provider);
+          signer = ethersProvider.getSigner();
 
-          contract = new web3.eth.Contract(
+          contract = new ethers.Contract(
+            config.contract.address,
             config.contract.abi,
-            config.contract.address
+            signer
           );
+          contractInterface = new ethers.utils.Interface(config.contract.abi);
           setSelectedAddress(provider.selectedAddress);
           getQuoteFromNetwork();
           provider.on("accountsChanged", function(accounts) {
@@ -101,8 +104,8 @@ function App() {
         console.log("Sending meta transaction");
         let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
         let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-        let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let nonce = await contract.getNonce(userAddress);
+        let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
         let message = {};
         message.nonce = parseInt(nonce);
         message.from = userAddress;
@@ -146,8 +149,8 @@ function App() {
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
-        let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let nonce = await contract.getNonce(userAddress);
+        let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
         let message = {};
         message.nonce = parseInt(nonce);
         message.from = userAddress;
@@ -162,35 +165,12 @@ function App() {
           primaryType: "MetaTransaction",
           message: message
         });
-        console.log(domainData);
-        console.log();
-        web3.currentProvider.send(
-          {
-            jsonrpc: "2.0",
-            id: 999999999999,
-            method: "eth_signTypedData_v4",
-            params: [userAddress, dataToSign]
-          },
-          function(error, response) {
-            console.info(`User signature is ${response.result}`);
-            if (error || (response && response.error)) {
-              showErrorMessage("Could not get user signature");
-            } else if (response && response.result) {
-              let { r, s, v } = getSignatureParameters(response.result);
-              console.log(userAddress);
-              console.log(JSON.stringify(message));
-              console.log(message);
-              console.log(getSignatureParameters(response.result));
 
-              const recovered = sigUtil.recoverTypedSignature_v4({
-                data: JSON.parse(dataToSign),
-                sig: response.result
-              });
-              console.log(`Recovered ${recovered}`);
-              sendTransaction(userAddress, functionSignature, r, s, v);
-            }
-          }
-        );
+        let signature = await ethersProvider.send("eth_signTypedData_v4", [userAddress, dataToSign]);
+
+        let { r, s, v } = getSignatureParameters(signature);
+
+        sendTransaction(userAddress, functionSignature, r, s, v);
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -211,7 +191,7 @@ function App() {
   };
 
   const getSignatureParameters = signature => {
-    if (!web3.utils.isHexStrict(signature)) {
+    if (!ethers.utils.isHexString(signature)) {
       throw new Error(
         'Given value "'.concat(signature, '" is not a valid hex string.')
       );
@@ -219,7 +199,7 @@ function App() {
     var r = signature.slice(0, 66);
     var s = "0x".concat(signature.slice(66, 130));
     var v = "0x".concat(signature.slice(130, 132));
-    v = web3.utils.hexToNumber(v);
+    v = ethers.BigNumber.from(v).toNumber();
     if (![27, 28].includes(v)) v += 27;
     return {
       r: r,
@@ -228,28 +208,24 @@ function App() {
     };
   };
 
-  const getQuoteFromNetwork = () => {
-    if (web3 && contract) {
-      contract.methods
-        .getQuote()
-        .call()
-        .then(function(result) {
-          console.log(result);
-          if (
-            result &&
-            result.currentQuote != undefined &&
-            result.currentOwner != undefined
-          ) {
-            if (result.currentQuote == "") {
-              showErrorMessage("No quotes set on blockchain yet");
-            } else {
-              setQuote(result.currentQuote);
-              setOwner(result.currentOwner);
-            }
-          } else {
-            showErrorMessage("Not able to get quote information from Network");
-          }
-        });
+  const getQuoteFromNetwork = async () => {
+    if (ethersProvider && contract) {
+      let result = await contract.getQuote();
+      console.log(result);
+      if (
+        result &&
+        result.currentQuote != undefined &&
+        result.currentOwner != undefined
+      ) {
+        if (result.currentQuote == "") {
+          showErrorMessage("No quotes set on blockchain yet");
+        } else {
+          setQuote(result.currentQuote);
+          setOwner(result.currentOwner);
+        }
+      } else {
+        showErrorMessage("Not able to get quote information from Network");
+      }
     }
   };
 
@@ -266,7 +242,7 @@ function App() {
   };
 
   const sendTransaction = async (userAddress, functionData, r, s, v) => {
-    if (web3 && contract) {
+    if (ethersProvider && contract) {
       try {
         fetch(`https://localhost:80/api/v2/meta-tx/native`, {
           method: "POST",
@@ -286,8 +262,9 @@ function App() {
           console.log(result);
           showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
 
-          let receipt = await getTransactionReceiptMined(result.txHash, 2000);
-          setTransactionHash(result.txHash);
+          let receipt = await ethersProvider.waitForTransaction(result.txHash);
+          console.log(receipt);
+          setTransactionHash(receipt.transactionHash);
           showSuccessMessage("Transaction confirmed on chain");
           getQuoteFromNetwork();
         }).catch(function(error) {
@@ -296,26 +273,6 @@ function App() {
       } catch (error) {
         console.log(error);
       }
-    }
-  };
-
-  const getTransactionReceiptMined = (txHash, interval) => {
-    const self = this;
-    const transactionReceiptAsync = async function(resolve, reject) {
-      var receipt = await web3.eth.getTransactionReceipt(txHash);
-      if (receipt == null) {
-          setTimeout(
-              () => transactionReceiptAsync(resolve, reject),
-              interval ? interval : 500);
-      } else {
-          resolve(receipt);
-      }
-    };
-
-    if (typeof txHash === "string") {
-        return new Promise(transactionReceiptAsync);
-    } else {
-        throw new Error("Invalid Type: " + txHash);
     }
   };
 

@@ -73,7 +73,6 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "5px",
   },
 }));
-let biconomy;
 
 function App() {
   const classes = useStyles();

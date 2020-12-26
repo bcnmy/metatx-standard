@@ -7,13 +7,15 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import { Biconomy, ERC20ForwarderClient } from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
-import { makeStyles, responsiveFontSizes } from "@material-ui/core/styles";
-import Link from "@material-ui/core/Link";
-import Typography from "@material-ui/core/Typography";
-import { Box } from "@material-ui/core";
+
+import {Biconomy} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
+import {makeStyles} from '@material-ui/core/styles';
+import Link from '@material-ui/core/Link';
+import Typography from '@material-ui/core/Typography';
+import {Box} from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
+
 
 const domainType = [
   {
@@ -49,6 +51,7 @@ const metaTransactionType = [
   },
 ];
 
+
 let domainData = {
   name: "TestContract",
   version: "1",
@@ -70,6 +73,7 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "5px",
   },
 }));
+let biconomy;
 
 function App() {
   const classes = useStyles();

@@ -6,15 +6,16 @@ import {
   NotificationManager,
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
-import Web3 from "web3";
-
 import {Biconomy} from "@biconomy/mexa"; // have to update a fix so there is no breaking changes
+import { ethers } from "ethers";
 import {makeStyles} from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import {Box} from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
+const EIP712_SIGN = "EIP712_SIGN";
+const PERSONAL_SIGN = "PERSONAL_SIGN";
 
 
 const domainType = [
@@ -36,22 +37,7 @@ const domainType = [
   },
 ];
 
-const metaTransactionType = [
-  {
-    name: "nonce",
-    type: "uint256",
-  },
-  {
-    name: "from",
-    type: "address",
-  },
-  {
-    name: "functionSignature",
-    type: "bytes",
-  },
-];
-
-
+// for other networks omit chainId and verifyingContract and add them during init process based on provider->networkId
 let domainData = {
   name: "TestContract",
   version: "1",
@@ -59,9 +45,9 @@ let domainData = {
   verifyingContract: config.contract.address,
 };
 
-let web3;
-let contract;
+let ethersProvider, signer;
 let biconomy;
+let contract, contractInterface, contractWithBasicSign;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -94,20 +80,27 @@ function App() {
         const provider = window["ethereum"];
         await provider.enable();
 
+        /*if (provider.networkVersion == chainId.toString()) {
+          domainData.chainId = chainId;*/
+
         biconomy = new Biconomy(provider, {
           apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
           debug: true,
         });
 
-        web3 = new Web3(biconomy);
+        ethersProvider = new ethers.providers.Web3Provider(biconomy);
+        signer = ethersProvider.getSigner();
+        console.log(signer);
 
         biconomy
           .onEvent(biconomy.READY, () => {
             // Initialize your dapp here like getting user accounts etc
-            contract = new web3.eth.Contract(
+            contract = new ethers.Contract(
+              config.contract.address,
               config.contract.abi,
-              config.contract.address
+              signer.connectUnchecked()
             );
+            contractInterface = new ethers.utils.Interface(config.contract.abi);
             setSelectedAddress(provider.selectedAddress);
             getQuoteFromNetwork();
             provider.on("accountsChanged", function (accounts) {
@@ -116,6 +109,8 @@ function App() {
           })
           .onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
+            console.log(message);
+            console.log(error);
           });
       } else {
         showErrorMessage("Metamask not installed");
@@ -134,7 +129,8 @@ function App() {
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
-        // let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        //let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
+        //could also use populateTransaction 
         sendTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
@@ -161,7 +157,8 @@ function App() {
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
-        //let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        //let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
+        //could also use populateTransaction 
         sendSignedRawTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
@@ -183,10 +180,9 @@ function App() {
   };
 
   const getQuoteFromNetwork = () => {
-    if (web3 && contract) {
-      contract.methods
+    if (ethersProvider && contract) {
+      contract
         .getQuote()
-        .call()
         .then(function (result) {
           console.log(result);
           if (
@@ -223,36 +219,45 @@ function App() {
   // get user signature and send raw tx along with signature type
   const sendSignedRawTransaction = async (userAddress, arg) => {
     let privateKey =
-      "a0d8fface04545793ef670d0aa6c78a3cdb935a4bb5d55f3061f7558e51b4570"; // or process.env.privKey
-    let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-    let gasLimit = await contract.methods
-      .setQuote(arg)
-      .estimateGas({ from: userAddress });
-    let txParams = {
-      from: userAddress,
-      gasLimit: web3.utils.toHex(gasLimit),
-      to: config.contract.address,
-      value: "0x0",
-      data: functionSignature,
-    };
+      "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // or process.env.privKey
+    let wallet = new ethers.Wallet(privateKey);  
+    let functionSignature = contractInterface.encodeFunctionData("setQuote", [arg]);
+    //could also use populateTransaction 
 
-    const signedTx = await web3.eth.accounts.signTransaction(
-      txParams,
-      `0x${privateKey}`
-    );
-    console.log(signedTx.rawTransaction);
+    // need to get gas estimation for ethers
+    /*let gasLimit = await contract.methods
+      .setQuote(arg)
+      .estimateGas({ from: userAddress });*/
+
+
+    let rawTx,signedTx;  
+
+    rawTx = {
+      to: config.contract.address,
+      data: functionSignature,
+      from: userAddress
+    }
+
+    signedTx = await wallet.signTransaction(rawTx);
+
+    console.log(signedTx);
+    //console.log(signedTx.rawTransaction);
+
 
     // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
     const dataToSign = await biconomy.getForwardRequestMessageToSign(
-      signedTx.rawTransaction
+      rawTx
     );
-    const signature = sigUtil.signTypedMessage(
+
+    const signature = await wallet._signTypedData(dataToSign.eip712Format.domain, dataToSign.eip712Format.types, dataToSign.eip712Format.message);
+
+    /*const signature = sigUtil.signTypedMessage(
       new Buffer.from(privateKey, "hex"),
       {
         data: dataToSign.eip712Format, // option to get personalFormat also 
       },
       "V4"
-    );
+    );*/
 
     let rawTransaction = signedTx.rawTransaction;
 
@@ -262,55 +267,55 @@ function App() {
       signatureType: "EIP712_SIGN",
     };
 
-    // Use any one of the methods below to check for transaction confirmation
-    // USING PROMISE
-    /*let receipt = await web3.eth.sendSignedTransaction(data, (error, txHash) => {
-            if (error) {
-                return console.error(error);
-            }
-            console.log(txHash);
-        })*/
-
-    // USING event emitter    
-    let tx = web3.eth.sendSignedTransaction(data);
-
-    tx.on("transactionHash", function (hash) {
-      console.log(`Transaction hash is ${hash}`);
-      showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-    }).once("confirmation", function (confirmationNumber, receipt) {
+    // console.log(ethersProvider.waitForTransaction);
+    let transactionHash;  
+    try {
+      let receipt = ethersProvider.sendTransaction(data); // should it be signedTx instead of data?
       console.log(receipt);
-      setTransactionHash(receipt.transactionHash);
+    } catch(error) {
+      // Ethers check the hash from user's signed tx and hash returned from Biconomy
+      // Both hash are expected to be different as biconomy send the transaction from its relayers
+      if(error.returnedHash && error.expectedHash) {
+        console.log("Transaction hash : ", error.returnedHash);
+        transactionHash = error.returnedHash;
+      } else {
+        console.log(error);
+        showErrorMessage("Error while sending transaction");
+      }
+    }
+
+    if(transactionHash) {
+      showInfoMessage(`Transaction sent by relayer with hash ${transactionHash}`);
+      let receipt = await ethersProvider.waitForTransaction(transactionHash);
+      console.log(receipt);
       showSuccessMessage("Transaction confirmed on chain");
       getQuoteFromNetwork();
-    });
+    } else {
+      showErrorMessage("Could not get transaction hash");
+    }
+
+
   };
 
   const sendTransaction = async (userAddress, arg) => {
-    if (web3 && contract) {
+    if (ethersProvider && contract) {
       try {
-        let gasLimit = await contract.methods
-          .setQuote(arg)
-          .estimateGas({ from: userAddress });
-        let gasPrice = await web3.eth.getGasPrice();
-        console.log(gasLimit);
-        console.log(gasPrice);
-        let tx = contract.methods
-          .setQuote(arg)
-          .send({
-            from: userAddress,
-            gasPrice: gasPrice,
-            signatureType: "EIP712_SIGN",
-          });
-
-        tx.on("transactionHash", function (hash) {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-        }).once("confirmation", function (confirmationNumber, receipt) {
-          console.log(receipt);
-          setTransactionHash(receipt.transactionHash);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
+        let {data,gasLimit} = await contract.populateTransaction.setQuote(arg);
+        // ethers equivalent of getting gas price like web3.eth.getGasPrice();
+        console.log(gasLimit);      
+        let tx = await contract
+        .setQuote(arg)
+        .send({
+          from: userAddress,
+          signatureType: "EIP712_SIGN",
         });
+
+        console.log("Transaction hash : ", tx);
+        //showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+        //let confirmation = await tx.wait();
+        //console.log(confirmation);
+        //setTransactionHash(tx.hash);
+        //getQuoteFromNetwork();
       } catch (error) {
         console.log(error);
       }

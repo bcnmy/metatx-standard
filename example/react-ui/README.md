@@ -2,6 +2,16 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ## Trusted Forwarder Approach for meta transaction 
 
+Configre your contract in the config section
+
+Make sure your contracts are EIP2771 compatible
+i) trusts the trusted forwarder (biconomyForwarder)
+ii) inherits from BaseRelayRecipient.sol
+
+here there are two ways to do meta transaction
+a) getting signature from the front end and send transaction (eth_sendTransaction will be intecepted by mexa SDK)
+b) getting signature in the backend using a private key and then sending a signed transaction. Mexa will handle this also and relay the transaction through biconomy's relayer infrastructure!
+
 ## Available Scripts
 
 In the project directory, you can run:

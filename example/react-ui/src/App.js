@@ -39,12 +39,8 @@ let daiDomainData = {
   name : "Dai Stablecoin",
   version : "1",
   chainId : 42,
-  verifyingContract : "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa"
+  verifyingContract : config.daiAddress
 };
-
-const feeProxyAddress = "0xFd5EEb7D07f37090ed3bD08E6B1FBC0E21C52FEF";
-const transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0";
-const tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 
 // todo
 // make clients pass the chainId instead of feeProxyDomainData
@@ -52,13 +48,14 @@ let feeProxyDomainData = {
   name : "TEST",
   version : "1",
   chainId : 42,
-  verifyingContract : "0x656a7B1B1E4525dB80bca5e80F4777F4b0C599b7"
+  verifyingContract : config.biconomyForwarderAddress
 };
 
 
 let web3;
 let biconomy;
-let contract,daiContract;
+let contract;
+//let daiContract,usdtContract,usdcContract;
 let ercForwarderClient,permitClient;
 
 const useStyles = makeStyles((theme) => ({
@@ -96,10 +93,10 @@ function App() {
           //web3 = new Web3(provider);
           console.log(web3);
 
-          daiContract = new web3.eth.Contract(
-            config.tokenAbi,
-            tokenAddress
-          );
+          /*daiContract = new web3.eth.Contract(
+            config.daiAbi,
+            config.daiAddress
+          );*/
 
           //contract should have been registered on the dashboard as ERC20_FORWARDER
           contract = new web3.eth.Contract(
@@ -149,7 +146,7 @@ function App() {
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
         console.log("getting permit to spend dai");
-        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${feeProxyAddress}`);
+        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
         await permitClient.daiPermit(daiPermitOptions);
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -159,7 +156,7 @@ function App() {
         .setQuote(newQuote)
         .estimateGas({ from: userAddress });
 
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,Number(gasLimit),functionSignature);
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
         const fee = builtTx.cost;
         console.log(tx);
@@ -194,7 +191,7 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-          spender: feeProxyAddress,
+          spender: config.feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
@@ -233,7 +230,7 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-          spender: feeProxyAddress,
+          spender: config.feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
@@ -242,7 +239,7 @@ function App() {
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
         console.log("getting permit to spend dai");
-        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${feeProxyAddress}`);
+        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
         await permitClient.daiPermit(daiPermitOptions);
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -252,7 +249,7 @@ function App() {
         .setQuote(newQuote)
         .estimateGas({ from: userAddress });
 
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,tokenAddress,Number(gasLimit),functionSignature);
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
         const fee = builtTx.cost;
 

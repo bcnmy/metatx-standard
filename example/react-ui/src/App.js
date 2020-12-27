@@ -103,7 +103,7 @@ function App() {
             contractInterface = new ethers.utils.Interface(config.contract.abi);
             setSelectedAddress(provider.selectedAddress);
             getQuoteFromNetwork();
-            provider.on("accountsChanged", function (accounts) {
+            ethersProvider.on("accountsChanged", function (accounts) {
               setSelectedAddress(accounts[0]);
             });
           })
@@ -235,7 +235,9 @@ function App() {
     rawTx = {
       to: config.contract.address,
       data: functionSignature,
-      from: userAddress
+      from: userAddress,
+      signatureType: "EIP712_SIGN",
+      
     }
 
     signedTx = await wallet.signTransaction(rawTx);
@@ -276,7 +278,13 @@ function App() {
       signatureType: "EIP712_SIGN",
     };
 
-    // console.log(ethersProvider.waitForTransaction);
+  wallet = wallet.connect(ethersProvider);
+
+  const createReceipt = await ethersProvider.sendTransaction(signedTx); // this is like send signed transaction
+   await createReceipt.wait();
+   console.log(`Transaction successful with hash: ${createReceipt.hash}`);
+
+  /*  // console.log(ethersProvider.waitForTransaction);
     let transactionHash;  
     try {
       let receipt = await ethersProvider.sendTransaction(data); // should it be signedTx instead of data?
@@ -302,29 +310,46 @@ function App() {
     } else {
       showErrorMessage("Could not get transaction hash");
     }
-
+*/
 
   };
 
   const sendTransaction = async (userAddress, arg) => {
     if (ethersProvider && contract) {
       try {
-        let {data,gasLimit} = await contract.populateTransaction.setQuote(arg);
-        // ethers equivalent of getting gas price like web3.eth.getGasPrice();
-        console.log(gasLimit);      
-        let tx = await contract
-        .setQuote(arg)
-        .send({
+        let {data} = await contract.populateTransaction.setQuote(arg);
+        let gasPrice = await ethersProvider.getGasPrice();
+        let gasLimit = await ethersProvider.estimateGas({
+          to: config.contract.address,
           from: userAddress,
-          signatureType: "EIP712_SIGN",
-        });
+          data: data
+        })
+        console.log(gasLimit.toString());
+        console.log(gasPrice.toString()); 
+
+        console.log(data);
+        let txParams = {
+           data: data,
+           to: config.contract.address,
+           from: userAddress,
+           gasLimit: gasLimit,
+           signatureType: "EIP712_SIGN"
+        };  
+
+        //let tx = await ethersProvider.sendTransaction(txParams); // yet to figure out       
+        let tx = await ethersProvider.send("eth_sendTransaction", [txParams])
 
         console.log("Transaction hash : ", tx);
-        //showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-        //let confirmation = await tx.wait();
-        //console.log(confirmation);
-        //setTransactionHash(tx.hash);
-        //getQuoteFromNetwork();
+        showInfoMessage(`Transaction sent by relayer with hash ${tx}`);
+
+        //event emitter methods
+        ethersProvider.once(tx, (transaction) => {
+          // Emitted when the transaction has been mined
+          console.log(transaction);
+          setTransactionHash(tx);
+          getQuoteFromNetwork();
+        })
+        
       } catch (error) {
         console.log(error);
       }

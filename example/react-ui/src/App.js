@@ -222,46 +222,42 @@ function App() {
       "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // or process.env.privKey
     let wallet = new ethers.Wallet(privateKey);  
     let functionSignature = contractInterface.encodeFunctionData("setQuote", [arg]);
-    //could also use populateTransaction 
+    let gasPrice = await ethersProvider.getGasPrice();
+    let gasLimit = await ethersProvider.estimateGas({
+          to: config.contract.address,
+          from: userAddress,
+          data: functionSignature
+        });
+    console.log(gasLimit.toString());
+    console.log(gasPrice.toString()); 
 
-    // need to get gas estimation for ethers
-    /*let gasLimit = await contract.methods
-      .setQuote(arg)
-      .estimateGas({ from: userAddress });*/
-
+    console.log(functionSignature);
 
     let rawTx,signedTx;  
 
     rawTx = {
       to: config.contract.address,
       data: functionSignature,
-      from: userAddress,
-      signatureType: "EIP712_SIGN",
-      
-    }
+      from: userAddress  
+    };
 
     signedTx = await wallet.signTransaction(rawTx);
 
-    console.log(signedTx);
-    //console.log(signedTx.rawTransaction);
-
+    console.log(signedTx); // this is rawTransaction itself in ethers response?
+    
 
     // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
     const dataToSign = await biconomy.getForwardRequestMessageToSign(
       signedTx
     );
     console.log(dataToSign);
-
     const signParams = dataToSign.eip712Format;
-
     //https://github.com/ethers-io/ethers.js/issues/687
     delete signParams.types.EIP712Domain;
-
-
     console.log(signParams);
-
     const signature = await wallet._signTypedData(signParams.domain, signParams.types, signParams.message);
 
+    //optional
     /*const signature = sigUtil.signTypedMessage(
       new Buffer.from(privateKey, "hex"),
       {
@@ -270,47 +266,34 @@ function App() {
       "V4"
     );*/
 
-    //let rawTransaction = signedTx.rawTransaction;
-
     let data = {
       signature: signature,
       rawTransaction: signedTx,
       signatureType: "EIP712_SIGN",
     };
 
-  wallet = wallet.connect(ethersProvider);
+   //test 
+   //wallet = wallet.connect(ethersProvider);
 
-  const createReceipt = await ethersProvider.sendTransaction(signedTx); // this is like send signed transaction
+   /*const createReceipt = await ethersProvider.sendTransaction(signedTx); 
+   // this is like send signed transaction, only works when you dont need extra parameters!
    await createReceipt.wait();
-   console.log(`Transaction successful with hash: ${createReceipt.hash}`);
+   console.log(`Transaction successful with hash: ${createReceipt.hash}`);*/
+      
+    let tx = await ethersProvider.send("eth_sendRawTransaction", [data]);
+   
 
-  /*  // console.log(ethersProvider.waitForTransaction);
-    let transactionHash;  
-    try {
-      let receipt = await ethersProvider.sendTransaction(data); // should it be signedTx instead of data?
-      console.log(receipt);
-    } catch(error) {
-      // Ethers check the hash from user's signed tx and hash returned from Biconomy
-      // Both hash are expected to be different as biconomy send the transaction from its relayers
-      if(error.returnedHash && error.expectedHash) {
-        console.log("Transaction hash : ", error.returnedHash);
-        transactionHash = error.returnedHash;
-      } else {
-        console.log(error);
-        showErrorMessage("Error while sending transaction");
-      }
-    }
+    console.log("Transaction hash : ", tx);
+    showInfoMessage(`Transaction sent by relayer with hash ${tx}`);
 
-    if(transactionHash) {
-      showInfoMessage(`Transaction sent by relayer with hash ${transactionHash}`);
-      let receipt = await ethersProvider.waitForTransaction(transactionHash);
-      console.log(receipt);
-      showSuccessMessage("Transaction confirmed on chain");
+    //event emitter methods
+    ethersProvider.once(tx, (transaction) => {
+      // Emitted when the transaction has been mined
+      console.log(transaction);
+      setTransactionHash(tx);
       getQuoteFromNetwork();
-    } else {
-      showErrorMessage("Could not get transaction hash");
-    }
-*/
+    });
+        
 
   };
 

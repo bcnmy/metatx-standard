@@ -145,9 +145,20 @@ function App() {
         let userAddress = selectedAddress;
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
+        
+        /*
         console.log("getting permit to spend dai");
         showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
         await permitClient.daiPermit(daiPermitOptions);
+        */
+
+        /**
+         * USDC permit
+         */
+
+        /* USDT permit (without any helpers approve transaction - can't be gasless!)
+        */
+
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
         // txGas should be calculated and passed here or calculate within the method
@@ -156,7 +167,7 @@ function App() {
         .setQuote(newQuote)
         .estimateGas({ from: userAddress });
 
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.usdtAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
         const fee = builtTx.cost;
         console.log(tx);

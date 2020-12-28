@@ -28,7 +28,6 @@ const abi = require("ethereumjs-abi");
 let web3;
 let contract;
 let provider;
-//let biconomy;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -67,7 +66,6 @@ function App() {
           provider = window["ethereum"];
           await provider.enable();
 
-          //biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           web3 = new Web3(provider);
 
             contract = new web3.eth.Contract(

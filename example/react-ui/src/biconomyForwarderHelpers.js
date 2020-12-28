@@ -41,6 +41,7 @@ helperAttributes.forwardRequestType = [
 const getBiconomyForwarder = async (provider, networkId) => {
         //get trusted forwarder contract address from network id
         const forwarderAddress = biconomyForwarderAddressMap[networkId];
+        // below line is the problem
         const ethersProvider = new ethers.providers.Web3Provider(provider);
         const signer = ethersProvider.getSigner();
         const forwarder = new ethers.Contract(forwarderAddress, helperAttributes.biconomyForwarderAbi, signer);

@@ -162,6 +162,7 @@ function App() {
         sendSignedRawTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
+        //needs to change for ethers
         contract.methods
           .setQuote(newQuote)
           .send({ from: selectedAddress })
@@ -269,7 +270,7 @@ function App() {
     let data = {
       signature: signature,
       rawTransaction: signedTx,
-      signatureType: "EIP712_SIGN",
+      signatureType: EIP712_SIGN,
     };
 
    //test 

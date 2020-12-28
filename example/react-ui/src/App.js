@@ -183,6 +183,7 @@ function App() {
         if(receipt)
         {
           console.log(receipt);
+          console.log('nonce was ' + (receipt.logs[2].topics[3]).toString());
           setTransactionHash(receipt.transactionHash);
           showSuccessMessage("Transaction confirmed on chain");
           getQuoteFromNetwork();

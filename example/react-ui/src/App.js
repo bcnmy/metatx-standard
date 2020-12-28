@@ -146,11 +146,11 @@ function App() {
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
         
-        /*
+        
         console.log("getting permit to spend dai");
         showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
         await permitClient.daiPermit(daiPermitOptions);
-        */
+        
 
         /**
          * USDC permit
@@ -167,16 +167,28 @@ function App() {
         .setQuote(newQuote)
         .estimateGas({ from: userAddress });
 
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.usdtAddress,Number(gasLimit),functionSignature);
+        //todo
+        //test with USDT and USDC
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
         const fee = builtTx.cost;
         console.log(tx);
         console.log(fee);
         showInfoMessage(`Signing message for meta transaction`);
-        const txHash = await ercForwarderClient.sendTxEIP712(tx);
-        console.log(txHash);
+        let transaction = await ercForwarderClient.sendTxEIP712(tx);
+        console.log(transaction);
 
-        //sendSignedTransaction(userAddress, newQuote);
+        // how do we return Promise and event emitter?
+        const receipt = await fetchMinedTransactionReceipt(transaction);
+        if(receipt)
+        {
+          console.log(receipt);
+          setTransactionHash(receipt.transactionHash);
+          showSuccessMessage("Transaction confirmed on chain");
+          getQuoteFromNetwork();
+        }
+
+
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -235,6 +247,24 @@ function App() {
     }
   };
 
+  const fetchMinedTransactionReceipt = (transactionHash) => {
+
+    return new Promise((resolve, reject) => {
+      
+      const { web3 } = window;
+  
+      var timer = setInterval(()=> {
+        web3.eth.getTransactionReceipt(transactionHash, (err, receipt)=> {
+          if(!err && receipt){
+            clearInterval(timer);
+            resolve(receipt);
+          }
+        });
+      }, 2000)
+     
+    })
+  }
+
   const onSubmitPersonalSign = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
@@ -268,10 +298,21 @@ function App() {
         console.log(fee);
 
         showInfoMessage(`Signing message for meta transaction`);
-        const txHash = await ercForwarderClient.sendTxPersonalSign(tx);
-        console.log(txHash);
+        //todo
+        //review change done in ERC Forwarder Cleint for this method
+        let transaction = await ercForwarderClient.sendTxPersonalSign(tx);
+        console.log(transaction);
 
-        //sendSignedRawTransaction(userAddress, newQuote);
+        // how do we return Promise and event emitter?
+        const receipt = await fetchMinedTransactionReceipt(transaction);
+        if(receipt)
+        {
+          console.log(receipt);
+          setTransactionHash(receipt.transactionHash);
+          showSuccessMessage("Transaction confirmed on chain");
+          getQuoteFromNetwork();
+        }
+
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -332,46 +373,73 @@ function App() {
     // contract should be registered as erc20 forwarder
     // get user signature and send raw tx along with signature type
     const sendSignedRawTransaction = async (userAddress, arg) => {
-      let privateKey = "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // process.env.privKey
+      let privateKey =
+        "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // process.env.privKey
       let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
 
-      let gasLimit = await contract.methods.setQuote(arg).estimateGas({from: userAddress});
+      let gasLimit = await contract.methods
+        .setQuote(arg)
+        .estimateGas({ from: userAddress });
       let txParams = {
-          "from": userAddress,
-          "gasLimit": web3.utils.toHex(gasLimit),
-          "to": config.contract.address,
-          "value": "0x0",
-          "data": functionSignature
+        from: userAddress,
+        gasLimit: web3.utils.toHex(gasLimit),
+        to: config.contract.address,
+        value: "0x0",
+        data: functionSignature,
       };
 
-      const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
+      const signedTx = await web3.eth.accounts.signTransaction(
+        txParams,
+        `0x${privateKey}`
+      );
       console.log(signedTx.rawTransaction);
 
       // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-      const dataToSign = await biconomy.getForwardRequestMessageToSign(signedTx.rawTransaction);
-      console.log('data to sign');
+      const dataToSign = await biconomy.getForwardRequestMessageToSign(
+        signedTx.rawTransaction
+      );
+      console.log("data to sign");
       console.log(dataToSign);
-      const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), {
-          data: dataToSign.eip712Format
-      }, 'V4');
+      const signature = sigUtil.signTypedMessage(
+        new Buffer.from(privateKey, "hex"),
+        {
+          data: dataToSign.eip712Format,
+        },
+        "V4"
+      );
 
       let rawTransaction = signedTx.rawTransaction;
 
       let data = {
-          signature: signature,
-          rawTransaction: rawTransaction,
-          signatureType: biconomy.EIP712_SIGN
+        signature: signature,
+        rawTransaction: rawTransaction,
+        signatureType: biconomy.EIP712_SIGN,
       };
 
       // Use any one of the methods below to check for transaction confirmation
       // USING PROMISE
-      let receipt = await web3.eth.sendSignedTransaction(data, (error, txHash) => {
+      /*let receipt = await web3.eth.sendSignedTransaction(data, (error, txHash) => {
           if (error) {
               return console.error(error);
           }
-          console.log(txHash);
-      })
-  };
+          console.log(txHash);    
+      })*/
+
+      // USING event emitter
+      let transaction = web3.eth.sendSignedTransaction(data);
+
+      transaction
+        .on("transactionHash", function (hash) {
+          console.log(`Transaction hash is ${hash}`);
+          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
+        })
+        .once("confirmation", function (confirmationNumber, receipt) {
+          console.log(receipt);
+          setTransactionHash(receipt.transactionHash);
+          showSuccessMessage("Transaction confirmed on chain");
+          getQuoteFromNetwork();
+        });
+    };
 
   return (
     <div className="App">

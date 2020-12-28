@@ -205,7 +205,6 @@ function App() {
         });
       } else {
         console.log("Sending normal transaction");
-        //needs to change for ethers
         let tx = await contract.setQuote(newQuote);
         console.log("Transaction hash : ", tx.hash);
         showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
@@ -240,7 +239,6 @@ function App() {
         sendSignedRawTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
-        //needs to change for thers
         let tx = await contract.setQuote(newQuote);
         console.log("Transaction hash : ", tx.hash);
         showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
@@ -318,7 +316,6 @@ function App() {
           });
       } else {
         console.log("Sending normal transaction");
-        //needs to change for ethers
         let tx = await contract.setQuote(newQuote);
         console.log("Transaction hash : ", tx.hash);
         showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);

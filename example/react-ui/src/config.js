@@ -1480,13 +1480,13 @@ config.usdcAbi =
       "type": "function"
     }];
 
-config.biconomyForwarderAddress = "0x46a7Aa64578F40F34CdC63c96E5340B6be1f7bba";
-config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
-config.usdtAddress = "0x4d6eDD8747af400b178CF680f03F5968c3f7ffb4";
-config.usdcAddress = "0xBeE859603fe4C29A746C18b47ABAADA218990dB8";
-config.feeProxyAddress = "0xd5120a36A8680A340d46931763C8E2d9487B1AF9";
-config.transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0";
-config.oracleAggregatorAddress = "0xa1095C06709Bbbb4a2B476ED0418d3B841a0Fec8";
-config.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+    config.biconomyForwarderAddress = "0x46a7Aa64578F40F34CdC63c96E5340B6be1f7bba";
+    config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
+    config.usdtAddress = "0x8486E3592CC23F27Ea430aDAD031Cf8ABD978756";
+    config.usdcAddress = "0xA5d2a43d94B6a26054506D18ea44E4749f727721";
+    config.feeProxyAddress = "0x966445784b8dd7a925794D35e335B2dd80C458A7";
+    config.transferHandlerAddress = "0x4AB0652B1049607F9E51E61144767d1C978950d0";
+    config.oracleAggregatorAddress = "0x6d04923945026711e42ebEA03C616e4E6BbF406e";
+    config.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 module.exports = {config}

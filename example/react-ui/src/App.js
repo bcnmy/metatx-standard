@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import { ethers } from "ethers";
-import { Biconomy } from "@biconomy/mexa";
+import { Biconomy, PermitClient } from "@biconomy/mexa";
 import { makeStyles, responsiveFontSizes } from "@material-ui/core/styles";
 import Link from "@material-ui/core/Link";
 import Typography from "@material-ui/core/Typography";
@@ -38,6 +38,13 @@ let daiDomainData = {
   verifyingContract: config.daiAddress,
 };
 
+let usdcDomainData = {
+  name : "USDC Coin",
+  version : "1",
+  chainId : 42,
+  verifyingContract : config.usdcAddress
+};
+
 // todo
 // make clients pass the chainId instead of feeProxyDomainData
 let feeProxyDomainData = {
@@ -51,6 +58,7 @@ let feeProxyDomainData = {
 
 let ethersProvider, signer;
 let biconomy;
+let provider;
 let contract, contractInterface, contractWithBasicSign;
 
 //let daiContract,usdtContract,usdcContract;
@@ -84,7 +92,7 @@ function App() {
         window.ethereum.isMetaMask
       ) {
         // Ethereum user detected. You can now use the provider.
-        const provider = window["ethereum"];
+        provider = window["ethereum"];
         await provider.enable();
 
         /*if (provider.networkVersion == chainId.toString()) {
@@ -111,7 +119,7 @@ function App() {
             );
 
             ercForwarderClient = biconomy.erc20ForwarderClient;
-            permitClient = biconomy.permitClient;
+            //permitClient = biconomy.permitClient;
 
             contractInterface = new ethers.utils.Interface(config.contract.abi);
             setSelectedAddress(provider.selectedAddress);
@@ -146,6 +154,14 @@ function App() {
           allowed: true,
         };
 
+        const usdcPermitOptions = {
+          domainData: usdcDomainData,
+          spender: config.feeProxyAddress,
+          value: "100000000000000000000", 
+          deadline: Math.floor(Date.now() / 1000 + 3600),
+        }
+
+
         let userAddress = selectedAddress;
         //let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
         //could also use populateTransaction
@@ -155,7 +171,12 @@ function App() {
         showInfoMessage(
           `Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`
         );
-        await permitClient.daiPermit(daiPermitOptions);
+
+        //await permitClient.daiPermit(daiPermitOptions);
+
+        permitClient = new PermitClient(provider,config.feeProxyAddress);
+        await permitClient.eip2612Permit(usdcPermitOptions);
+
 
         /**
          * USDC permit
@@ -183,7 +204,7 @@ function App() {
         //test with USDT and USDC
         const builtTx = await ercForwarderClient.buildTx(
           config.contract.address,
-          config.daiAddress,
+          config.usdcAddress,
           Number(gasLimit),
           data
         );

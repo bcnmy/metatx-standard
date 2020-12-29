@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy} from "@biconomy/mexa";
+import {Biconomy, PermitClient} from "@biconomy/mexa";
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -35,6 +35,13 @@ let domainData = {
   verifyingContract: config.contract.address
 };
 
+let usdcDomainData = {
+  name : "USDC Coin",
+  version : "1",
+  chainId : 42,
+  verifyingContract : config.usdcAddress
+};
+
 let daiDomainData = {
   name : "Dai Stablecoin",
   version : "1",
@@ -54,9 +61,11 @@ let feeProxyDomainData = {
 
 let web3;
 let biconomy;
+let provider;
 let contract;
 //let daiContract,usdtContract,usdcContract;
-let ercForwarderClient,permitClient;
+let ercForwarderClient;
+let permitClient;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -86,7 +95,7 @@ function App() {
         window.ethereum.isMetaMask
       ) {
         // Ethereum user detected. You can now use the provider.
-          const provider = window["ethereum"];
+          provider = window["ethereum"];
           await provider.enable();
           biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           web3 = new Web3(biconomy);
@@ -137,10 +146,17 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-        //   spender: feeProxyAddress,
+          spender: config.feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
+
+        const usdcPermitOptions = {
+          domainData: usdcDomainData,
+          spender: config.feeProxyAddress,
+          value: "100000000000000000000", 
+          deadline: Math.floor(Date.now() / 1000 + 3600),
+        }
 
         let userAddress = selectedAddress;
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
@@ -149,6 +165,9 @@ function App() {
         
         console.log("getting permit to spend dai");
         showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
+        //permitClient = new PermitClient(provider,usdcDomainData,config.feeProxyAddress);
+        //await permitClient.eip2612Permit(usdcPermitOptions);
+
         await permitClient.daiPermit(daiPermitOptions);
         
 
@@ -169,7 +188,7 @@ function App() {
 
         //todo
         //test with USDT and USDC
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.usdcAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
         const fee = builtTx.cost;
         console.log(tx);

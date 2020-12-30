@@ -18,7 +18,7 @@ import {
   getDataToSignForPersonalSign,
   getDataToSignForEIP712,
   buildForwardTxRequest,
-  getBiconomyForwarder
+  getBiconomyForwarderConfig
 } from './biconomyForwarderHelpers';
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
@@ -39,12 +39,6 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "5px"
   }
 }));
-
-//todo
-//review for dev perspective more or less freedom
-//review config
-//get contract address map for network id
-//seperation of ethers and web3 
 
 function App() {
   const classes = useStyles();
@@ -90,7 +84,6 @@ function App() {
   };
 
   /* this app does not need to use @biconomy/mexa */
-  /* for quotes dapp demo with erc20 forwarder and api call check the branch -  from repo - */
   const onForwardWithEIP712Signature = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
@@ -104,7 +97,7 @@ function App() {
        * create dataToSign as per signature scheme used (EIP712 or personal)
        * get the signature from user
        * create the domain separator
-       * Now call the meta tx API
+       * Now call the meta tx API with three parameters request, domainSeperator and signature
        */
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
@@ -114,8 +107,14 @@ function App() {
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
 
         //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
-        let forwarder = await getBiconomyForwarder(provider,42);
-        const batchNonce = await forwarder.getNonce(userAddress,0);
+        let forwarder = await getBiconomyForwarderConfig(42);
+        let forwarderContract = new web3.eth.Contract(
+          forwarder.abi,
+          forwarder.address
+        );
+
+
+        const batchNonce = await forwarderContract.methods.getNonce(userAddress,0).call();
         console.log(batchNonce);
         const to = config.contract.address;
         const gasLimitNum = Number(txGas);
@@ -170,10 +169,9 @@ function App() {
        * create txGas param which is gas estimation of his function call
        * get nonce from biconomyForwarder instance
        * create a forwarder request
-       * create dataToSign as per signature scheme used (EIP712 or personal)
+       * create dataToSign as per signature scheme used (personal sign)
        * get the signature from user
-       * create the domain separator
-       * Now call the meta tx API
+       * Now call the meta tx API with two parameters request and signature
        */
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
@@ -182,9 +180,14 @@ function App() {
         let data = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
     
-        let forwarder = await getBiconomyForwarder(provider,42);
+        let forwarder = await getBiconomyForwarderConfig(42);
         //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
-        const batchNonce = await forwarder.getNonce(userAddress,0);
+        let forwarderContract = new web3.eth.Contract(
+          forwarder.abi,
+          forwarder.address
+        );
+
+        const batchNonce = await forwarderContract.methods.getNonce(userAddress,0).call();
         console.log(batchNonce);
 
         const to = config.contract.address;
@@ -208,27 +211,6 @@ function App() {
     }
   };
 
-  const signMessage = async (addr, data) => {
-    let signature;
-    await web3.currentProvider.sendAsync(
-      {
-        jsonrpc: "2.0",
-        id: 999999999999,
-        method: "eth_signTypedData_v4",
-        params: [addr, data]
-      },
-      function(error, response) {
-        console.info(`User signature is ${response.result}`);
-        if (error || (response && response.error)) {
-          showErrorMessage("Could not get user signature");
-        } else if (response && response.result) {
-          signature = response.result;
-          return signature;
-        }
-      }
-    );
-  }
-
   const sendTransaction = async ({userAddress, req, sig, domainSeparator, signatureType}) => {
     if (web3 && contract) {
       let params;
@@ -246,10 +228,9 @@ function App() {
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "aeecd3f0-b0da-449f-9a65-b8a16fe0cc9e",
+            "apiId": "1c38dae7-4b5f-4d0c-9517-ea6da190b2a6",
             "params": params,
             "from": userAddress,
-            // "gasLimit":1000000,
             "signatureType": signatureType
           })
         })
@@ -257,7 +238,19 @@ function App() {
         .then(function(result) {
           console.log(result);
           showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
+          return result.txHash;
           // todo - fetch mined transaction receipt, show tx confirmed and update quotes
+        }).then(function(hash){
+          const receipt = fetchMinedTransactionReceipt(hash);
+          return receipt;
+        }).then(function(receipt){
+          if(receipt)
+          {
+            console.log(receipt);
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed on chain");
+            getQuoteFromNetwork();
+          }  
         })
 	      .catch(function(error) {
 	        console.log(error)
@@ -265,8 +258,32 @@ function App() {
       } catch (error) {
         console.log(error);
       }
+
     }
   };
+
+
+  const fetchMinedTransactionReceipt = (transactionHash) => {
+
+    return new Promise((resolve, reject) => {
+      
+      const { web3 } = window;
+  
+      var timer = setInterval(()=> {
+        web3.eth.getTransactionReceipt(transactionHash, (err, receipt)=> {
+          if(!err && receipt){
+            clearInterval(timer);
+            resolve(receipt);
+          }
+          else if(err)
+          {
+            reject(err);
+          }
+        });
+      }, 2000)
+     
+    })
+  }
 
   const getQuoteFromNetwork = () => {
     if (web3 && contract) {

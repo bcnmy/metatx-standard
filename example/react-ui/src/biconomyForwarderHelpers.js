@@ -9,7 +9,7 @@ helperAttributes.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 let biconomyForwarderAddressMap = {};
 
 // Kovan
-biconomyForwarderAddressMap[42] = "0x656a7B1B1E4525dB80bca5e80F4777F4b0C599b7";
+biconomyForwarderAddressMap[42] = "0x46a7Aa64578F40F34CdC63c96E5340B6be1f7bba";
 
 helperAttributes.biconomyForwarderAbi = [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"domainSeparator","type":"bytes32"},{"indexed":false,"internalType":"bytes","name":"domainValue","type":"bytes"}],"name":"DomainRegistered","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"uint256","name":"batchId","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"batchNonce","type":"uint256"},{"indexed":false,"internalType":"bool","name":"success","type":"bool"},{"indexed":false,"internalType":"bytes","name":"returnData","type":"bytes"},{"indexed":false,"internalType":"address","name":"feeProxy","type":"address"},{"indexed":false,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"txGas","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"indexed":false,"internalType":"bytes","name":"data","type":"bytes"}],"name":"ForwardedTx","type":"event"},{"inputs":[],"name":"EIP712_DOMAIN_TYPE","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"REQUEST_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"domains","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"components":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"txGas","type":"uint256"},{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"uint256","name":"batchId","type":"uint256"},{"internalType":"uint256","name":"batchNonce","type":"uint256"},{"internalType":"uint256","name":"deadline","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct ERC20ForwardRequestTypes.ERC20ForwardRequest","name":"req","type":"tuple"},{"internalType":"bytes32","name":"domainSeparator","type":"bytes32"},{"internalType":"bytes","name":"sig","type":"bytes"}],"name":"executeEIP712","outputs":[{"internalType":"bool","name":"success","type":"bool"},{"internalType":"bytes","name":"ret","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[{"components":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"txGas","type":"uint256"},{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"uint256","name":"batchId","type":"uint256"},{"internalType":"uint256","name":"batchNonce","type":"uint256"},{"internalType":"uint256","name":"deadline","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct ERC20ForwardRequestTypes.ERC20ForwardRequest","name":"req","type":"tuple"},{"internalType":"bytes","name":"sig","type":"bytes"}],"name":"executePersonalSign","outputs":[{"internalType":"bool","name":"success","type":"bool"},{"internalType":"bytes","name":"ret","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"uint256","name":"batchId","type":"uint256"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"highestBatchId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"version","type":"string"}],"name":"registerDomainSeparator","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"components":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"txGas","type":"uint256"},{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"uint256","name":"batchId","type":"uint256"},{"internalType":"uint256","name":"batchNonce","type":"uint256"},{"internalType":"uint256","name":"deadline","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct ERC20ForwardRequestTypes.ERC20ForwardRequest","name":"req","type":"tuple"},{"internalType":"bytes32","name":"domainSeparator","type":"bytes32"},{"internalType":"bytes","name":"sig","type":"bytes"}],"name":"verifyEIP712","outputs":[],"stateMutability":"view","type":"function"},{"inputs":[{"components":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"txGas","type":"uint256"},{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"uint256","name":"batchId","type":"uint256"},{"internalType":"uint256","name":"batchNonce","type":"uint256"},{"internalType":"uint256","name":"deadline","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct ERC20ForwardRequestTypes.ERC20ForwardRequest","name":"req","type":"tuple"},{"internalType":"bytes","name":"sig","type":"bytes"}],"name":"verifyPersonalSign","outputs":[],"stateMutability":"view","type":"function"},{"stateMutability":"payable","type":"receive"}];
 
@@ -37,17 +37,27 @@ helperAttributes.forwardRequestType = [
     {name:'data',type:'bytes'}
   ];
 
-// pass the networkId and provider to get biconomy forwarder instance and populate domain data
-const getBiconomyForwarder = async (provider, networkId) => {
+/**
+ * Returns ABI and contract address based on network Id
+ * You can build biconomy forwarder contract object using above values and calculate the nonce
+ * @param {*} networkId 
+ */
+const getBiconomyForwarderConfig = async (networkId) => {
         //get trusted forwarder contract address from network id
         const forwarderAddress = biconomyForwarderAddressMap[networkId];
-        // below line is the problem
-        const ethersProvider = new ethers.providers.Web3Provider(provider);
-        const signer = ethersProvider.getSigner();
-        const forwarder = new ethers.Contract(forwarderAddress, helperAttributes.biconomyForwarderAbi, signer);
-        return forwarder;
+        return {abi: helperAttributes.biconomyForwarderAbi, address: forwarderAddress};
 };
 
+/**
+ * pass the below params in any order e.g. account=<account>,batchNone=<batchNone>,...
+ * @param {*}  account - from (end user's) address for this transaction 
+ * @param {*}  to - target recipient contract address
+ * @param {*}  gasLimitNum - gas estimation of your target method in numeric format
+ * @param {*}  batchId - batchId 
+ * @param {*}  batchNonce - batchNonce which can be verified and obtained from the biconomy forwarder
+ * @param {*}  data - functionSignature of target method
+ * @param {*}  deadline - optional deadline for this forward request 
+ */
 const buildForwardTxRequest = async ({account, to, gasLimitNum, batchId, batchNonce, data, deadline}) => {
     const req = {
         from: account,
@@ -63,6 +73,12 @@ const buildForwardTxRequest = async ({account, to, gasLimitNum, batchId, batchNo
     return req;
 };
 
+/**
+ * pass your forward request and network Id 
+ * use this method to build message to be signed by end user in EIP712 signature format 
+ * @param {*} request - forward request object
+ * @param {*} networkId 
+ */
 const getDataToSignForEIP712 = (request,networkId) => {
     const forwarderAddress = biconomyForwarderAddressMap[networkId];
     let domainData = helperAttributes.biconomyForwarderDomainData;
@@ -81,6 +97,11 @@ const getDataToSignForEIP712 = (request,networkId) => {
     return dataToSign;
 }
 
+/**
+ * pass your forward request
+ * use this method to build message to be signed by end user in personal signature format 
+ * @param {*} networkId 
+ */
 const getDataToSignForPersonalSign = (request) => {
     const hashToSign = abi.soliditySHA3([
         "address",
@@ -106,6 +127,10 @@ const getDataToSignForPersonalSign = (request) => {
     return hashToSign;
 }
 
+/**
+ * get the domain seperator that needs to be passed while using EIP712 signature type
+ * @param {*} networkId 
+ */
 const getDomainSeperator = (networkId) => {
     const forwarderAddress = biconomyForwarderAddressMap[networkId];
     let domainData = helperAttributes.biconomyForwarderDomainData;
@@ -135,5 +160,5 @@ export {
     getDataToSignForPersonalSign,
     getDataToSignForEIP712,
     buildForwardTxRequest,
-    getBiconomyForwarder
+    getBiconomyForwarderConfig
 };

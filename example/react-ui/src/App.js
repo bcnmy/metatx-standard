@@ -6,7 +6,7 @@ import {
   NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
-import Web3 from "web3";
+import { ethers } from "ethers";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -24,10 +24,9 @@ const { config } = require("./config");
 const abi = require("ethereumjs-abi");
 
 
-let web3;
-let contract;
+let ethersProvider, signer;
+let contract, contractInterface;
 let provider;
-let ethersProvider;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -65,19 +64,31 @@ function App() {
           provider = window["ethereum"];
           await provider.enable();
 
-          //const biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
-          web3 = new Web3(provider);
+          if (provider.networkVersion == "42") {
+            //doStuff
 
-            contract = new web3.eth.Contract(
+            ethersProvider = new ethers.providers.Web3Provider(provider);
+            signer = ethersProvider.getSigner();
+  
+            contract = new ethers.Contract(
+              config.contract.address,
               config.contract.abi,
-              config.contract.address
+              signer
             );
+  
+            contractInterface = new ethers.utils.Interface(config.contract.abi);
 
             setSelectedAddress(provider.selectedAddress);
             getQuoteFromNetwork();
             provider.on("accountsChanged", function(accounts) {
               setSelectedAddress(accounts[0]);
             });
+          }
+          else{
+            showErrorMessage(
+              "Please change the network in metamask to Kovan Testnet"
+            );
+          }
       } else {
         showErrorMessage("Metamask not installed");
       }
@@ -99,8 +110,19 @@ function App() {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
 
-        let data = contract.methods.setQuote(newQuote).encodeABI();
-        let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
+        let {data} = await contract.populateTransaction.setQuote(newQuote);
+        //could also use below
+        //let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
+
+        let gasPrice = await ethersProvider.getGasPrice();
+        let gasLimit = await ethersProvider.estimateGas({
+              to: config.contract.address,
+              from: userAddress,
+              data: data
+            });
+        console.log(gasLimit.toString());
+        console.log(gasPrice.toString()); 
+
         let networkId = 42;
 
         const daiPermitOptions = {
@@ -113,18 +135,22 @@ function App() {
         await getDaiPermit(provider,userAddress,daiPermitOptions);
       
         let forwarder = await getBiconomyForwarderConfig(42);
-        let forwarderContract = new web3.eth.Contract(
-           forwarder.abi,
-           forwarder.address
-         );
+        let forwarderContract = new ethers.Contract(
+          forwarder.address,
+          forwarder.abi,
+          signer
+        );
 
-        const batchNonce = await forwarderContract.methods.getNonce(userAddress,0).call();
-        //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
+        const batchNonce = await forwarderContract.getNonce(userAddress,0);
+        //const batchId = await forwarderContract.getBatch(userAddress);
         console.log(batchNonce);
 
         const tokGasPrice = await getTokenGasPrice(networkId,config.tokenAddress);
+
+        const gasLimitNum = Number(gasLimit.toNumber().toString());
+        console.log(gasLimitNum);
         
-        let request = await buildForwardTxRequest(networkId,{account:userAddress,to:config.contract.address,gasLimitNum:Number(txGas),batchId:0,batchNonce,tokenGasPrice:tokGasPrice,data,tokenAddress:config.tokenAddress});
+        let request = await buildForwardTxRequest(networkId,{account:userAddress,to:config.contract.address,gasLimitNum,batchId:0,batchNonce,tokenGasPrice:tokGasPrice,data,tokenAddress:config.tokenAddress});
         const req = request.request;
         console.log(req);
         const cost = request.cost;
@@ -137,30 +163,13 @@ function App() {
 
         const dataToSign = getDataToSignForEIP712(req,networkId);
 
-        const promi = new Promise(async function(resolve, reject) {
-          await web3.currentProvider.send(
-            {
-              jsonrpc: "2.0",
-              id: 999999999999,
-              method: "eth_signTypedData_v4",
-              params: [userAddress, dataToSign]
-            }, function(error, res){
-            if(error) {
-              reject(error);
-            } else {
-              resolve(res.result);
-            }
-          });
-        });
-
-        promi.then(async function(sig){
-          console.log('signature ' + sig);
-          console.log(req);
+        ethersProvider.send("eth_signTypedData_v4", [userAddress, dataToSign])
+        .then(function(sig){
           sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712_SIGN"});
-        }).catch(function(error) {
-          console.log('could not get signature error ' + error);
-          showErrorMessage("Could not get user signature");
-        });
+        })
+        .catch(function(error) {
+	        console.log(error)
+	      });
 
       } else {
         showErrorMessage("Meta Transaction disabled");
@@ -192,8 +201,19 @@ function App() {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
 
-        let data = contract.methods.setQuote(newQuote).encodeABI();
-        let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
+        let {data} = await contract.populateTransaction.setQuote(newQuote);
+        //could also use below
+        //let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
+
+        let gasPrice = await ethersProvider.getGasPrice();
+        let gasLimit = await ethersProvider.estimateGas({
+              to: config.contract.address,
+              from: userAddress,
+              data: data
+            });
+        console.log(gasLimit.toString());
+        console.log(gasPrice.toString()); 
+
         let networkId = 42;
         
         const daiPermitOptions = {
@@ -206,18 +226,22 @@ function App() {
         await getDaiPermit(provider,userAddress,daiPermitOptions);
       
         let forwarder = await getBiconomyForwarderConfig(42);
-        let forwarderContract = new web3.eth.Contract(
-           forwarder.abi,
-           forwarder.address
-         );
+        let forwarderContract = new ethers.Contract(
+          forwarder.address,
+          forwarder.abi,
+          signer
+        );
 
-        const batchNonce = await forwarderContract.methods.getNonce(userAddress,0).call();
+        const batchNonce = await forwarderContract.getNonce(userAddress,0);
         //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
         console.log(batchNonce);
 
         const tokGasPrice = await getTokenGasPrice(networkId,config.tokenAddress);
 
-        let request = await buildForwardTxRequest(networkId,{account:userAddress,to:config.contract.address,gasLimitNum:Number(txGas),batchId:0,batchNonce,tokenGasPrice:tokGasPrice,data,tokenAddress:config.tokenAddress});
+        const gasLimitNum = Number(gasLimit.toNumber().toString());
+        console.log(gasLimitNum);
+
+        let request = await buildForwardTxRequest(networkId,{account:userAddress,to:config.contract.address,gasLimitNum,batchId:0,batchNonce,tokenGasPrice:tokGasPrice,data,tokenAddress:config.tokenAddress});
         const req = request.request;
         console.log(req);
         const cost = request.cost;
@@ -225,10 +249,14 @@ function App() {
 
         const hashToSign = getDataToSignForPersonalSign(req);
 
-        const sig = await web3.eth.personal.sign("0x" + hashToSign.toString("hex"), userAddress);
-
-        console.log('signature ' + sig);
-        sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
+        signer.signMessage(hashToSign)
+        .then(function(sig){
+          console.log('signature ' + sig);
+          sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
+        })
+        .catch(function(error) {
+	        console.log(error)
+	      });
 
       } else {
         showErrorMessage("Meta Transaction disabled");
@@ -238,30 +266,8 @@ function App() {
     }
   };
 
-
-  /*const signMessage = async (addr, data) => {
-    let signature;
-    await web3.currentProvider.sendAsync(
-      {
-        jsonrpc: "2.0",
-        id: 999999999999,
-        method: "eth_signTypedData_v4",
-        params: [addr, data]
-      },
-      function(error, response) {
-        console.info(`User signature is ${response.result}`);
-        if (error || (response && response.error)) {
-          showErrorMessage("Could not get user signature");
-        } else if (response && response.result) {
-          signature = response.result;
-          return signature;
-        }
-      }
-    );
-  }*/
-
   const sendTransaction = ({userAddress, req, sig, domainSeparator, signatureType}) => {
-    if (web3 && contract) {
+    if (ethersProvider && contract) {
       let params;
       if(domainSeparator) {
           params = [req, domainSeparator, sig]
@@ -290,16 +296,13 @@ function App() {
           return result.txHash;
         })
         .then(function(hash){
-          const receipt = fetchMinedTransactionReceipt(hash);
-          return receipt;
-        }).then(function(receipt){
-          if(receipt)
-          {
-            console.log(receipt);
-            setTransactionHash(receipt.transactionHash);
-            showSuccessMessage("Transaction confirmed on chain");
+           //event emitter methods
+           ethersProvider.once(hash, (transaction) => {
+            // Emitted when the transaction has been mined
+            console.log(transaction);
+            setTransactionHash(hash);
             getQuoteFromNetwork();
-          }  
+            })
         })
 	      .catch(function(error) {
 	        console.log(error)
@@ -310,50 +313,25 @@ function App() {
     }
   };
 
-  const fetchMinedTransactionReceipt = (transactionHash) => {
 
-    return new Promise((resolve, reject) => {
-      
-      const { web3 } = window;
-  
-      var timer = setInterval(()=> {
-        web3.eth.getTransactionReceipt(transactionHash, (err, receipt)=> {
-          if(!err && receipt){
-            clearInterval(timer);
-            resolve(receipt);
-          }
-          else if(err)
-          {
-            reject(err);
-          }
-        });
-      }, 2000)
-     
-    })
-  }
-
-  const getQuoteFromNetwork = () => {
-    if (web3 && contract) {
-      contract.methods
-        .getQuote()
-        .call()
-        .then(function(result) {
-          console.log(result);
-          if (
-            result &&
-            result.currentQuote != undefined &&
-            result.currentOwner != undefined
-          ) {
-            if (result.currentQuote == "") {
-              showErrorMessage("No quotes set on blockchain yet");
-            } else {
-              setQuote(result.currentQuote);
-              setOwner(result.currentOwner);
-            }
-          } else {
-            showErrorMessage("Not able to get quote information from Network");
-          }
-        });
+  const getQuoteFromNetwork = async () => {
+    if (ethersProvider && contract) {
+      let result = await contract.getQuote();
+      console.log(result);
+      if (
+        result &&
+        result.currentQuote != undefined &&
+        result.currentOwner != undefined
+      ) {
+        if (result.currentQuote == "") {
+          showErrorMessage("No quotes set on blockchain yet");
+        } else {
+          setQuote(result.currentQuote);
+          setOwner(result.currentOwner);
+        }
+      } else {
+        showErrorMessage("Not able to get quote information from Network");
+      }
     }
   };
 

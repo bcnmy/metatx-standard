@@ -106,7 +106,7 @@ function App() {
         let data = contract.methods.setQuote(newQuote).encodeABI();
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
 
-        //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
+        
         let forwarder = await getBiconomyForwarderConfig(42);
         let forwarderContract = new web3.eth.Contract(
           forwarder.abi,
@@ -115,6 +115,7 @@ function App() {
 
 
         const batchNonce = await forwarderContract.methods.getNonce(userAddress,0).call();
+        //const batchId = await forwarderContract.methods.getBatch(userAddress).call();
         console.log(batchNonce);
         const to = config.contract.address;
         const gasLimitNum = Number(txGas);
@@ -181,13 +182,14 @@ function App() {
         let txGas = await contract.methods.setQuote(newQuote).estimateGas({from: userAddress});
     
         let forwarder = await getBiconomyForwarderConfig(42);
-        //const batchId = await biconomyForwarder.methods.getBatch(userAddress).call();
+        
         let forwarderContract = new web3.eth.Contract(
           forwarder.abi,
           forwarder.address
         );
 
         const batchNonce = await forwarderContract.methods.getNonce(userAddress,0).call();
+        //const batchId = await forwarderContract.methods.getBatch(userAddress).call();
         console.log(batchNonce);
 
         const to = config.contract.address;

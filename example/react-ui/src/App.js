@@ -146,7 +146,7 @@ function App() {
 
         promi.then(async function(sig){
           console.log('signature ' + sig);
-          await sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712_SIGN"});
+          sendTransaction({userAddress, req, domainSeparator, sig, signatureType:"EIP712_SIGN"});
         }).catch(function(error) {
           console.log('could not get signature error ' + error);
           showErrorMessage("Could not get user signature");
@@ -203,7 +203,7 @@ function App() {
         const sig = await web3.eth.personal.sign("0x" + hashToSign.toString("hex"), userAddress);
 
         console.log('signature ' + sig);
-        await sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
+        sendTransaction({userAddress, req, sig, signatureType:"PERSONAL_SIGN"});
 
       } else {
         showErrorMessage("Meta Transaction disabled");
@@ -213,7 +213,7 @@ function App() {
     }
   };
 
-  const sendTransaction = async ({userAddress, req, sig, domainSeparator, signatureType}) => {
+  const sendTransaction = ({userAddress, req, sig, domainSeparator, signatureType}) => {
     if (web3 && contract) {
       let params;
       if(domainSeparator) {

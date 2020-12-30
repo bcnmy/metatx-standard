@@ -13,7 +13,6 @@ Biconomy was selected as one of the finalist in the hackathon. Read <a href="htt
 
 1. Inherit <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/EIP712MetaTransaction.sol" target="_blank" >EIP712MetaTransaction</a> contract 
 2. Use msgSender() method where ever you were using msg.sender
-3. (Optional) Use msgRelayer() method to get the relayer address who paid for transaction gas fees
 That's it. Pretty simple
 
 <h3>How do i use this in my client code?</h3>

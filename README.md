@@ -36,6 +36,5 @@ r,s,v can be calculated using web3 <a href="https://web3js.readthedocs.io/en/v2.
 
 Since this standard supports <a href="https://eips.ethereum.org/EIPS/eip-712" target="_blank" >EIP-712</a> so signature parameters should be generated using eth_signTypedData_v3 or eth_signTypedData_v4 JSON RPC method.
 
-Check out example front-end code <a href="https://github.com/bcnmy/metatx-standard/blob/master/example/react-ui/src/App.js" target="_blank" >here</a> and example solidity code <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/TestContract.sol" target="_blank" >here</a>
+Check out example front-end code <a href="https://github.com/bcnmy/metatx-standard/blob/mumbai-demo/example/react-ui/src/App.js" target="_blank" >here</a> and example solidity code <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/TestContract.sol" target="_blank" >here</a>
 
-This repository is basic implementation of Native Meta Transactions. This reposiory will be updated as per the <a href="https://github.com/ethereum/EIPs/issues/1776" target="_blank">EIP-1776</a> to implement native meta transactions with support of batching, transaction expiry etc

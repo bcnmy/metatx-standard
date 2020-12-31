@@ -188,7 +188,7 @@ function App() {
 
         //todo
         //test with USDT and USDC
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.usdcAddress,Number(gasLimit),functionSignature);
+        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
         const tx = builtTx.request;
         const fee = builtTx.cost;
         console.log(tx);

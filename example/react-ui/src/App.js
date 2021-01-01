@@ -7,6 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import { ethers } from "ethers";
+import Web3 from "web3";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -26,7 +27,8 @@ const abi = require("ethereumjs-abi");
 
 let ethersProvider, signer;
 let contract, contractInterface;
-let provider;
+let provider, web3;
+let ethersTestProvider;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -62,12 +64,22 @@ function App() {
       ) {
         // Ethereum user detected. You can now use the provider.
           provider = window["ethereum"];
+          //console.log('window provider');
+          //console.log(provider);
           await provider.enable();
+
+          //web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+
+          //ethersTestProvider = new ethers.providers.JsonRpcProvider('https://kovan.infura.io/v3/4fc8c17e36ad4f85bc7bdce6e57ad06d');
+          //console.log(ethersTestProvider);
 
           if (provider.networkVersion == "42") {
             //doStuff
 
-            ethersProvider = new ethers.providers.Web3Provider(provider);
+           ethersProvider = new ethers.providers.Web3Provider(provider);
+
+
+
             signer = ethersProvider.getSigner();
   
             contract = new ethers.Contract(
@@ -283,7 +295,7 @@ function App() {
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "859e9aeb-7630-40d2-8dbc-08d48bf957ee",
+            "apiId": "b2406d6a-c3dd-404c-90f7-f7978bc46eab",
             "params": params,
             "from": userAddress,
             "signatureType": signatureType

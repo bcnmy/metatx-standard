@@ -415,9 +415,13 @@ function App() {
       console.log(signedTx.rawTransaction);
 
       // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-      const dataToSign = await biconomy.getForwardRequestMessageToSign(
+      const dataToSign = await biconomy.getForwardRequestAndMessageToSign(
         signedTx.rawTransaction
       );
+
+      const request = dataToSign.request;
+      console.log(request);
+
       console.log("data to sign");
       console.log(dataToSign);
       const signature = sigUtil.signTypedMessage(
@@ -434,6 +438,7 @@ function App() {
         signature: signature,
         rawTransaction: rawTransaction,
         signatureType: biconomy.EIP712_SIGN,
+        forwardRequest: request,
       };
 
       // Use any one of the methods below to check for transaction confirmation

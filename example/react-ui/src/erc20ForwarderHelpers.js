@@ -1,10 +1,11 @@
 import { ethers } from "ethers";
 const abi = require("ethereumjs-abi");
-const { config } = require("./config"); //remove config and hardcode biconomy API
 let helperAttributes = {};
 let supportedNetworks = [42];
 helperAttributes.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-helperAttributes.baseURL = "https://localhost:4000";
+const FORWARD_OVERHEAD_PERSONAL_SIGN = 26231;
+const FORWARD_OVERHEAD_EIP712_SIGN = 27796;
+helperAttributes.baseURL = "https://api.biconomy.io";
 let daiTokenAddressMap = {},
   usdtTokenAddressMap = {},
   usdcTokenAddressMap = {},
@@ -152,6 +153,7 @@ const buildForwardTxRequest = async (networkId,{account, to, gasLimitNum, batchI
     };
 
     let cost = ethers.BigNumber.from(req.txGas.toString())
+        .add(ethers.BigNumber.from(FORWARD_OVERHEAD_EIP712_SIGN.toString())) // estimate on the higher end
         .add(transferHandlerGas)
         .mul(ethers.BigNumber.from(req.tokenGasPrice))
         .mul(ethers.BigNumber.from(feeMultiplier.toString()))

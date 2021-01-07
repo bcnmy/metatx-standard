@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy, PermitClient} from "@biconomy/mexa";
+import {Biconomy, PermitClient, HTTP_CODES, RESPONSE_CODES} from "@biconomy/mexa";
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -97,7 +97,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2", debug: true});
           web3 = new Web3(biconomy);
           //web3 = new Web3(provider);
           console.log(web3);
@@ -144,71 +144,78 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
+        try {
 
-        const daiPermitOptions = {
-          spender: config.feeProxyAddress,
-          expiry: Math.floor(Date.now() / 1000 + 3600),
-          allowed: true
-        };
+          const daiPermitOptions = {
+            // spender: config.feeProxyAddress,
+            expiry: Math.floor(Date.now() / 1000 + 3600),
+            allowed: true
+          };
 
-        const usdcPermitOptions = {
-          domainData: usdcDomainData,
-          spender: config.feeProxyAddress,
-          value: "100000000000000000000", 
-          deadline: Math.floor(Date.now() / 1000 + 3600),
+          const usdcPermitOptions = {
+            domainData: usdcDomainData,
+            // spender: config.feeProxyAddress,
+            value: "100000000000000000000",
+            deadline: Math.floor(Date.now() / 1000 + 3600),
+          }
+
+          let userAddress = selectedAddress;
+          let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+          console.log(functionSignature);
+
+
+          console.log("getting permit to spend dai");
+          showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
+          //permitClient = new PermitClient(provider,usdcDomainData,config.feeProxyAddress);
+          //await permitClient.eip2612Permit(usdcPermitOptions);
+
+          await permitClient.daiPermit(daiPermitOptions);
+
+
+          /**
+           * USDC permit
+           */
+
+          /* USDT permit (without any helpers approve transaction - can't be gasless!)
+          */
+
+          console.log("Sending meta transaction");
+          showInfoMessage("Building transaction to forward");
+          // txGas should be calculated and passed here or calculate within the method
+
+          let gasLimit = await contract.methods
+          .setQuote(newQuote)
+          .estimateGas({ from: userAddress });
+
+          //todo
+          //test with USDT and USDC
+          const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
+          const tx = builtTx.request;
+          const fee = builtTx.cost;
+          console.log(tx);
+          console.log(fee);
+          showInfoMessage(`Signing message for meta transaction`);
+          let txResponse = await ercForwarderClient.sendTxEIP712(tx);
+          console.log(txResponse);
+
+          // how do we return Promise and event emitter?
+          if(txResponse && txResponse.code == RESPONSE_CODES.OK && txResponse.txHash) {
+            const receipt = await fetchMinedTransactionReceipt(txResponse.txHash);
+            if(receipt) {
+              console.log(receipt);
+              // console.log('nonce was ' + (receipt.logs[2].topics[3]).toString());
+              setTransactionHash(receipt.transactionHash);
+              showSuccessMessage("Transaction confirmed on chain");
+              getQuoteFromNetwork();
+            }
+          } else if(txResponse && txResponse.message) {
+            console.log(txResponse);
+            showErrorMessage(txResponse.message);
+          }
+        } catch(error) {
+          showErrorMessage("Unable to send meta transaction");
+          console.log(error);
         }
-
-        let userAddress = selectedAddress;
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        console.log(functionSignature);
-        
-        
-        console.log("getting permit to spend dai");
-        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
-        //permitClient = new PermitClient(provider,usdcDomainData,config.feeProxyAddress);
-        //await permitClient.eip2612Permit(usdcPermitOptions);
-
-        await permitClient.daiPermit(daiPermitOptions);
-        
-
-        /**
-         * USDC permit
-         */
-
-        /* USDT permit (without any helpers approve transaction - can't be gasless!)
-        */
-
-        console.log("Sending meta transaction");
-        showInfoMessage("Building transaction to forward");
-        // txGas should be calculated and passed here or calculate within the method
-
-        let gasLimit = await contract.methods
-        .setQuote(newQuote)
-        .estimateGas({ from: userAddress });
-
-        //todo
-        //test with USDT and USDC
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
-        const tx = builtTx.request;
-        const fee = builtTx.cost;
-        console.log(tx);
-        console.log(fee);
-        showInfoMessage(`Signing message for meta transaction`);
-        let transaction = await ercForwarderClient.sendTxEIP712(tx);
-        console.log(transaction);
-
-        // how do we return Promise and event emitter?
-        const receipt = await fetchMinedTransactionReceipt(transaction);
-        if(receipt)
-        {
-          console.log(receipt);
-          console.log('nonce was ' + (receipt.logs[2].topics[3]).toString());
-          setTransactionHash(receipt.transactionHash);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
-        }
-
-
       } else {
         console.log("Sending normal transaction");
         contract.methods
@@ -234,7 +241,6 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-          spender: config.feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
@@ -270,9 +276,9 @@ function App() {
   const fetchMinedTransactionReceipt = (transactionHash) => {
 
     return new Promise((resolve, reject) => {
-      
+
       const { web3 } = window;
-  
+
       var timer = setInterval(()=> {
         web3.eth.getTransactionReceipt(transactionHash, (err, receipt)=> {
           if(!err && receipt){
@@ -281,7 +287,7 @@ function App() {
           }
         });
       }, 2000)
-     
+
     })
   }
 
@@ -291,7 +297,7 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-          spender: config.feeProxyAddress,
+          // spender: config.feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
@@ -320,17 +326,19 @@ function App() {
         showInfoMessage(`Signing message for meta transaction`);
         //todo
         //review change done in ERC Forwarder Cleint for this method
-        let transaction = await ercForwarderClient.sendTxPersonalSign(tx);
-        console.log(transaction);
-
-        // how do we return Promise and event emitter?
-        const receipt = await fetchMinedTransactionReceipt(transaction);
-        if(receipt)
-        {
-          console.log(receipt);
-          setTransactionHash(receipt.transactionHash);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
+        let txResponse = await ercForwarderClient.sendTxPersonalSign(tx);
+        if(txResponse && txResponse.code == RESPONSE_CODES.OK && txResponse.txHash) {
+          const receipt = await fetchMinedTransactionReceipt(txResponse.txHash);
+          if(receipt) {
+            console.log(receipt);
+            // console.log('nonce was ' + (receipt.logs[2].topics[3]).toString());
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed on chain");
+            getQuoteFromNetwork();
+          }
+        } else if(txResponse && txResponse.message) {
+          console.log(txResponse);
+          showErrorMessage(txResponse.message);
         }
 
       } else {
@@ -447,7 +455,7 @@ function App() {
           if (error) {
               return console.error(error);
           }
-          console.log(txHash);    
+          console.log(txHash);
       })*/
 
       // USING event emitter

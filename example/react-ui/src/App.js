@@ -278,9 +278,7 @@ function App() {
       try {
         let tx;
         if(signType == PERSONAL_SIGN) {
-          let txData = await contractWithBasicSign.populateTransaction.executeMetaTransaction(userAddress, functionData, r, s, v);
-          console.log(txData);
-          tx = await networkProvider.send("eth_sendRawTransaction",[{"from":selectedAddress,"to":txData.to,"data":txData.data}]);
+          tx = await contractWithBasicSign.executeMetaTransaction(userAddress, functionData, r, s, v);
           //console.log("pre-call");
           //tx = await contractWeb3.methods
           //.executeMetaTransaction(userAddress, functionData, r, s, v)

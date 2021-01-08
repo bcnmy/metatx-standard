@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import { ethers } from "ethers";
-import {Biconomy} from "@biconomy/mexa";
+import Biconomy from "@biconomy/mexa";
 import abi from "ethereumjs-abi";
 import {toBuffer} from "ethereumjs-util";
 
@@ -19,6 +19,8 @@ let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 const EIP712_SIGN = "EIP712_SIGN";
 const PERSONAL_SIGN = "PERSONAL_SIGN";
+
+var Web3 = require('web3');
 
 const domainType = [
   { name: "name", type: "string" },
@@ -40,8 +42,10 @@ let domainData = {
 };
 let chainId = 42;
 
-let ethersProvider, signer;
-let contract, contractInterface, contractWithBasicSign;
+let networkProvider, walletProvider, walletSigner, networkSigner;
+let randomSigner;
+let web3, contractWeb3;
+let contract, contractInterface, contractWithBasicSign, contractReadOnly;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -73,39 +77,63 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          if (provider.networkVersion == chainId.toString()) {
-            domainData.chainId = chainId;
+          // We're creating a 2nd Ethers provider linked to your L2 network of choice
+          let biconomy = new Biconomy(new Web3.providers.HttpProvider("https://eth-kovan.alchemyapi.io/v2/DvW1I4OgMAVXJIw3zzfWHnQz1Lpeki9I"),{apiKey: "_iAMyHbdb.561e4a31-1cd5-43f3-a715-7f9478f39be8", debug: true});
+          networkProvider = new ethers.providers.Web3Provider(biconomy);
+          web3 = new Web3(biconomy);
 
-          const biconomy = new Biconomy(provider,{apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2", debug: true});
-          ethersProvider = new ethers.providers.Web3Provider(biconomy);
-          signer = ethersProvider.getSigner();
-          console.log(signer);
+          /*
+            This provider linked to your wallet.
+            If needed, substitute your wallet solution in place of window.ethereum 
+          */
+          walletProvider = new ethers.providers.Web3Provider(window.ethereum);
+          walletSigner = walletProvider.getSigner();
+          networkSigner = networkProvider.getSigner();
+          setSelectedAddress(await walletSigner.getAddress());
+
+          randomSigner = (ethers.Wallet.createRandom()).connect(networkProvider);
+
+          //const biconomy = new Biconomy(provider,{apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2", debug: true});
+          //ethersProvider = new ethers.providers.Web3Provider(biconomy);
+          console.log(networkSigner);
+          console.log(await walletSigner.getAddress());
+          console.log(walletProvider);
+          
           biconomy.onEvent(biconomy.READY, async () => {
             // Initialize your dapp here like getting user accounts etc
-            contract = new ethers.Contract(
+            /*contract = new ethers.Contract(
               config.contract.address,
               config.contract.abi,
               signer.connectUnchecked()
+            );*/
+            contractWeb3 = new web3.eth.Contract(
+              config.contractWithBasicSign.abi,
+              config.contractWithBasicSign.address 
             );
+
             contractWithBasicSign = new ethers.Contract(
               config.contractWithBasicSign.address,
               config.contractWithBasicSign.abi,
-              signer.connectUnchecked()
+              randomSigner
             );
-            contractInterface = new ethers.utils.Interface(config.contract.abi);
-            setSelectedAddress(await signer.getAddress());
-            getQuoteFromNetwork();
-            provider.on("accountsChanged", function(accounts) {
-              setSelectedAddress(accounts[0]);
-            });
+
+            console.log(contractWithBasicSign);
+
+            contractReadOnly = new ethers.Contract(
+              config.contractWithBasicSign.address,
+              config.contractWithBasicSign.abi,
+              new ethers.providers.JsonRpcProvider("https://eth-kovan.alchemyapi.io/v2/DvW1I4OgMAVXJIw3zzfWHnQz1Lpeki9I")
+            )
+
+            console.log(contractWithBasicSign);
+            contractInterface = new ethers.utils.Interface(config.contractWithBasicSign.abi);
+            getQuoteFromNetwork(PERSONAL_SIGN);
+            console.log(quote);
           }).onEvent(biconomy.ERROR, (error, message) => {
             // Handle error while initializing mexa
             console.log(message);
             console.log(error);
           });
-        } else {
-           showErrorMessage("Please change the network in metamask to Kovan Testnet");
-        }
       } else {
         showErrorMessage("Metamask not installed");
       }
@@ -117,7 +145,7 @@ function App() {
     setNewQuote(event.target.value);
   };
 
-  const onSubmitWithEIP712Sign = async event => {
+  /*const onSubmitWithEIP712Sign = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
@@ -156,20 +184,21 @@ function App() {
     } else {
       showErrorMessage("Please enter the quote");
     }
-  };
+  };*/
 
   const onSubmitWithPersonalSign = async event => {
-    if (newQuote != "" && contractWithBasicSign && signer) {
+    if (newQuote != "" && contractWithBasicSign && walletSigner) {
       setTransactionHash("");
       if (metaTxEnabled) {
         let userAddress = selectedAddress;
         let nonce = await contractWithBasicSign.getNonce(userAddress);
+        //let nonce = await contractWeb3.methods.getNonce(userAddress).call();
         let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
         let messageToSign = abi.soliditySHA3(
             ["uint256","address","uint256","bytes"],
             [parseInt(nonce), config.contractWithBasicSign.address, chainId, toBuffer(functionSignature)]
         );
-        const signature = await signer.signMessage(messageToSign);
+        const signature = await walletSigner.signMessage(messageToSign);
         let { r, s, v } = getSignatureParameters(signature);
         sendSignedTransaction(userAddress, functionSignature, r, s, v, PERSONAL_SIGN);
       } else {
@@ -208,10 +237,11 @@ function App() {
   };
 
   const getQuoteFromNetwork = async (signType) => {
-    if (contract) {
       let result;
       if(signType == PERSONAL_SIGN) {
         result = await contractWithBasicSign.getQuote();
+        //result = await contractWithBasicSign.getQuote();
+        //result = await contractWeb3.methods.getQuote().call();
       } else {
         result = await contract.getQuote();
       }
@@ -229,7 +259,6 @@ function App() {
       } else {
         showErrorMessage("Not able to get quote information from Network");
       }
-    }
   };
 
   const showErrorMessage = message => {
@@ -245,11 +274,18 @@ function App() {
   };
 
   const sendSignedTransaction = async (userAddress, functionData, r, s, v, signType) => {
-    if (contract) {
+    if (contractWeb3) {
       try {
         let tx;
         if(signType == PERSONAL_SIGN) {
-          tx = await contractWithBasicSign.executeMetaTransaction(userAddress, functionData, r, s, v);
+          let txData = await contractWithBasicSign.populateTransaction.executeMetaTransaction(userAddress, functionData, r, s, v);
+          console.log(txData);
+          tx = await networkProvider.send("eth_sendRawTransaction",[{"from":selectedAddress,"to":txData.to,"data":txData.data}]);
+          //console.log("pre-call");
+          //tx = await contractWeb3.methods
+          //.executeMetaTransaction(userAddress, functionData, r, s, v)
+          //.send({from: userAddress});
+          //console.log("post call");
         } else {
           tx = await contract.executeMetaTransaction(userAddress, functionData, r, s, v);
         }
@@ -307,9 +343,6 @@ function App() {
               onChange={onQuoteChange}
               value={newQuote}
             />
-            <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign}>
-              Submit (EIP-712 Sign)
-            </Button>
             <Button variant="contained" color="primary" onClick={onSubmitWithPersonalSign} style={{marginLeft: "10px"}}>
               Submit (Persoanl Sign)
             </Button>

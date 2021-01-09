@@ -278,7 +278,10 @@ function App() {
       try {
         let tx;
         if(signType == PERSONAL_SIGN) {
-          tx = await contractWithBasicSign.executeMetaTransaction(userAddress, functionData, r, s, v);
+          const txData = await contractWithBasicSign.populateTransaction.executeMetaTransaction(userAddress, functionData, r, s, v);
+          txData.from = selectedAddress;
+          const txHash = await networkProvider.send("eth_sendTransaction",[txData]);
+          tx = await networkProvider.waitForTransaction(txHash);
           //console.log("pre-call");
           //tx = await contractWeb3.methods
           //.executeMetaTransaction(userAddress, functionData, r, s, v)
@@ -289,8 +292,8 @@ function App() {
         }
         console.log("Transaction hash : ", tx.hash);
         showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-        let confirmation = await tx.wait();
-        console.log(confirmation);
+        //let confirmation = await tx.wait();
+        console.log(tx);
         setTransactionHash(tx.hash);
 
         showSuccessMessage("Transaction confirmed on chain");

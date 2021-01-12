@@ -15,20 +15,6 @@ import { Box, useIsFocusVisible } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 
-/*let usdcDomainData = {
-  name : "USDC Coin",
-  version : "1",
-  chainId : 42,
-  verifyingContract : config.usdcAddress
-};*/
-
-/*let daiDomainData = {
-  name : "Dai Stablecoin",
-  version : "1",
-  chainId : 42,
-  verifyingContract : config.daiAddress
-};*/
-
 let web3;
 let biconomy;
 let provider;
@@ -119,14 +105,7 @@ function App() {
           let userAddress = selectedAddress;
           let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
           console.log(functionSignature);
-
-        /*const usdcPermitOptions = {
-          domainData: usdcDomainData,
-          spender: config.feeProxyAddress,
-          value: "100000000000000000000", 
-          deadline: Math.floor(Date.now() / 1000 + 3600),
-        }*/  
-        
+ 
         console.log("getting permit to spend dai");
         showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
         
@@ -387,6 +366,7 @@ function App() {
       console.log(signedTx.rawTransaction);
 
       // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
+      // In this method tokenAddress needs to be passed, by default it will spend DAI tokens from user's wallet
       const dataToSign = await biconomy.getForwardRequestAndMessageToSign(
         signedTx.rawTransaction
       );

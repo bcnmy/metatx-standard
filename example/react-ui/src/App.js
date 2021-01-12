@@ -17,27 +17,6 @@ const { config } = require("./config");
 const EIP712_SIGN = "EIP712_SIGN";
 const PERSONAL_SIGN = "PERSONAL_SIGN";
 
-const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" },
-];
-
-let domainData = {
-  name: "TestContract",
-  version: "1",
-  chainId: 42,
-  verifyingContract: config.contract.address,
-};
-
-let daiDomainData = {
-  name: "Dai Stablecoin",
-  version: "1",
-  chainId: 42,
-  verifyingContract: config.daiAddress,
-};
-
 let usdcDomainData = {
   name : "USDC Coin",
   version : "1",
@@ -45,23 +24,10 @@ let usdcDomainData = {
   verifyingContract : config.usdcAddress
 };
 
-// todo
-// make clients pass the chainId instead of feeProxyDomainData
-let feeProxyDomainData = {
-  name: "TEST",
-  version: "1",
-  chainId: 42,
-  verifyingContract: config.biconomyForwarderAddress,
-};
-
-//above odmain dtaa would not be required!
-
 let ethersProvider, signer;
 let biconomy;
 let provider;
 let contract, contractInterface, contractWithBasicSign;
-
-//let daiContract,usdtContract,usdcContract;
 let ercForwarderClient, permitClient;
 
 const useStyles = makeStyles((theme) => ({
@@ -95,9 +61,6 @@ function App() {
         provider = window["ethereum"];
         await provider.enable();
 
-        /*if (provider.networkVersion == chainId.toString()) {
-          domainData.chainId = chainId;*/
-
         biconomy = new Biconomy(provider, {
             apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
             debug: true,
@@ -119,7 +82,7 @@ function App() {
             );
 
             ercForwarderClient = biconomy.erc20ForwarderClient;
-            //permitClient = biconomy.permitClient;
+            permitClient = biconomy.permitClient;
 
             contractInterface = new ethers.utils.Interface(config.contract.abi);
             setSelectedAddress(provider.selectedAddress);
@@ -148,12 +111,10 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
-        const daiPermitOptions = {
-          //   spender: feeProxyAddress,
-          expiry: Math.floor(Date.now() / 1000 + 3600),
-          allowed: true,
-        };
 
+        let userAddress = selectedAddress;
+        
+        //If your provider is not a signer with accounts then you must pass userAddress in the permti options
         const usdcPermitOptions = {
           domainData: usdcDomainData,
           spender: config.feeProxyAddress,
@@ -161,29 +122,21 @@ function App() {
           deadline: Math.floor(Date.now() / 1000 + 3600),
         }
 
-
-        let userAddress = selectedAddress;
-        //let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
-        //could also use populateTransaction
-        //console.log(functionSignature);
-
-        console.log("getting permit to spend dai");
+        console.log("getting permit to spend usdc tokens");
         showInfoMessage(
-          `Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`
+          `Getting signature and permit transaction to spend usdc token by Fee proxy contract ${config.feeProxyAddress}`
         );
+        
+        //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
+        //Users need to pass provider object from window, spender address (erc20 forwarder OR the fee proxy address) and DAI's address for your network
+        //permitClient = new PermitClient(provider,config.feeProxyAddress,config.daiAddress);
 
-        //await permitClient.daiPermit(daiPermitOptions);
+        //OR use biconomy's permitclient member as below!
+        // If you'd like to see demo for spending DAI please check the branch erc20-forwarder-demo
+        // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
 
-        permitClient = new PermitClient(provider,config.feeProxyAddress);
+        // This step only needs to be done once and is valid during the given deadline
         await permitClient.eip2612Permit(usdcPermitOptions);
-
-
-        /**
-         * USDC permit
-         */
-
-        /* USDT permit (without any helpers approve transaction - can't be gasless!)
-         */
 
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -200,8 +153,6 @@ function App() {
         console.log(gasPrice.toString());
         console.log(data);
 
-        //todo
-        //test with USDT and USDC
         const builtTx = await ercForwarderClient.buildTx(
           config.contract.address,
           config.usdcAddress,
@@ -213,15 +164,19 @@ function App() {
         console.log(tx);
         console.log(fee);
         showInfoMessage(`Signing message for meta transaction`);
-        let transaction = await ercForwarderClient.sendTxEIP712(tx);
-        console.log(transaction);
-        // how do we return Promise and event emitter for sendTxEIP712?
 
+        //signature of this method is sendTxEIP712({req, signature = null, userAddress})
+        //signature param is optional. check network agnostics section for more details about this
+        //userAddress is must when your provider does not have a signer with accounts 
+        let transaction = await ercForwarderClient.sendTxEIP712({req:tx});
+        //returns an object containing code, log, message, txHash 
+        console.log(transaction);
+      
         //event emitter methods
-        ethersProvider.once(transaction, (result) => {
+        ethersProvider.once(transaction.txHash, (result) => {
           // Emitted when the transaction has been mined
           console.log(result);
-          setTransactionHash(transaction);
+          setTransactionHash(transaction.txHash);
           getQuoteFromNetwork();
         });
       } else {
@@ -245,18 +200,21 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
-        const daiPermitOptions = {
+       
+        const usdcPermitOptions = {
+          domainData: usdcDomainData,
           spender: config.feeProxyAddress,
-          expiry: Math.floor(Date.now() / 1000 + 3600),
-          allowed: true,
-        };
+          value: "100000000000000000000", 
+          deadline: Math.floor(Date.now() / 1000 + 3600),
+        }
 
-        await permitClient.daiPermit(daiPermitOptions);
+        //For an example using DAI tokens check the method onSendRawTxFromBackend in the branch erc20-forwarder-demo 
+
+        //This permit is only required once and remains valid according to the set deadline 
+        await permitClient.eip2612Permit(usdcPermitOptions);
 
         let userAddress = selectedAddress;
-        //let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        //console.log(functionSignature);
-
+        
         sendSignedRawTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
@@ -279,20 +237,23 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
-        const daiPermitOptions = {
-          spender: config.feeProxyAddress,
-          expiry: Math.floor(Date.now() / 1000 + 3600),
-          allowed: true,
-        };
-
+       
         let userAddress = selectedAddress;
 
-        console.log("getting permit to spend dai");
+        console.log("getting permit to spend usdc tokens");
         showInfoMessage(
-          `Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`
+          `Getting signature and permit transaction to spend usdc token by Fee proxy contract ${config.feeProxyAddress}`
         );
 
-        await permitClient.daiPermit(daiPermitOptions);
+        const usdcPermitOptions = {
+          domainData: usdcDomainData,
+          spender: config.feeProxyAddress,
+          value: "100000000000000000000", 
+          deadline: Math.floor(Date.now() / 1000 + 3600),
+        }
+
+        //If already given permit skip below step
+        //await permitClient.eip2612Permit(usdcPermitOptions);
 
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -311,7 +272,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx(
           config.contract.address,
-          config.daiAddress,
+          config.usdcAddress,
           Number(gasLimit),
           data
         );
@@ -322,17 +283,21 @@ function App() {
         console.log(fee);
 
         showInfoMessage(`Signing message for meta transaction`);
-        //todo
-        //review change done in ERC Forwarder Cleint for this method
-        let transaction = await ercForwarderClient.sendTxPersonalSign(tx);
-        console.log(transaction);
-        // how do we return Promise and event emitter?
+        
+        //signature of this method is sendTxEIP712({req, signature = null, userAddress})
+        //signature param is optional. check network agnostics section for more details about this
+        //userAddress is must when your provider does not have a signer with accounts 
+        let txResponse = await ercForwarderClient.sendTxPersonalSign({req:tx});
+        //returns an object containing code, log, message, txHash 
+        const txHash = txResponse.txHash;
+        console.log(txHash);
+       
 
         //event emitter methods
-        ethersProvider.once(transaction, (result) => {
+        ethersProvider.once(txHash, (result) => {
             // Emitted when the transaction has been mined
             console.log(result);
-            setTransactionHash(transaction);
+            setTransactionHash(txHash);
             getQuoteFromNetwork();
           });
       } else {
@@ -390,7 +355,7 @@ function App() {
   // get user signature and send raw tx along with signature type
   const sendSignedRawTransaction = async (userAddress, arg) => {
     let privateKey =
-      "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // process.env.privKey
+      "3cad93b95310df46dfbc3f64d7aabac713ad19a55dc8a610b8fbb702684dd27d"; // process.env.privKey
     let wallet = new ethers.Wallet(privateKey);
     let functionSignature = contractInterface.encodeFunctionData("setQuote", [
       arg,
@@ -420,7 +385,7 @@ function App() {
     console.log(signedTx);
 
     // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-    const dataToSign = await biconomy.getForwardRequestMessageToSign(signedTx);
+    const dataToSign = await biconomy.getForwardRequestAndMessageToSign(signedTx, config.usdcAddress);
     console.log(dataToSign);
     const signParams = dataToSign.eip712Format;
     //https://github.com/ethers-io/ethers.js/issues/687
@@ -443,14 +408,12 @@ function App() {
 
     let data = {
       signature: signature,
+      forwardRequest: dataToSign.request,
       rawTransaction: signedTx,
       signatureType: EIP712_SIGN,
     };
 
-    //test
-    //wallet = wallet.connect(ethersProvider);
-
-    /*const createReceipt = await ethersProvider.sendTransaction(signedTx); 
+   /*const createReceipt = await ethersProvider.sendTransaction(signedTx); 
    // this is like send signed transaction, only works when you dont need extra parameters!
    await createReceipt.wait();
    console.log(`Transaction successful with hash: ${createReceipt.hash}`);*/

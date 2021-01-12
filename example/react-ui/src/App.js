@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy, PermitClient} from "@biconomy/mexa";
+import {Biconomy, PermitClient, HTTP_CODES, RESPONSE_CODES} from "@biconomy/mexa";
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -109,24 +109,23 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
+       
+          const daiPermitOptions = {
+            // spender: config.feeProxyAddress,
+            expiry: Math.floor(Date.now() / 1000 + 3600),
+            allowed: true
+          };
 
-        const daiPermitOptions = {
-          spender: config.feeProxyAddress,
-          expiry: Math.floor(Date.now() / 1000 + 3600),
-          allowed: true
-        };
+          let userAddress = selectedAddress;
+          let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+          console.log(functionSignature);
 
         /*const usdcPermitOptions = {
           domainData: usdcDomainData,
           spender: config.feeProxyAddress,
           value: "100000000000000000000", 
           deadline: Math.floor(Date.now() / 1000 + 3600),
-        }*/
-
-        let userAddress = selectedAddress;
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        console.log(functionSignature);
-        
+        }*/  
         
         console.log("getting permit to spend dai");
         showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
@@ -170,9 +169,8 @@ function App() {
           showSuccessMessage("Transaction confirmed on chain");
           getQuoteFromNetwork();
         }
-
-
-      } else {
+      }
+      else {
         console.log("Sending normal transaction");
         contract.methods
           .setQuote(newQuote)
@@ -186,9 +184,10 @@ function App() {
             getQuoteFromNetwork();
           });
       }
-    } else {
-      showErrorMessage("Please enter the quote");
     }
+      else {
+        showErrorMessage("Please enter the quote");
+      }
   };
 
   const onSendRawTxFromBackend = async event => {
@@ -197,7 +196,6 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-          spender: config.feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
@@ -233,9 +231,9 @@ function App() {
   const fetchMinedTransactionReceipt = (transactionHash) => {
 
     return new Promise((resolve, reject) => {
-      
+
       const { web3 } = window;
-  
+
       var timer = setInterval(()=> {
         web3.eth.getTransactionReceipt(transactionHash, (err, receipt)=> {
           if(!err && receipt){
@@ -254,7 +252,7 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-          spender: config.feeProxyAddress,
+          // spender: config.feeProxyAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
@@ -421,7 +419,7 @@ function App() {
           if (error) {
               return console.error(error);
           }
-          console.log(txHash);    
+          console.log(txHash);
       })*/
 
       // USING event emitter

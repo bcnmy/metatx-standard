@@ -7,6 +7,7 @@ contract ForwarderTest is BaseRelayRecipient {
     string public quote;
     address public owner;
     
+    // set biconomy's trusted forwarder for your network
     constructor(address forwarder) public{
         trustedForwarder = forwarder;
     }

@@ -5,7 +5,7 @@ let supportedNetworks = [42];
 helperAttributes.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const FORWARD_OVERHEAD_PERSONAL_SIGN = 26231;
 const FORWARD_OVERHEAD_EIP712_SIGN = 27796;
-helperAttributes.baseURL = "https://api.biconomy.io";
+helperAttributes.baseURL = "https://localhost:4000";
 let daiTokenAddressMap = {},
   usdtTokenAddressMap = {},
   usdcTokenAddressMap = {},
@@ -23,7 +23,7 @@ usdtTokenAddressMap[42] = "0x8486E3592CC23F27Ea430aDAD031Cf8ABD978756";
 
 // any other constants needed goes in helperAttributes
 helperAttributes.biconomyForwarderDomainData = {
-    name : "TEST", // Biconomy Transaction
+    name : "TRUSTED FORWARDER", // Biconomy Transaction
     version : "1",
   };
 

@@ -121,6 +121,6 @@ config.contract = {
 config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 config.usdtAddress = "0x7816604Da30cFb779Cd0F113E748238033710bAa";
 //config.usdcAddress = "0xA5d2a43d94B6a26054506D18ea44E4749f727721";
-config.feeProxyAddress = "0xff7EBa16DBD8E1358055CDD0082cc553799d80F0";
+config.erc20ForwarderAddress = "0x44f59E0A8085ee12B0634A5B15b62751b4DA51D7";
 
 module.exports = {config}

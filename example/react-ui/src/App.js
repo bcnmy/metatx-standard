@@ -97,7 +97,7 @@ function App() {
       if (metaTxEnabled) {
        
           const daiPermitOptions = {
-            // spender: config.feeProxyAddress,
+            // spender: config.erc20ForwarderAddress,
             expiry: Math.floor(Date.now() / 1000 + 3600),
             allowed: true
           };
@@ -107,11 +107,11 @@ function App() {
           console.log(functionSignature);
  
         console.log("getting permit to spend dai");
-        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
+        showInfoMessage(`Getting signature and permit transaction to spend dai token by ERC20 Forwarder contract ${config.erc20ForwarderAddress}`);
         
         //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
         //Users need to pass provider object from window, spender address (erc20 forwarder address) and DAI's address for your network
-        //permitClient = new PermitClient(provider,config.feeProxyAddress,config.daiAddress);
+        //permitClient = new PermitClient(provider,config.erc20ForwarderAddress,config.daiAddress);
 
         //OR use biconomy's permitclient member as below!
         // If you'd like to see demo for spending USDC please check the branch erc20-forwarder-ethers-demo
@@ -231,7 +231,7 @@ function App() {
       if (metaTxEnabled) {
 
         const daiPermitOptions = {
-          // spender: config.feeProxyAddress,
+          // spender: config.erc20ForwarderAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true
         };
@@ -240,11 +240,11 @@ function App() {
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
         console.log("getting permit to spend dai");
-        showInfoMessage(`Getting signature and permit transaction to spend dai token by Fee proxy contract ${config.feeProxyAddress}`);
+        showInfoMessage(`Getting signature and permit transaction to spend dai token by ERC20 Forwarder contract ${config.erc20ForwarderAddress}`);
 
          //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
         //Users need to pass provider object from window, spender address (erc20 forwarder address) and DAI's address for your network
-        //permitClient = new PermitClient(provider,config.feeProxyAddress,config.daiAddress);
+        //permitClient = new PermitClient(provider,config.erc20ForwarderAddress,config.daiAddress);
 
         //OR use biconomy's permitclient member as below!
         // If you'd like to see demo for spending USDC please check the branch erc20-forwarder-ethers-demo

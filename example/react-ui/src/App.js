@@ -52,7 +52,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "LfKQFbcGl.1366d661-4f38-43f6-8544-578e659c1c5d", debug: true});
           web3 = new Web3(biconomy);
           
           console.log(web3);
@@ -119,7 +119,7 @@ function App() {
 
         //await permitClient.eip2612Permit(usdcPermitOptions);
         //This step only needs to be done once and is valid during the given deadline
-        await permitClient.daiPermit(daiPermitOptions);
+        // await permitClient.daiPermit(daiPermitOptions);
         
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -128,7 +128,12 @@ function App() {
         .setQuote(newQuote)
         .estimateGas({ from: userAddress });
 
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
+        const builtTx = await ercForwarderClient.buildTx({
+          to: config.contract.address,
+          token: config.daiAddress,
+          txGas: Number(gasLimit),
+          data: functionSignature
+        });
         const tx = builtTx.request;
         const fee = builtTx.cost;
         console.log(tx);
@@ -139,14 +144,17 @@ function App() {
         let transaction = await ercForwarderClient.sendTxEIP712({req:tx});
         //returns an object containing code, log, message, txHash 
         console.log(transaction);
-
-        const receipt = await fetchMinedTransactionReceipt(transaction.txHash);
-        if(receipt)
-        {
-          console.log(receipt);
-          setTransactionHash(receipt.transactionHash);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
+        if(transaction && transaction.txHash) {
+          const receipt = await fetchMinedTransactionReceipt(transaction.txHash);
+          if(receipt)
+          {
+            console.log(receipt);
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed on chain");
+            getQuoteFromNetwork();
+          }
+        } else {
+          showErrorMessage(transaction.message);
         }
       }
       else {
@@ -179,7 +187,7 @@ function App() {
           allowed: true
         };
 
-        await permitClient.daiPermit(daiPermitOptions);
+       // await permitClient.daiPermit(daiPermitOptions);
 
         let userAddress = selectedAddress;
         //let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
@@ -261,7 +269,13 @@ function App() {
         .setQuote(newQuote)
         .estimateGas({ from: userAddress });
 
-        const builtTx = await ercForwarderClient.buildTx(config.contract.address,config.daiAddress,Number(gasLimit),functionSignature);
+        const builtTx = await ercForwarderClient.buildTx({
+          to: config.contract.address,
+          token: config.daiAddress,
+          txGas: Number(gasLimit),
+          data: functionSignature
+        });
+
         const tx = builtTx.request;
         const fee = builtTx.cost;
 
@@ -367,19 +381,22 @@ function App() {
 
       // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
       // In this method tokenAddress needs to be passed, by default it will spend DAI tokens from user's wallet
-      const dataToSign = await biconomy.getForwardRequestAndMessageToSign(
+      const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(
         signedTx.rawTransaction
       );
 
-      const request = dataToSign.request;
+      console.log(forwardRequestData);
+
+      const request = forwardRequestData.request;
       console.log(request);
 
+      console.log("Estimated cost in token : ", forwardRequestData.cost);
       console.log("data to sign");
-      console.log(dataToSign);
+      console.log(forwardRequestData);
       const signature = sigUtil.signTypedMessage(
         new Buffer.from(privateKey, "hex"),
         {
-          data: dataToSign.eip712Format,
+          data: forwardRequestData.eip712Format,
         },
         "V4"
       );

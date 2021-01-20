@@ -355,7 +355,7 @@ function App() {
   // get user signature and send raw tx along with signature type
   const sendSignedRawTransaction = async (userAddress, arg) => {
     let privateKey =
-      "3cad93b95310df46dfbc3f64d7aabac713ad19a55dc8a610b8fbb702684dd27d"; // process.env.privKey
+      "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // process.env.privKey
     let wallet = new ethers.Wallet(privateKey);
     let functionSignature = contractInterface.encodeFunctionData("setQuote", [
       arg,

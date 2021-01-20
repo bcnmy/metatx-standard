@@ -52,7 +52,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "LfKQFbcGl.1366d661-4f38-43f6-8544-578e659c1c5d", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           web3 = new Web3(biconomy);
           
           console.log(web3);
@@ -119,7 +119,7 @@ function App() {
 
         //await permitClient.eip2612Permit(usdcPermitOptions);
         //This step only needs to be done once and is valid during the given deadline
-        // await permitClient.daiPermit(daiPermitOptions);
+        await permitClient.daiPermit(daiPermitOptions);
         
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -385,7 +385,7 @@ function App() {
         signedTx.rawTransaction
       );
 
-      console.log(forwardRequestData);
+      console.log('amount of tokens charged would be' + forwardRequestData.cost);
 
       const request = forwardRequestData.request;
       console.log(request);

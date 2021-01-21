@@ -1,6 +1,6 @@
 let config = {};
 config.contract = {
-    address: "0x042AB34a73175b4EF3AfE5D9FC894428FcaF1695",
+    address: "0x274dBC1a5527D8130899b63FA1941e6B47413Bb2",
     abi: [
         {
             "inputs": [
@@ -121,6 +121,6 @@ config.contract = {
 config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 config.usdtAddress = "0x7816604Da30cFb779Cd0F113E748238033710bAa";
 //config.usdcAddress = "0xA5d2a43d94B6a26054506D18ea44E4749f727721";
-config.erc20ForwarderAddress = "0x886c7B1eBa746990E019fD370Cc6e5fe70b98f29";
+config.erc20ForwarderAddress = "0xdC44251d4a6115aDa10a4A623405BAb3eaE68353";
 
 module.exports = {config}

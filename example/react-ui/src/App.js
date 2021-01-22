@@ -62,7 +62,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-            apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
+            apiKey: "5NiZ_d92n.1ba91c84-b28c-4376-8860-397db6ddbf37",
             debug: true,
           });
 
@@ -153,12 +153,12 @@ function App() {
         console.log(gasPrice.toString());
         console.log(data);
 
-        const builtTx = await ercForwarderClient.buildTx(
-          config.contract.address,
-          config.usdcAddress,
-          Number(gasLimit),
+        const builtTx = await ercForwarderClient.buildTx({
+          to: config.contract.address,
+          token:config.usdcAddress,
+          txGas:Number(gasLimit),
           data
-        );
+        });
         const tx = builtTx.request;
         const fee = builtTx.cost;
         console.log(tx);
@@ -270,12 +270,12 @@ function App() {
         console.log(gasPrice.toString());
         console.log(data);
 
-        const builtTx = await ercForwarderClient.buildTx(
-          config.contract.address,
-          config.usdcAddress,
-          Number(gasLimit),
+        const builtTx = await ercForwarderClient.buildTx({
+          to: config.contract.address,
+          token:config.usdcAddress,
+          txGas:Number(gasLimit),
           data
-        );
+        });
         const tx = builtTx.request;
         const fee = builtTx.cost;
 
@@ -385,8 +385,8 @@ function App() {
     console.log(signedTx);
 
     // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-    const dataToSign = await biconomy.getForwardRequestAndMessageToSign(signedTx, config.usdcAddress);
-    console.log(dataToSign);
+    const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(signedTx, config.usdcAddress);
+    /*console.log(dataToSign);
     const signParams = dataToSign.eip712Format;
     //https://github.com/ethers-io/ethers.js/issues/687
     delete signParams.types.EIP712Domain;
@@ -395,20 +395,22 @@ function App() {
       signParams.domain,
       signParams.types,
       signParams.message
-    );
+    );*/
+
+    console.log(`${forwardRequestData.cost} amount of tokens will be charged`);
 
     //optional
-    /*const signature = sigUtil.signTypedMessage(
+    const signature = sigUtil.signTypedMessage(
       new Buffer.from(privateKey, "hex"),
       {
-        data: dataToSign.eip712Format, // option to get personalFormat also 
+        data: forwardRequestData.eip712Format, // option to get personalFormat also 
       },
       "V4"
-    );*/
+    );
 
     let data = {
       signature: signature,
-      forwardRequest: dataToSign.request,
+      forwardRequest: forwardRequestData.request,
       rawTransaction: signedTx,
       signatureType: EIP712_SIGN,
     };

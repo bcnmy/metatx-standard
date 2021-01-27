@@ -134,17 +134,15 @@ function App() {
         sendTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
-        contract.methods
-          .setQuote(newQuote)
-          .send({ from: selectedAddress })
-          .on("transactionHash", function (hash) {
-            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-          })
-          .once("confirmation", function (confirmationNumber, receipt) {
-            setTransactionHash(receipt.transactionHash);
-            showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
-          });
+        let tx = await contract.setQuote(newQuote);
+        console.log("Transaction hash : ", tx.hash);
+        showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+        let confirmation = await tx.wait();
+        console.log(confirmation);
+        setTransactionHash(tx.hash);
+
+        showSuccessMessage("Transaction confirmed on chain");
+        getQuoteFromNetwork();
       }
     } else {
       showErrorMessage("Please enter the quote");
@@ -162,17 +160,15 @@ function App() {
         sendSignedRawTransaction(userAddress, newQuote);
       } else {
         console.log("Sending normal transaction");
-        contract.methods
-          .setQuote(newQuote)
-          .send({ from: selectedAddress })
-          .on("transactionHash", function (hash) {
-            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-          })
-          .once("confirmation", function (confirmationNumber, receipt) {
-            setTransactionHash(receipt.transactionHash);
-            showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
-          });
+        let tx = await contract.setQuote(newQuote);
+        console.log("Transaction hash : ", tx.hash);
+        showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+        let confirmation = await tx.wait();
+        console.log(confirmation);
+        setTransactionHash(tx.hash);
+
+        showSuccessMessage("Transaction confirmed on chain");
+        getQuoteFromNetwork();
       }
     } else {
       showErrorMessage("Please enter the quote");
@@ -270,7 +266,7 @@ function App() {
       signature: signature,
       forwardRequest: forwardData.request,
       rawTransaction: signedTx,
-      signatureType: "EIP712_SIGN",
+      signatureType: EIP712_SIGN,
     };
 
    //test 

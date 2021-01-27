@@ -1,6 +1,6 @@
 let config = {};
 config.contract = {
-    address: "0x77caE92852c2F807A9a3c3F55aD91C96CeE4C903",
+    address: "0xCb7ECa3cd58Ef49F164F58D77C8A56ddDdfF5FA1",
     abi: [
         {
             "inputs": [
@@ -11,6 +11,19 @@ config.contract = {
                 }
             ],
             "name": "setQuote",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "newForwarder",
+                    "type": "address"
+                }
+            ],
+            "name": "setTrustedForwarder",
             "outputs": [],
             "stateMutability": "nonpayable",
             "type": "function"
@@ -120,7 +133,7 @@ config.contract = {
 
 
 
-config.biconomyForwarderAddress = "0x1c92C18b1936F1191B2b6A076F1a6F3801BaDdDb";
+config.biconomyForwarderAddress = "0xd6c08184B02682EBfA2845A521Dfcbd9E8F64418";
 config.oracleAggregatorAddress = "0xdDA72D57754B20F5C859777922A8D7f34f8e2833";
 config.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 

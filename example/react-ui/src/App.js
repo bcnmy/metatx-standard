@@ -95,7 +95,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-          apiKey: "5NiZ_d92n.1ba91c84-b28c-4376-8860-397db6ddbf37",
+          apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
           debug: true,
         });
 
@@ -301,6 +301,7 @@ function App() {
             from: userAddress,
             gasPrice: gasPrice,
             signatureType: "EIP712_SIGN",
+            gasLimit: 300000
           });
 
         tx.on("transactionHash", function (hash) {

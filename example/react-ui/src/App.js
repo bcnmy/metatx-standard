@@ -238,7 +238,7 @@ function App() {
     rawTx = {
       to: config.contract.address,
       data: functionSignature,
-      from: userAddress  
+      from: userAddress
     };
 
     signedTx = await wallet.signTransaction(rawTx);
@@ -247,27 +247,28 @@ function App() {
     
 
     // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-    const dataToSign = await biconomy.getForwardRequestMessageToSign(
+    const forwardData = await biconomy.getForwardRequestAndMessageToSign(
       signedTx
     );
-    console.log(dataToSign);
-    const signParams = dataToSign.eip712Format;
+    console.log(forwardData);
+    //const signParams = forwardData.eip712Format;
     //https://github.com/ethers-io/ethers.js/issues/687
-    delete signParams.types.EIP712Domain;
-    console.log(signParams);
-    const signature = await wallet._signTypedData(signParams.domain, signParams.types, signParams.message);
+    //delete signParams.types.EIP712Domain;
+    //console.log(signParams);
+    //const signature = await wallet._signTypedData(signParams.domain, signParams.types, signParams.message);
 
     //optional
-    /*const signature = sigUtil.signTypedMessage(
+    const signature = sigUtil.signTypedMessage(
       new Buffer.from(privateKey, "hex"),
       {
-        data: dataToSign.eip712Format, // option to get personalFormat also 
+        data: forwardData.eip712Format, // option to get personalFormat also 
       },
       "V4"
-    );*/
+    );
 
     let data = {
       signature: signature,
+      forwardRequest: forwardData.request,
       rawTransaction: signedTx,
       signatureType: "EIP712_SIGN",
     };

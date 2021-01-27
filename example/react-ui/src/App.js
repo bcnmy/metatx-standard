@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import Biconomy from "@biconomy/mexa";
+import {Biconomy} from "@biconomy/mexa";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -67,9 +67,9 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
-          if (provider.networkVersion == "80001") {
-            domainData.chainId = 80001;
-          const biconomy = new Biconomy(provider,{apiKey: "emxBQWVss.dba9922c-1cd9-49d3-bfab-90d9dba77c53", debug: true});
+          if (provider.networkVersion == "4") {
+            domainData.chainId = 4;
+          const biconomy = new Biconomy(provider,{apiKey: config.apiKey, debug: true});
           web3 = new Web3(biconomy);
 
           biconomy.onEvent(biconomy.READY, () => {
@@ -87,7 +87,7 @@ function App() {
             // Handle error while initializing mexa
           });
         } else {
-           showErrorMessage("Please change the network in metamask to Mumbai Testnet");
+           showErrorMessage("Please change the network in metamask to Rinkeby Testnet");
         }
       } else {
         showErrorMessage("Metamask not installed");
@@ -344,7 +344,7 @@ function App() {
         {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
           <Typography>
             Check your transaction hash
-            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}`} target="_blank"
+            <Link href={`https://rinkeby.etherscan.io/tx/${transactionHash}`} target="_blank"
             className={classes.link}>
               here
             </Link>

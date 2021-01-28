@@ -230,7 +230,7 @@ function App() {
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "df8911a5-43c0-4e44-9977-e21e7768fa5c",
+            "apiId": "f71c5a2d-c64b-4add-b0d3-df55ea06f687",
             "params": params,
             "from": userAddress,
             "signatureType": signatureType
@@ -268,9 +268,7 @@ function App() {
   const fetchMinedTransactionReceipt = (transactionHash) => {
 
     return new Promise((resolve, reject) => {
-      
-      const { web3 } = window;
-  
+    
       var timer = setInterval(()=> {
         web3.eth.getTransactionReceipt(transactionHash, (err, receipt)=> {
           if(!err && receipt){

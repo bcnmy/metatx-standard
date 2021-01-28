@@ -34,6 +34,13 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
+let usdcDomainData = {
+  name : "USDC Coin",
+  version : "1",
+  chainId : 4,
+  verifyingContract : config.usdcAddress
+};
+
 function App() {
   const classes = useStyles();
   const preventDefault = (event) => event.preventDefault();
@@ -244,11 +251,11 @@ function App() {
       setTransactionHash("");
       if (metaTxEnabled) {
 
-        const daiPermitOptions = {
-          // spender: config.erc20ForwarderAddress,
-          expiry: Math.floor(Date.now() / 1000 + 3600),
-          allowed: true
-        };
+        const usdcPermitOptions = {
+          domainData: usdcDomainData,
+          value: "100000000000000000000", 
+          deadline: Math.floor(Date.now() / 1000 + 3600),
+        }
 
         let userAddress = selectedAddress;
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
@@ -265,7 +272,7 @@ function App() {
         // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
 
         //This step only needs to be done once and is valid during the given deadline
-        let permitTx = await permitClient.daiPermit(daiPermitOptions);
+        let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
         await permitTx.wait(1);
 
         console.log("Sending meta transaction");
@@ -279,7 +286,7 @@ function App() {
         // USDT
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token: config.usdtAddress,
+          token: config.usdcAddress,
           txGas: Number(gasLimit),
           data: functionSignature
         });

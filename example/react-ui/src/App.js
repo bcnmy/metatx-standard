@@ -104,13 +104,13 @@ function App() {
         let networkId = 42;
 
         const daiPermitOptions = {
-          spender: config.feeProxyAddress,
+          spender: config.erc20ForwarderAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true,
           networkId: 42
         };
 
-        await getDaiPermit(provider,userAddress,daiPermitOptions);
+        //await getDaiPermit(provider,userAddress,daiPermitOptions);
       
         let forwarder = await getBiconomyForwarderConfig(42);
         let forwarderContract = new web3.eth.Contract(
@@ -197,7 +197,7 @@ function App() {
         let networkId = 42;
         
         const daiPermitOptions = {
-          spender: config.feeProxyAddress,
+          spender: config.erc20ForwarderAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true,
           networkId: networkId
@@ -277,7 +277,7 @@ function App() {
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "ca3c2a47-61ad-4e9e-bff3-1da0faeb69f5",
+            "apiId": "e2016151-bee9-4736-81c1-b4e0037b82da",
             "params": params,
             "from": userAddress,
             "signatureType": signatureType
@@ -314,8 +314,6 @@ function App() {
 
     return new Promise((resolve, reject) => {
       
-      const { web3 } = window;
-  
       var timer = setInterval(()=> {
         web3.eth.getTransactionReceipt(transactionHash, (err, receipt)=> {
           if(!err && receipt){

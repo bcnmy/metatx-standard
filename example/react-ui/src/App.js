@@ -136,7 +136,7 @@ function App() {
         // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
 
         // This step only needs to be done once and is valid during the given deadline
-        await permitClient.eip2612Permit(usdcPermitOptions);
+        //await permitClient.eip2612Permit(usdcPermitOptions);
 
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -211,7 +211,7 @@ function App() {
         //For an example using DAI tokens check the method onSendRawTxFromBackend in the branch erc20-forwarder-demo 
 
         //This permit is only required once and remains valid according to the set deadline 
-        await permitClient.eip2612Permit(usdcPermitOptions);
+        //await permitClient.eip2612Permit(usdcPermitOptions);
 
         let userAddress = selectedAddress;
         

@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import {Biconomy, PermitClient, HTTP_CODES, RESPONSE_CODES} from "@biconomy/mexa";
+import { Biconomy, PermitClient, HTTP_CODES, RESPONSE_CODES } from "@biconomy/mexa";
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -21,6 +21,7 @@ let provider;
 let contract;
 let ercForwarderClient;
 let permitClient;
+let daiToken;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -50,34 +51,34 @@ function App() {
         window.ethereum.isMetaMask
       ) {
         // Ethereum user detected. You can now use the provider.
-          provider = window["ethereum"];
-          await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
-          web3 = new Web3(biconomy);
-          
-          console.log(web3);
+        provider = window["ethereum"];
+        await provider.enable();
+        biconomy = new Biconomy(provider, { apiKey: config.apiKey, debug: true });
+        web3 = new Web3(biconomy);
 
-         
-          //contract should have been registered on the dashboard as ERC20_FORWARDER
-          contract = new web3.eth.Contract(
-            config.contract.abi,
-            config.contract.address
-          );
+        console.log(web3);
 
 
-          biconomy.onEvent(biconomy.READY, () => {
-            // Initialize your dapp here like getting user accounts etc
-            ercForwarderClient = biconomy.erc20ForwarderClient;
-            permitClient = biconomy.permitClient;
-            console.log(contract);
-            setSelectedAddress(provider.selectedAddress);
-            getQuoteFromNetwork();
-            provider.on("accountsChanged", function(accounts) {
-              setSelectedAddress(accounts[0]);
-            });
-          }).onEvent(biconomy.ERROR, (error, message) => {
-            // Handle error while initializing mexa
+        //contract should have been registered on the dashboard as ERC20_FORWARDER
+        contract = new web3.eth.Contract(
+          config.contract.abi,
+          config.contract.address
+        );
+        daiToken = new web3.eth.Contract(config.daiABI, config.daiAddress);
+
+        biconomy.onEvent(biconomy.READY, () => {
+          // Initialize your dapp here like getting user accounts etc
+          ercForwarderClient = biconomy.erc20ForwarderClient;
+          permitClient = biconomy.permitClient;
+          console.log(contract);
+          setSelectedAddress(provider.selectedAddress);
+          getQuoteFromNetwork();
+          provider.on("accountsChanged", function (accounts) {
+            setSelectedAddress(accounts[0]);
           });
+        }).onEvent(biconomy.ERROR, (error, message) => {
+          // Handle error while initializing mexa
+        });
 
 
       } else {
@@ -95,38 +96,44 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
-       
-          const daiPermitOptions = {
-            // spender: config.erc20ForwarderAddress,
-            expiry: Math.floor(Date.now() / 1000 + 3600),
-            allowed: true
-          };
 
-          let userAddress = selectedAddress;
-          let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-          console.log(functionSignature);
- 
-        console.log("getting permit to spend dai");
-        showInfoMessage(`Getting signature and permit transaction to spend dai token by ERC20 Forwarder contract ${config.erc20ForwarderAddress}`);
-        
-        //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
-        //Users need to pass provider object from window, spender address (erc20 forwarder address) and DAI's address for your network
-        //permitClient = new PermitClient(provider,config.erc20ForwarderAddress,config.daiAddress);
+        const daiPermitOptions = {
+          // spender: config.erc20ForwarderAddress,
+          expiry: Math.floor(Date.now() / 1000 + 3600),
+          allowed: true
+        };
 
-        //OR use biconomy's permitclient member as below!
-        // If you'd like to see demo for spending USDC please check the branch erc20-forwarder-ethers-demo
-        // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
+        let userAddress = selectedAddress;
+        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        console.log(functionSignature);
 
-        //await permitClient.eip2612Permit(usdcPermitOptions);
-        //This step only needs to be done once and is valid during the given deadline
-        await permitClient.daiPermit(daiPermitOptions);
-        
+        let allowance = await daiToken.methods.allowance(userAddress, biconomy.erc20ForwarderAddress).call();
+        if (allowance <= 0) {
+          console.log("getting permit to spend dai");
+          showInfoMessage(`Getting signature and permit transaction to spend dai token by ERC20 Forwarder contract ${config.erc20ForwarderAddress}`);
+
+          //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
+          //Users need to pass provider object from window, spender address (erc20 forwarder address) and DAI's address for your network
+          //permitClient = new PermitClient(provider,config.erc20ForwarderAddress,config.daiAddress);
+
+          //OR use biconomy's permitclient member as below!
+          // If you'd like to see demo for spending USDC please check the branch erc20-forwarder-ethers-demo
+          // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
+
+          //await permitClient.eip2612Permit(usdcPermitOptions);
+          //This step only needs to be done once and is valid during the given deadline
+          let permitTx = await permitClient.daiPermit(daiPermitOptions);
+          await permitTx.wait(1);
+        }
+
+
+
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
         // txGas should be calculated and passed here or calculate within the method
         let gasLimit = await contract.methods
-        .setQuote(newQuote)
-        .estimateGas({ from: userAddress });
+          .setQuote(newQuote)
+          .estimateGas({ from: userAddress });
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
@@ -142,13 +149,12 @@ function App() {
         showInfoMessage(`Signing message for meta transaction`);
 
         //signature of this method is sendTxEIP712({req, signature = null, userAddress})
-        let transaction = await ercForwarderClient.sendTxEIP712({req:tx});
+        let transaction = await ercForwarderClient.sendTxEIP712({ req: tx });
         //returns an object containing code, log, message, txHash 
         console.log(transaction);
-        if(transaction && transaction.txHash) {
+        if (transaction && transaction.txHash) {
           const receipt = await fetchMinedTransactionReceipt(transaction.txHash);
-          if(receipt)
-          {
+          if (receipt) {
             console.log(receipt);
             setTransactionHash(receipt.transactionHash);
             showSuccessMessage("Transaction confirmed on chain");
@@ -163,19 +169,19 @@ function App() {
         contract.methods
           .setQuote(newQuote)
           .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
+          .on("transactionHash", function (hash) {
             showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
           })
-          .once("confirmation", function(confirmationNumber, receipt) {
+          .once("confirmation", function (confirmationNumber, receipt) {
             setTransactionHash(receipt.transactionHash);
             showSuccessMessage("Transaction confirmed");
             getQuoteFromNetwork();
           });
       }
     }
-      else {
-        showErrorMessage("Please enter the quote");
-      }
+    else {
+      showErrorMessage("Please enter the quote");
+    }
   };
 
   const onSendRawTxFromBackend = async event => {
@@ -188,30 +194,31 @@ function App() {
           allowed: true
         };
 
-       // await permitClient.daiPermit(daiPermitOptions);
+        let permitTx = await permitClient.daiPermit(daiPermitOptions);
+        await permitTx.wait(1);
 
         let userAddress = selectedAddress;
         //let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         //console.log(functionSignature);
 
-        sendSignedRawTransaction(userAddress,newQuote);
+        sendSignedRawTransaction(userAddress, newQuote);
       }
       else {
         console.log("Sending normal transaction");
         contract.methods
           .setQuote(newQuote)
           .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
+          .on("transactionHash", function (hash) {
             showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
           })
-          .once("confirmation", function(confirmationNumber, receipt) {
+          .once("confirmation", function (confirmationNumber, receipt) {
             setTransactionHash(receipt.transactionHash);
             showSuccessMessage("Transaction confirmed");
             getQuoteFromNetwork();
           });
       }
     }
-     else {
+    else {
       showErrorMessage("Please enter the quote");
     }
   };
@@ -220,15 +227,15 @@ function App() {
 
     return new Promise((resolve, reject) => {
 
-      var timer = setInterval(()=> {
-        web3.eth.getTransactionReceipt(transactionHash, (err, receipt)=> {
-          if(!err && receipt){
+      var timer = setInterval(() => {
+        web3.eth.getTransactionReceipt(transactionHash, (err, receipt) => {
+          if (!err && receipt) {
             clearInterval(timer);
             resolve(receipt);
           }
         });
       }, 3000)
-     
+
     })
   }
 
@@ -249,7 +256,7 @@ function App() {
         //console.log("getting permit to spend dai");
         //showInfoMessage(`Getting signature and permit transaction to spend dai token by ERC20 Forwarder contract ${config.erc20ForwarderAddress}`);
 
-         //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
+        //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
         //Users need to pass provider object from window, spender address (erc20 forwarder address) and DAI's address for your network
         //permitClient = new PermitClient(provider,config.erc20ForwarderAddress,config.daiAddress);
 
@@ -258,15 +265,16 @@ function App() {
         // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
 
         //This step only needs to be done once and is valid during the given deadline
-        //await permitClient.daiPermit(daiPermitOptions);
-        
+        let permitTx = await permitClient.daiPermit(daiPermitOptions);
+        await permitTx.wait(1);
+
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
         //txGas should be calculated and passed here or calculate within the method
 
         let gasLimit = await contract.methods
-        .setQuote(newQuote)
-        .estimateGas({ from: userAddress });
+          .setQuote(newQuote)
+          .estimateGas({ from: userAddress });
 
         // USDT
         const builtTx = await ercForwarderClient.buildTx({
@@ -283,15 +291,14 @@ function App() {
         console.log(fee);
 
         showInfoMessage(`Signing message for meta transaction`);
-     
+
         //signature of this method is sendTxEIP712({req, signature = null, userAddress})
-        let transaction = await ercForwarderClient.sendTxPersonalSign({req:tx});
+        let transaction = await ercForwarderClient.sendTxPersonalSign({ req: tx });
         //returns an object containing code, log, message, txHash 
         console.log(transaction);
 
         const receipt = await fetchMinedTransactionReceipt(transaction.txHash);
-        if(receipt)
-        {
+        if (receipt) {
           console.log(receipt);
           setTransactionHash(receipt.transactionHash);
           showSuccessMessage("Transaction confirmed on chain");
@@ -303,10 +310,10 @@ function App() {
         contract.methods
           .setQuote(newQuote)
           .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
+          .on("transactionHash", function (hash) {
             showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
           })
-          .once("confirmation", function(confirmationNumber, receipt) {
+          .once("confirmation", function (confirmationNumber, receipt) {
             setTransactionHash(receipt.transactionHash);
             showSuccessMessage("Transaction confirmed");
             getQuoteFromNetwork();
@@ -323,7 +330,7 @@ function App() {
       contract.methods
         .getQuote()
         .call()
-        .then(function(result) {
+        .then(function (result) {
           console.log(result);
           if (
             result &&
@@ -355,87 +362,87 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-    // contract should be registered as erc20 forwarder
-    // get user signature and send raw tx along with signature type
-    const sendSignedRawTransaction = async (userAddress, arg) => {
-      let privateKey =
-        "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // process.env.privKey
-      let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+  // contract should be registered as erc20 forwarder
+  // get user signature and send raw tx along with signature type
+  const sendSignedRawTransaction = async (userAddress, arg) => {
+    let privateKey =
+      "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // process.env.privKey
+    let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
 
-      let gasLimit = await contract.methods
-        .setQuote(arg)
-        .estimateGas({ from: userAddress });
-      let txParams = {
-        from: userAddress,
-        gasLimit: web3.utils.toHex(gasLimit),
-        to: config.contract.address,
-        value: "0x0",
-        data: functionSignature,
-      };
-
-      const signedTx = await web3.eth.accounts.signTransaction(
-        txParams,
-        `0x${privateKey}`
-      );
-      console.log(signedTx.rawTransaction);
-
-      // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-      // In this method tokenAddress needs to be passed, by default it will spend DAI tokens from user's wallet
-      const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(
-        signedTx.rawTransaction,
-        //need to pass any other token address than DAI
-      );
-
-      console.log('amount of tokens charged would be' + forwardRequestData.cost);
-
-      const request = forwardRequestData.request;
-      console.log(request);
-
-      console.log("Estimated cost in token : ", forwardRequestData.cost);
-      console.log("data to sign");
-      console.log(forwardRequestData);
-      const signature = sigUtil.signTypedMessage(
-        new Buffer.from(privateKey, "hex"),
-        {
-          data: forwardRequestData.eip712Format,
-        },
-        "V4"
-      );
-
-      let rawTransaction = signedTx.rawTransaction;
-
-      let data = {
-        signature: signature,
-        rawTransaction: rawTransaction,
-        signatureType: biconomy.EIP712_SIGN,
-        forwardRequest: request,
-      };
-
-      // Use any one of the methods below to check for transaction confirmation
-      // USING PROMISE
-      /*let receipt = await web3.eth.sendSignedTransaction(data, (error, txHash) => {
-          if (error) {
-              return console.error(error);
-          }
-          console.log(txHash);
-      })*/
-
-      // USING event emitter
-      let transaction = web3.eth.sendSignedTransaction(data);
-      console.log(transaction);
-
-      transaction
-        .on("transactionHash", function (hash) {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-        })
-        .once("confirmation", function (confirmationNumber, receipt) {
-          console.log(receipt);
-          setTransactionHash(receipt.transactionHash);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
-        });
+    let gasLimit = await contract.methods
+      .setQuote(arg)
+      .estimateGas({ from: userAddress });
+    let txParams = {
+      from: userAddress,
+      gasLimit: web3.utils.toHex(gasLimit),
+      to: config.contract.address,
+      value: "0x0",
+      data: functionSignature,
     };
+
+    const signedTx = await web3.eth.accounts.signTransaction(
+      txParams,
+      `0x${privateKey}`
+    );
+    console.log(signedTx.rawTransaction);
+
+    // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
+    // In this method tokenAddress needs to be passed, by default it will spend DAI tokens from user's wallet
+    const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(
+      signedTx.rawTransaction,
+      //need to pass any other token address than DAI
+    );
+
+    console.log('amount of tokens charged would be' + forwardRequestData.cost);
+
+    const request = forwardRequestData.request;
+    console.log(request);
+
+    console.log("Estimated cost in token : ", forwardRequestData.cost);
+    console.log("data to sign");
+    console.log(forwardRequestData);
+    const signature = sigUtil.signTypedMessage(
+      new Buffer.from(privateKey, "hex"),
+      {
+        data: forwardRequestData.eip712Format,
+      },
+      "V4"
+    );
+
+    let rawTransaction = signedTx.rawTransaction;
+
+    let data = {
+      signature: signature,
+      rawTransaction: rawTransaction,
+      signatureType: biconomy.EIP712_SIGN,
+      forwardRequest: request,
+    };
+
+    // Use any one of the methods below to check for transaction confirmation
+    // USING PROMISE
+    /*let receipt = await web3.eth.sendSignedTransaction(data, (error, txHash) => {
+        if (error) {
+            return console.error(error);
+        }
+        console.log(txHash);
+    })*/
+
+    // USING event emitter
+    let transaction = web3.eth.sendSignedTransaction(data);
+    console.log(transaction);
+
+    transaction
+      .on("transactionHash", function (hash) {
+        console.log(`Transaction hash is ${hash}`);
+        showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
+      })
+      .once("confirmation", function (confirmationNumber, receipt) {
+        console.log(receipt);
+        setTransactionHash(receipt.transactionHash);
+        showSuccessMessage("Transaction confirmed on chain");
+        getQuoteFromNetwork();
+      });
+  };
 
   return (
     <div className="App">
@@ -460,8 +467,8 @@ function App() {
         {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
           <Typography>
             Check your transaction hash
-            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
-            className={classes.link}>
+            <Link href={`https://rinkeby.etherscan.io/tx/${transactionHash}`} target="_blank"
+              className={classes.link}>
               here
             </Link>
           </Typography>

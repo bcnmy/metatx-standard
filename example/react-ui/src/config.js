@@ -1,20 +1,7 @@
 let config = {};
 config.contract = {
-    address: "0x6949DC435b9a11DDA4E91a32f432B430b5A2A187",
+    address: "0xCb7ECa3cd58Ef49F164F58D77C8A56ddDdfF5FA1",
     abi: [
-        {
-            "inputs": [
-                {
-                    "internalType": "string",
-                    "name": "newQuote",
-                    "type": "string"
-                }
-            ],
-            "name": "setQuote",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
         {
             "inputs": [
                 {
@@ -90,6 +77,32 @@ config.contract = {
             "type": "function"
         },
         {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "newQuote",
+                    "type": "string"
+                }
+            ],
+            "name": "setQuote",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "newForwarder",
+                    "type": "address"
+                }
+            ],
+            "name": "setTrustedForwarder",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
             "inputs": [],
             "name": "trustedForwarder",
             "outputs": [
@@ -119,7 +132,7 @@ config.contract = {
 }
 
 config.tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
-config.feeProxyAddress = "0x966445784b8dd7a925794D35e335B2dd80C458A7";
+config.erc20ForwarderAddress = "0xe8515c8200bA9c74FaD5B51F5265be1C3Daacee8";
 config.baseURL = "https://localhost:4000";
 
 module.exports = {config}

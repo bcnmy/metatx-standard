@@ -246,8 +246,8 @@ function App() {
         let userAddress = selectedAddress;
         let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
         console.log(functionSignature);
-        console.log("getting permit to spend dai");
-        showInfoMessage(`Getting signature and permit transaction to spend dai token by ERC20 Forwarder contract ${config.erc20ForwarderAddress}`);
+        //console.log("getting permit to spend dai");
+        //showInfoMessage(`Getting signature and permit transaction to spend dai token by ERC20 Forwarder contract ${config.erc20ForwarderAddress}`);
 
          //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
         //Users need to pass provider object from window, spender address (erc20 forwarder address) and DAI's address for your network
@@ -268,9 +268,10 @@ function App() {
         .setQuote(newQuote)
         .estimateGas({ from: userAddress });
 
+        // USDT
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token: config.daiAddress,
+          token: config.usdtAddress,
           txGas: Number(gasLimit),
           data: functionSignature
         });
@@ -381,7 +382,8 @@ function App() {
       // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
       // In this method tokenAddress needs to be passed, by default it will spend DAI tokens from user's wallet
       const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(
-        signedTx.rawTransaction
+        signedTx.rawTransaction,
+        //need to pass any other token address than DAI
       );
 
       console.log('amount of tokens charged would be' + forwardRequestData.cost);

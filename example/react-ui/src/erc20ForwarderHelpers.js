@@ -5,7 +5,7 @@ let supportedNetworks = [42];
 helperAttributes.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const FORWARD_OVERHEAD_PERSONAL_SIGN = 18253;
 const FORWARD_OVERHEAD_EIP712_SIGN = 19213;
-helperAttributes.baseURL = "https://localhost:4000";
+helperAttributes.baseURL = "https://test-api.biconomy.io";
 let daiTokenAddressMap = {},
   usdtTokenAddressMap = {},
   usdcTokenAddressMap = {},
@@ -15,11 +15,11 @@ let daiTokenAddressMap = {},
 
 //Kovan
 daiTokenAddressMap[42] = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
-biconomyForwarderAddressMap[42] = "0x38C72836364Ae731dCAE427e73585f5D1086dD53";
-erc20ForwarderAddressMap[42] = "0xe8515c8200bA9c74FaD5B51F5265be1C3Daacee8";
-oracleAggregatorAddressMap[42] = "0x4C66c4509177be39614EbdeA7D76104eFE2179f1";
-usdcTokenAddressMap[42] = "0xA5d2a43d94B6a26054506D18ea44E4749f727721";
-usdtTokenAddressMap[42] = "0x7816604Da30cFb779Cd0F113E748238033710bAa";
+biconomyForwarderAddressMap[42] = "0x5F96595367708aD309AD1Fe5fb6415B158617bd2";
+erc20ForwarderAddressMap[42] = "0x90a04073fD94B67Ebe83AAf0D0B6cbA4e0bB8A4B";
+oracleAggregatorAddressMap[42] = "0x6E27578b6c01EF626e23a1cb570432C5F3f3EC98";
+usdcTokenAddressMap[42] = "0x6043fD7126e4229d6FcaC388c9E1C8d333CCb8fA";
+usdtTokenAddressMap[42] = "0x8e1084f3599ba90991C3b2f9e25D920738C1496D";
 
 //Rinkeby
 daiTokenAddressMap[4] = "";

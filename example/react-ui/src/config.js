@@ -132,7 +132,7 @@ config.contract = {
 }
 
 config.tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
-config.erc20ForwarderAddress = "0xe8515c8200bA9c74FaD5B51F5265be1C3Daacee8";
-config.baseURL = "https://localhost:4000";
+config.erc20ForwarderAddress = "0x90a04073fD94B67Ebe83AAf0D0B6cbA4e0bB8A4B";
+config.baseURL = "https://test-api.biconomy.io";
 
 module.exports = {config}

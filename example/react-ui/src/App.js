@@ -62,7 +62,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-            apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
+            apiKey: "m60yDrUs7.5c3b23fa-0b93-46ac-86f9-79e998d8f361",
             debug: true,
           });
 
@@ -155,7 +155,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token:config.usdcAddress,
+          token:config.usdtAddress,
           txGas:Number(gasLimit),
           data
         });
@@ -272,7 +272,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token:config.usdcAddress,
+          token:config.usdtAddress,
           txGas:Number(gasLimit),
           data
         });

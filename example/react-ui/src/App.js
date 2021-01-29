@@ -52,7 +52,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "m60yDrUs7.5c3b23fa-0b93-46ac-86f9-79e998d8f361", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "W4nND_V0p.d19fceb7-7153-4329-bc7e-99b8175bee1b", debug: true});
           web3 = new Web3(biconomy);
           
           console.log(web3);
@@ -119,7 +119,8 @@ function App() {
 
         //await permitClient.eip2612Permit(usdcPermitOptions);
         //This step only needs to be done once and is valid during the given deadline
-        await permitClient.daiPermit(daiPermitOptions);
+        let permitTx = await permitClient.daiPermit(daiPermitOptions);
+        await permitTx.wait(1);
         
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -130,7 +131,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token: config.daiAddress,
+          token: biconomy.daiTokenAddress,
           txGas: Number(gasLimit),
           data: functionSignature
         });
@@ -138,7 +139,7 @@ function App() {
         const fee = builtTx.cost;
         console.log(tx);
         console.log(fee);
-        alert(`You will be charged ${fee} amount of DAI ${config.daiAddress} for this transaction`);
+        alert(`You will be charged ${fee} amount of DAI ${biconomy.daiTokenAddress} for this transaction`);
         showInfoMessage(`Signing message for meta transaction`);
 
         //signature of this method is sendTxEIP712({req, signature = null, userAddress})
@@ -271,7 +272,7 @@ function App() {
         // USDT
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token: config.daiAddress,
+          token: biconomy.daiTokenAddress,
           txGas: Number(gasLimit),
           data: functionSignature
         });

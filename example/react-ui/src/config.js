@@ -133,8 +133,8 @@ config.contract = {
 
 
 
-config.biconomyForwarderAddress = "0xd6c08184B02682EBfA2845A521Dfcbd9E8F64418";
-config.oracleAggregatorAddress = "0xdDA72D57754B20F5C859777922A8D7f34f8e2833";
+config.biconomyForwarderAddress = "0x5F96595367708aD309AD1Fe5fb6415B158617bd2";
+config.oracleAggregatorAddress = "0x6E27578b6c01EF626e23a1cb570432C5F3f3EC98";
 config.ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 module.exports = {config}

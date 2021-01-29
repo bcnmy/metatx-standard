@@ -222,15 +222,15 @@ function App() {
           params = [req, sig]
       }
       try {
-        fetch(`https://localhost:4000/api/v2/meta-tx/native`, {
+        fetch(`https://test-api.biconomy.io/api/v2/meta-tx/native`, {
           method: "POST",
           headers: {
-            "x-api-key" : "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
+            "x-api-key" : "5NiZ_d92n.1ba91c84-b28c-4376-8860-397db6ddbf37",
             'Content-Type': 'application/json;charset=utf-8'
           },
           body: JSON.stringify({
             "to": config.contract.address,
-            "apiId": "f71c5a2d-c64b-4add-b0d3-df55ea06f687",
+            "apiId": "55c2973c-90ed-4d7e-8e53-3421e0108abf",
             "params": params,
             "from": userAddress,
             "signatureType": signatureType

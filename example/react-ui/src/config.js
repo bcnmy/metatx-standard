@@ -1,20 +1,7 @@
 let config = {};
 config.contract = {
-    address: "0x00371C560dA472d7ac898fF945a9b7f4CEa8BC84",
+    address: "0xCb7ECa3cd58Ef49F164F58D77C8A56ddDdfF5FA1",
     abi: [
-        {
-            "inputs": [
-                {
-                    "internalType": "string",
-                    "name": "newQuote",
-                    "type": "string"
-                }
-            ],
-            "name": "setQuote",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
         {
             "inputs": [
                 {
@@ -90,6 +77,32 @@ config.contract = {
             "type": "function"
         },
         {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "newQuote",
+                    "type": "string"
+                }
+            ],
+            "name": "setQuote",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "newForwarder",
+                    "type": "address"
+                }
+            ],
+            "name": "setTrustedForwarder",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
             "inputs": [],
             "name": "trustedForwarder",
             "outputs": [
@@ -119,7 +132,7 @@ config.contract = {
 }
 
 config.tokenAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
-config.feeProxyAddress = "0x966445784b8dd7a925794D35e335B2dd80C458A7";
-config.baseURL = "https://localhost:4000";
+config.erc20ForwarderAddress = "0x90a04073fD94B67Ebe83AAf0D0B6cbA4e0bB8A4B";
+config.baseURL = "https://test-api.biconomy.io";
 
 module.exports = {config}

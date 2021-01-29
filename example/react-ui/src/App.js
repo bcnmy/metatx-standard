@@ -138,7 +138,7 @@ function App() {
         let networkId = 42;
 
         const daiPermitOptions = {
-          spender: config.feeProxyAddress,
+          spender: config.erc20ForwarderAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true,
           networkId: 42
@@ -229,7 +229,7 @@ function App() {
         let networkId = 42;
         
         const daiPermitOptions = {
-          spender: config.feeProxyAddress,
+          spender: config.erc20ForwarderAddress,
           expiry: Math.floor(Date.now() / 1000 + 3600),
           allowed: true,
           networkId: networkId

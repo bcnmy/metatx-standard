@@ -52,7 +52,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "m60yDrUs7.5c3b23fa-0b93-46ac-86f9-79e998d8f361", debug: true});
           web3 = new Web3(biconomy);
           
           console.log(web3);
@@ -271,7 +271,7 @@ function App() {
         // USDT
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token: config.usdtAddress,
+          token: config.daiAddress,
           txGas: Number(gasLimit),
           data: functionSignature
         });

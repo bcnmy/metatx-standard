@@ -1,6 +1,6 @@
 let config = {};
 config.contract = {
-    address: "0xCb7ECa3cd58Ef49F164F58D77C8A56ddDdfF5FA1",
+    address: "0x3c9CCADa9aaa5b5D5321BA49Ad0799520449BD8b",
     abi: [
         {
             "inputs": [
@@ -119,9 +119,8 @@ config.contract = {
 }
 
 config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
-config.usdtAddress = "0x8e1084f3599ba90991C3b2f9e25D920738C1496D";
-config.usdcAddress = "0x6043fD7126e4229d6FcaC388c9E1C8d333CCb8fA";
-config.usdtAddress = "0x8e1084f3599ba90991C3b2f9e25D920738C1496D";
-config.feeProxyAddress = "0x90a04073fD94B67Ebe83AAf0D0B6cbA4e0bB8A4B";
+config.usdtAddress = "0x7816604Da30cFb779Cd0F113E748238033710bAa";
+config.usdcAddress = "0x1ee9a3E27100B640E830ea4c8AC1954Ec8Fa601F";
+
 
 module.exports = {config}

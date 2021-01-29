@@ -20,7 +20,7 @@ const PERSONAL_SIGN = "PERSONAL_SIGN";
 let usdcDomainData = {
   name : "USDC Coin",
   version : "1",
-  chainId : 42,
+  chainId : 4,
   verifyingContract : config.usdcAddress
 };
 
@@ -62,7 +62,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-            apiKey: "m60yDrUs7.5c3b23fa-0b93-46ac-86f9-79e998d8f361",
+            apiKey: "W4nND_V0p.d19fceb7-7153-4329-bc7e-99b8175bee1b",
             debug: true,
           });
 
@@ -117,26 +117,25 @@ function App() {
         //If your provider is not a signer with accounts then you must pass userAddress in the permti options
         const usdcPermitOptions = {
           domainData: usdcDomainData,
-          spender: config.feeProxyAddress,
           value: "100000000000000000000", 
           deadline: Math.floor(Date.now() / 1000 + 3600),
         }
 
         console.log("getting permit to spend usdc tokens");
         showInfoMessage(
-          `Getting signature and permit transaction to spend usdc token by Fee proxy contract ${config.feeProxyAddress}`
+          `Getting signature and permit transaction to spend usdc token by Fee proxy contract`
         );
         
         //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
         //Users need to pass provider object from window, spender address (erc20 forwarder OR the fee proxy address) and DAI's address for your network
-        //permitClient = new PermitClient(provider,config.feeProxyAddress,config.daiAddress);
 
         //OR use biconomy's permitclient member as below!
         // If you'd like to see demo for spending DAI please check the branch erc20-forwarder-demo
         // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
 
         // This step only needs to be done once and is valid during the given deadline
-        //await permitClient.eip2612Permit(usdcPermitOptions);
+        let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
+        await permitTx.wait(1);
 
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -155,7 +154,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token:config.usdtAddress,
+          token:biconomy.usdcTokenAddress,
           txGas:Number(gasLimit),
           data
         });
@@ -172,13 +171,17 @@ function App() {
         //returns an object containing code, log, message, txHash 
         console.log(transaction);
       
-        //event emitter methods
-        ethersProvider.once(transaction.txHash, (result) => {
-          // Emitted when the transaction has been mined
-          console.log(result);
-          setTransactionHash(transaction.txHash);
-          getQuoteFromNetwork();
-        });
+        if(transaction && transaction.code == 200 && transaction.txHash) {
+          //event emitter methods
+          ethersProvider.once(transaction.txHash, (result) => {
+            // Emitted when the transaction has been mined
+            console.log(result);
+            setTransactionHash(transaction.txHash);
+            getQuoteFromNetwork();
+          });
+        } else {
+          showErrorMessage(transaction.message);
+        }
       } else {
         console.log("Sending normal transaction");
         let tx = await contract.setQuote(newQuote);
@@ -203,7 +206,6 @@ function App() {
        
         const usdcPermitOptions = {
           domainData: usdcDomainData,
-          spender: config.feeProxyAddress,
           value: "100000000000000000000", 
           deadline: Math.floor(Date.now() / 1000 + 3600),
         }
@@ -242,12 +244,11 @@ function App() {
 
         console.log("getting permit to spend usdc tokens");
         showInfoMessage(
-          `Getting signature and permit transaction to spend usdc token by Fee proxy contract ${config.feeProxyAddress}`
+          `Getting signature and permit transaction to spend usdc token by Fee proxy contract`
         );
 
         const usdcPermitOptions = {
           domainData: usdcDomainData,
-          spender: config.feeProxyAddress,
           value: "100000000000000000000", 
           deadline: Math.floor(Date.now() / 1000 + 3600),
         }
@@ -272,7 +273,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token:config.usdtAddress,
+          token:biconomy.usdcTokenAddress,
           txGas:Number(gasLimit),
           data
         });
@@ -385,7 +386,7 @@ function App() {
     console.log(signedTx);
 
     // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-    const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(signedTx, config.usdcAddress);
+    const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(signedTx, biconomy.usdcTokenAddress);
     /*console.log(dataToSign);
     const signParams = dataToSign.eip712Format;
     //https://github.com/ethers-io/ethers.js/issues/687

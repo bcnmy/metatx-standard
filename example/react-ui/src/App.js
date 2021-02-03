@@ -62,7 +62,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-            apiKey: "m60yDrUs7.5c3b23fa-0b93-46ac-86f9-79e998d8f361",
+            apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
             debug: true,
           });
 
@@ -117,10 +117,15 @@ function App() {
         //If your provider is not a signer with accounts then you must pass userAddress in the permti options
         const usdcPermitOptions = {
           domainData: usdcDomainData,
-          spender: config.feeProxyAddress,
           value: "100000000000000000000", 
           deadline: Math.floor(Date.now() / 1000 + 3600),
         }
+
+        const daiPermitOptions = {
+          // spender: config.erc20ForwarderAddress,
+          expiry: Math.floor(Date.now() / 1000 + 3600),
+          allowed: true
+        };
 
         console.log("getting permit to spend usdc tokens");
         showInfoMessage(
@@ -136,7 +141,8 @@ function App() {
         // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
 
         // This step only needs to be done once and is valid during the given deadline
-        //await permitClient.eip2612Permit(usdcPermitOptions);
+        //let txn = await permitClient.daiPermit(daiPermitOptions);
+        //let receipt = await txn.wait(2);
 
         console.log("Sending meta transaction");
         showInfoMessage("Building transaction to forward");
@@ -155,7 +161,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token:config.usdtAddress,
+          token:config.daiAddress,
           txGas:Number(gasLimit),
           data
         });

@@ -140,6 +140,5 @@ config.contract = {
 config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 config.usdtAddress = "0x8e1084f3599ba90991C3b2f9e25D920738C1496D";
 //config.usdcAddress = "0xA5d2a43d94B6a26054506D18ea44E4749f727721";
-config.erc20ForwarderAddress = "0x90a04073fD94B67Ebe83AAf0D0B6cbA4e0bB8A4B";
 
 module.exports = {config}

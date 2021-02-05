@@ -1,6 +1,26 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Trusted Forwarder Approach for meta transaction 
+## ERC20 Forwarder Approach (Forward) for meta transaction 
+For more details please check this section
+https://docs.biconomy.io/guides/enable-paying-gas-in-erc20
+
+## Steps  
+This exmaple is on Kovan test network and showcases how you can pay gas fees in DAI and USDT tokens
+
+i) register your smart contract on the dashboard as ERC20 Forwarder
+ii) register target method API
+iii) follow the steps referring App.js and pay in tokens
+
+## Actions
+
+a) Submit with EIP712 - signature is requested in EIP712 format when user signs a message
+b) Submit with Personal - signature is requested in personal sign format when user signs a message
+c) send backend signed Tx - signs a message and sends a transaction using private key from the backend. Refer to SDK backend section in the docs 
+
+## Note regarding Permit
+
+You may use permit client to provide one time permit for spending DAI tokens from the user.
+
 
 ## Available Scripts
 
@@ -9,7 +29,7 @@ In the project directory, you can run:
 ### `yarn start`
 
 Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Open [http://localhost:6005](http://localhost:6005) to view it in the browser.
 
 The page will reload if you make edits.<br />
 You will also see any lint errors in the console.

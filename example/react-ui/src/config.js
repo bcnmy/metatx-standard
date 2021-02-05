@@ -1,6 +1,6 @@
 let config = {};
 config.contract = {
-    address: "0xCb7ECa3cd58Ef49F164F58D77C8A56ddDdfF5FA1",
+    address: "0x3c9CCADa9aaa5b5D5321BA49Ad0799520449BD8b",
     abi: [
         {
             "inputs": [

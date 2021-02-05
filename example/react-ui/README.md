@@ -6,6 +6,7 @@ https://docs.biconomy.io/guides/enable-paying-gas-in-erc20
 
 ## Steps  
 This exmaple is on Kovan test network and showcases how you can pay gas fees in DAI and USDT tokens
+For using Ether provider or USDC check the branch https://github.com/bcnmy/metatx-standard/tree/erc20-forwarder-ethers-demo/example/react-ui/src
 
 i) register your smart contract on the dashboard as ERC20 Forwarder
 ii) register target method API
@@ -21,6 +22,10 @@ c) send backend signed Tx - signs a message and sends a transaction using privat
 
 You may use permit client to provide one time permit for spending DAI tokens from the user.
 
+## Cost display 
+
+Before you send out final request sendTxEIP712/sendTxPersonalSign, you will receive the cost from the built transaction which is the maximum amount of fees to be charged in particular tokens. If gas tokens are enabled these fees come down depending on the efficiency of burning gas tokens. 
+https://medium.com/biconomy/gas-saving-by-biconomy-ea67d7e64d0c 
 
 ## Available Scripts
 

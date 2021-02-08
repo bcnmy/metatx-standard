@@ -9,7 +9,7 @@ The approach support signed typed messages (EIP712) so that while signing the da
 <h3>How do i use this in my Smart Contracts?</h3>
 
 1. Inherit <a href="https://github.com/opengsn/gsn/blob/master/contracts/BaseRelayRecipient.sol" target="_blank" >BaseRelayRecipient</a> contract 
-2. Use msgSender() method where ever you were using msg.sender
+2. Use _msgSender() method where ever you were using msg.sender
 3. (Optional) Use msgRelayer() method to get the relayer address who paid for transaction gas fees
 That's it. Pretty simple
 

@@ -10,7 +10,7 @@ import { ethers } from "ethers";
 import {Biconomy} from "@biconomy/mexa";
 import abi from "ethereumjs-abi";
 import {toBuffer} from "ethereumjs-util";
-
+import Web3 from "web3";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -21,11 +21,11 @@ const EIP712_SIGN = "EIP712_SIGN";
 const PERSONAL_SIGN = "PERSONAL_SIGN";
 
 const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" }
-];
+  { name: 'name', type: 'string' },
+  { name: 'version', type: 'string' },
+  { name: 'chainId', type: 'uint256' },
+  { name: 'verifyingContract', type: 'address' },
+]
 
 const metaTransactionType = [
   { name: "nonce", type: "uint256" },
@@ -34,11 +34,12 @@ const metaTransactionType = [
 ];
 
 let domainData = {
-  name: "TestContract",
-  version: "1",
+  name: 'Unirace',
+  version: '1',
+  chainId: 5,
   verifyingContract: config.contract.address
 };
-let chainId = 42;
+let chainId = 5;
 
 let ethersProvider, signer;
 let contract, contractInterface, contractWithBasicSign;
@@ -73,10 +74,17 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           const provider = window["ethereum"];
           await provider.enable();
+          debugger;
           if (provider.networkVersion == chainId.toString()) {
-            domainData.chainId = chainId;
+          //domainData.chainId = chainId;
 
-          const biconomy = new Biconomy(provider,{apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2", debug: true});
+          const biconomy = new Biconomy(
+            provider,
+            {
+              apiKey: 'dvXGji4Gn.1dc60aed-2bd1-4208-9767-b05ca95b687a',
+              debug: true,
+            }
+          )
           ethersProvider = new ethers.providers.Web3Provider(biconomy);
           signer = ethersProvider.getSigner();
           console.log(signer);
@@ -87,14 +95,14 @@ function App() {
               config.contract.abi,
               signer.connectUnchecked()
             );
-            contractWithBasicSign = new ethers.Contract(
+            /*contractWithBasicSign = new ethers.Contract(
               config.contractWithBasicSign.address,
               config.contractWithBasicSign.abi,
               signer.connectUnchecked()
-            );
+            );*/
             contractInterface = new ethers.utils.Interface(config.contract.abi);
             setSelectedAddress(await signer.getAddress());
-            getQuoteFromNetwork();
+            //getQuoteFromNetwork();
             provider.on("accountsChanged", function(accounts) {
               setSelectedAddress(accounts[0]);
             });
@@ -121,9 +129,13 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
+        debugger;
         let userAddress = selectedAddress;
         let nonce = await contract.getNonce(userAddress);
-        let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
+        const raceIndex = 0;
+        const horseIndex = 1;
+        const amount = 10;
+        let functionSignature = contractInterface.encodeFunctionData("createBet", [raceIndex,horseIndex,amount]);
         let message = {};
         message.nonce = parseInt(nonce);
         message.from = userAddress;
@@ -151,7 +163,7 @@ function App() {
         setTransactionHash(tx.hash);
 
         showSuccessMessage("Transaction confirmed on chain");
-        getQuoteFromNetwork();
+        //getQuoteFromNetwork();
       }
     } else {
       showErrorMessage("Please enter the quote");
@@ -182,7 +194,7 @@ function App() {
         setTransactionHash(tx.hash);
 
         showSuccessMessage("Transaction confirmed on chain");
-        getQuoteFromNetwork();
+        //getQuoteFromNetwork();
       }
     } else {
       showErrorMessage("Please enter the quote or check contract and signer object");
@@ -248,10 +260,11 @@ function App() {
     if (contract) {
       try {
         let tx;
+        debugger;
         if(signType == PERSONAL_SIGN) {
           tx = await contractWithBasicSign.executeMetaTransaction(userAddress, functionData, r, s, v);
         } else {
-          tx = await contract.executeMetaTransaction(userAddress, functionData, r, s, v);
+          tx = await contract.executeMetaTransaction(userAddress, functionData, r, s, v,{gasLimit: 500000});
         }
         console.log("Transaction hash : ", tx.hash);
         showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
@@ -260,7 +273,7 @@ function App() {
         setTransactionHash(tx.hash);
 
         showSuccessMessage("Transaction confirmed on chain");
-        getQuoteFromNetwork(signType);
+        //getQuoteFromNetwork(signType);
 
       } catch (error) {
         console.log(error);

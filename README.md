@@ -10,7 +10,9 @@ The approach support EIP2771 approach to enable native meta-transaction in your 
 3. Set trusted forwarder method while deploying the contract. Check <a href="https://docs.biconomy.io/misc/contract-addresses#binance-testnet" target="_blank" >here</a>
 
 <h3>How do i use this in my client code?</h3>
-Initialize Biconomy object in your contract. Pass Biconomy object in your web3/ethers constructor. Call your contract methods normally, no need to do any change it that. Check <a href="https://docs.biconomy.io/guides/enable-paying-gas-in-erc20/sdk#sdk-frontend-integration" target="_blank" >here</a> for reference code
+Initialize Biconomy object in your contract. Pass Biconomy object in your web3/ethers constructor. Call your contract methods normally, no need to do any change it that. 
+
+Check <a href="https://docs.biconomy.io/guides/enable-paying-gas-in-erc20/sdk#sdk-frontend-integration" target="_blank" >here</a> for reference code
 <br/>
 
 userAddress       => externally owned address of the user eg the user address in his metamask wallet<br/>

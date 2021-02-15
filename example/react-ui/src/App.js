@@ -30,7 +30,7 @@ function App() {
         const provider = window["ethereum"];
         await provider.enable();
 
-        biconomy = new Biconomy(provider, {apiKey: "BRsuoBMha.d22d4079-b044-4d92-9871-ce08d9e4f158", debug: true});
+        biconomy = new Biconomy(provider, {apiKey: "HG302ERn6.e700689f-0fd3-4b34-868e-2efb28b9dac6", debug: true});
 
         networkWeb3 = new Web3(biconomy);
         

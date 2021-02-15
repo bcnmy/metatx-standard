@@ -3,7 +3,7 @@
 Repository containing a gas cost effective standard for meta transaction to be used by any contract to enable native meta transaction feature on any function.
 The approach support signed typed messages so that while signing the data on client side user see a human readable message instead of scary hex string.
 
-You can see the LIVE DEMO <a href="https://metatx.biconomy.io" target="_blank" >Here</a>(works on Ropsten)
+You can see the LIVE DEMO <a href="https://dapp.biconomy.io/" target="_blank" >Here</a>(works on Kovan)
 
 The standard is the result of initiative by metamask here https://medium.com/metamask/announcing-a-generalized-metatransaction-contest-abd4f321470b
 
@@ -55,6 +55,6 @@ NOTE: Make sure you have nodejs version > 12.0.0 <br/>
 4. Run `ganache-cli` in separate cmd/terminal to run ganache client
 5. At last, Run `npm run coverage` to get test coverage report
 
-Check out example front-end code <a href="https://github.com/bcnmy/metatx-standard/blob/master/example/react-ui/src/App.js" target="_blank" >here</a> and example solidity code <a href="https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/TestContract.sol" target="_blank" >here</a>
+Check out example front-end code <a href="https://github.com/bcnmy/metatx-standard/blob/demo/example/react-ui/src/App.js" target="_blank" >here</a> and example solidity code <a href="https://github.com/bcnmy/metatx-standard/blob/demo/src/contracts/TestContract.sol" target="_blank" >here</a>
 
 This repository is basic implementation of Native Meta Transactions. This reposiory will be updated as per the <a href="https://github.com/ethereum/EIPs/issues/1776" target="_blank">EIP-1776</a> to implement native meta transactions with support of batching, transaction expiry etc

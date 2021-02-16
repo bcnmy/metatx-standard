@@ -15,35 +15,6 @@ import {Box} from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 const EIP712_SIGN = "EIP712_SIGN";
-const PERSONAL_SIGN = "PERSONAL_SIGN";
-
-
-const domainType = [
-  {
-    name: "name",
-    type: "string",
-  },
-  {
-    name: "version",
-    type: "string",
-  },
-  {
-    name: "chainId",
-    type: "uint256",
-  },
-  {
-    name: "verifyingContract",
-    type: "address",
-  },
-];
-
-// for other networks omit chainId and verifyingContract and add them during init process based on provider->networkId
-let domainData = {
-  name: "TestContract",
-  version: "1",
-  chainId: 42,
-  verifyingContract: config.contract.address,
-};
 
 let ethersProvider, signer;
 let biconomy;
@@ -84,7 +55,7 @@ function App() {
           domainData.chainId = chainId;*/
 
         biconomy = new Biconomy(provider, {
-          apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
+          apiKey: "R4uJNzPXl.73f1d768-7a8b-460b-befc-3a0d805ca896",
           debug: true,
         });
 
@@ -157,7 +128,7 @@ function App() {
         let userAddress = selectedAddress;
         //let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
         //could also use populateTransaction 
-        sendSignedRawTransaction(userAddress, newQuote);
+        sendSignedRawTransaction("0x2eE022434C996BE4d9A4146E1696F21D765F0dc5", newQuote);
       } else {
         console.log("Sending normal transaction");
         let tx = await contract.setQuote(newQuote);
@@ -215,7 +186,7 @@ function App() {
   // get user signature and send raw tx along with signature type
   const sendSignedRawTransaction = async (userAddress, arg) => {
     let privateKey =
-      "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // or process.env.privKey
+      "64a246eaa29f83e20f2f7cf83a7c9a93b679d9eb28d3aee8953604e1c6112a08"; // or process.env.privKey
     let wallet = new ethers.Wallet(privateKey);  
     let functionSignature = contractInterface.encodeFunctionData("setQuote", [arg]);
     let gasPrice = await ethersProvider.getGasPrice();

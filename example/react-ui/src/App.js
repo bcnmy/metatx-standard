@@ -20,7 +20,7 @@ const PERSONAL_SIGN = "PERSONAL_SIGN";
 let usdcDomainData = {
   name : "USDC Coin",
   version : "1",
-  chainId : 4,
+  chainId : 42,
   verifyingContract : config.usdcAddress
 };
 
@@ -62,7 +62,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-            apiKey: "W4nND_V0p.d19fceb7-7153-4329-bc7e-99b8175bee1b",
+            apiKey: "ivDpoR7cT.b00a1b2a-e42f-4cce-8202-dc0dac68fc1b",
             debug: true,
           });
 

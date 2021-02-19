@@ -7,6 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
+import { ethers } from "ethers";
 import {Biconomy, PermitClient, HTTP_CODES, RESPONSE_CODES} from "@biconomy/mexa";
 import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
@@ -16,11 +17,35 @@ let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 
 let web3;
+let ethersProvider;
 let biconomy;
 let provider;
 let contract;
+let daiToken;
 let ercForwarderClient;
 let permitClient;
+
+let daiDomainType = [
+  { name: "name", type: "string" },
+  { name: "version", type: "string" },
+  { name: "chainId", type: "uint256" },
+  { name: "verifyingContract", type: "address" },
+];
+
+let daiPermitType = [
+  { name: "holder", type: "address" },
+  { name: "spender", type: "address" },
+  { name: "nonce", type: "uint256" },
+  { name: "expiry", type: "uint256" },
+  { name: "allowed", type: "bool" },
+];
+
+let daiDomainData = {
+  name: "Dai Stablecoin",
+  version: "1",
+  chainId: 42,
+  verifyingContract: config.daiAddress,
+};
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -52,8 +77,9 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "ivDpoR7cT.b00a1b2a-e42f-4cce-8202-dc0dac68fc1b", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
           web3 = new Web3(biconomy);
+          ethersProvider = new ethers.providers.Web3Provider(biconomy);
           
           console.log(web3);
 
@@ -62,6 +88,11 @@ function App() {
           contract = new web3.eth.Contract(
             config.contract.abi,
             config.contract.address
+          );
+
+          daiToken = new web3.eth.Contract(
+            config.dai.abi,
+            config.dai.address
           );
 
 
@@ -95,7 +126,6 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
-       
           const daiPermitOptions = {
             // spender: config.erc20ForwarderAddress,
             expiry: Math.floor(Date.now() / 1000 + 3600),
@@ -144,6 +174,136 @@ function App() {
 
         //signature of this method is sendTxEIP712({req, signature = null, userAddress})
         let transaction = await ercForwarderClient.sendTxEIP712({req:tx});
+        //returns an object containing code, log, message, txHash 
+        console.log(transaction);
+        if(transaction && transaction.txHash) {
+          const receipt = await fetchMinedTransactionReceipt(transaction.txHash);
+          if(receipt)
+          {
+            console.log(receipt);
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed on chain");
+            getQuoteFromNetwork();
+          }
+        } else {
+          showErrorMessage(transaction.message);
+        }
+      }
+      else {
+        console.log("Sending normal transaction");
+        contract.methods
+          .setQuote(newQuote)
+          .send({ from: selectedAddress })
+          .on("transactionHash", function(hash) {
+            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
+          })
+          .once("confirmation", function(confirmationNumber, receipt) {
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed");
+            getQuoteFromNetwork();
+          });
+      }
+    }
+      else {
+        showErrorMessage("Please enter the quote");
+      }
+  };
+
+  const onPermitAndSubmitEIP712 = async event => {
+    if (newQuote != "" && contract) {
+      setTransactionHash("");
+      if (metaTxEnabled) {
+       
+          debugger;
+          const daiPermitOptions = {
+            spender: config.erc20ForwarderAddress,
+            expiry: Math.floor(Date.now() / 1000 + 3600),
+            allowed: true
+          };
+
+          let userAddress = selectedAddress;
+          let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+          console.log(functionSignature);
+ 
+      
+        console.log("Sending meta transaction");
+        showInfoMessage("Building transaction to forward");
+        // txGas should be calculated and passed here or calculate within the method
+        let gasLimit = await contract.methods
+        .setQuote(newQuote)
+        .estimateGas({ from: userAddress });
+
+        const builtTx = await ercForwarderClient.buildTx({
+          to: config.contract.address,
+          token: biconomy.daiTokenAddress,
+          txGas: Number(gasLimit),
+          data: functionSignature
+        });
+
+        debugger;
+
+        const tx = builtTx.request;
+        const fee = builtTx.cost; // only gets the cost of target method call
+        console.log(tx);
+        console.log(fee);
+        alert(`You will be charged ${fee} amount of DAI ${biconomy.daiTokenAddress} for this transaction`);
+        showInfoMessage(`Signing message for meta transaction`);
+
+        const nonce = await daiToken.methods.nonces(userAddress).call();
+        console.log(`nonce is : ${nonce}`);
+
+        const permitDataToSign = {
+          types: {
+            EIP712Domain: daiDomainType,
+            Permit: daiPermitType,
+          },
+          domain: daiDomainData,
+          primaryType: "Permit",
+          message: {
+            holder: userAddress,
+            spender: daiPermitOptions.spender,
+            nonce: parseInt(nonce),
+            expiry: parseInt(daiPermitOptions.expiry),
+            allowed: daiPermitOptions.allowed,
+          },
+        };
+
+        let result = await ethersProvider.send("eth_signTypedData_v3", [
+          userAddress,
+          JSON.stringify(permitDataToSign),
+        ]);
+
+        console.log(result);
+          
+        let metaInfo = {};
+        let permitOptions = {};
+
+        
+        console.log("success:" + result);
+        const signature = result.substring(2);
+        const r = "0x" + signature.substring(0, 64);
+        const s = "0x" + signature.substring(64, 128);
+        const v = parseInt(signature.substring(128, 130), 16);
+
+        permitOptions.holder = userAddress;
+        permitOptions.spender = daiPermitOptions.spender;
+        permitOptions.value = 0; //in case of DAI passing dummy value for the sake of struct (similar to token address in EIP2771)
+        permitOptions.nonce = parseInt(nonce.toString());
+        permitOptions.expiry = parseInt(daiPermitOptions.expiry);
+        permitOptions.allowed = daiPermitOptions.allowed;
+        permitOptions.v = v;
+        permitOptions.r = r;
+        permitOptions.s = s;
+
+        metaInfo.permitType = "DAI_Permit";
+        metaInfo.permitData = permitOptions;
+      
+       
+        debugger;
+  
+        //signature of this method is sendTxEIP712({req, signature = null, userAddress, metaInfo})
+        let transaction = await ercForwarderClient.permitAndSendTxEIP712({req:tx, metaInfo: metaInfo});
+
         //returns an object containing code, log, message, txHash 
         console.log(transaction);
         if(transaction && transaction.txHash) {
@@ -479,6 +639,9 @@ function App() {
             />
             <Button variant="contained" color="primary" onClick={onSubmitEIP712}>
               Submit with EIP712
+            </Button>
+            <Button variant="contained" color="primary" onClick={onPermitAndSubmitEIP712}>
+              Permit and Submit with EIP712
             </Button>
             <Button variant="contained" color="primary" onClick={onSubmitPersonalSign}>
               Submit with Personal

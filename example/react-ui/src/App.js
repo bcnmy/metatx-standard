@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import { ethers } from "ethers";
-import Biconomy from "@biconomy/mexa";
+import {Biconomy} from "@biconomy/mexa";
 import abi from "ethereumjs-abi";
 import {toBuffer} from "ethereumjs-util";
 
@@ -19,8 +19,6 @@ let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 const EIP712_SIGN = "EIP712_SIGN";
 const PERSONAL_SIGN = "PERSONAL_SIGN";
-
-var Web3 = require('web3');
 
 const domainType = [
   { name: "name", type: "string" },
@@ -42,10 +40,8 @@ let domainData = {
 };
 let chainId = 42;
 
-let networkProvider, walletProvider, walletSigner, networkSigner;
-let randomSigner;
-let web3, contractWeb3;
-let contract, contractInterface, contractWithBasicSign, contractReadOnly;
+let networkProvider, walletProvider, walletSigner;
+let contract, contractInterface, contractWithBasicSign;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -78,9 +74,10 @@ function App() {
           const provider = window["ethereum"];
           await provider.enable();
           // We're creating a 2nd Ethers provider linked to your L2 network of choice
-          let biconomy = new Biconomy(new Web3.providers.HttpProvider("https://eth-kovan.alchemyapi.io/v2/DvW1I4OgMAVXJIw3zzfWHnQz1Lpeki9I"),{apiKey: "_iAMyHbdb.561e4a31-1cd5-43f3-a715-7f9478f39be8", debug: true});
+          let biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77"),
+          {apiKey: "m8VQSpGWh.8cda48fc-093f-4e99-a35d-1706e766d102", debug: true});
+          // let biconomy = new Biconomy(window.ethereum, {apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", debug: true});
           networkProvider = new ethers.providers.Web3Provider(biconomy);
-          web3 = new Web3(biconomy);
 
           /*
             This provider linked to your wallet.
@@ -88,42 +85,19 @@ function App() {
           */
           walletProvider = new ethers.providers.Web3Provider(window.ethereum);
           walletSigner = walletProvider.getSigner();
-          networkSigner = networkProvider.getSigner();
-          setSelectedAddress(await walletSigner.getAddress());
-
-          randomSigner = (ethers.Wallet.createRandom()).connect(networkProvider);
-
-          //const biconomy = new Biconomy(provider,{apiKey: "bF4ixrvcS.7cc0c280-94cb-463f-b6bb-38d29cc9dfd2", debug: true});
-          //ethersProvider = new ethers.providers.Web3Provider(biconomy);
-          console.log(networkSigner);
+          let userAddress = await walletSigner.getAddress()
+          setSelectedAddress(userAddress);
+          
           console.log(await walletSigner.getAddress());
           console.log(walletProvider);
           
           biconomy.onEvent(biconomy.READY, async () => {
             // Initialize your dapp here like getting user accounts etc
-            /*contract = new ethers.Contract(
-              config.contract.address,
-              config.contract.abi,
-              signer.connectUnchecked()
-            );*/
-            contractWeb3 = new web3.eth.Contract(
-              config.contractWithBasicSign.abi,
-              config.contractWithBasicSign.address 
-            );
-
             contractWithBasicSign = new ethers.Contract(
               config.contractWithBasicSign.address,
               config.contractWithBasicSign.abi,
-              randomSigner
+              biconomy.getRandomSigner()
             );
-
-            console.log(contractWithBasicSign);
-
-            contractReadOnly = new ethers.Contract(
-              config.contractWithBasicSign.address,
-              config.contractWithBasicSign.abi,
-              new ethers.providers.JsonRpcProvider("https://eth-kovan.alchemyapi.io/v2/DvW1I4OgMAVXJIw3zzfWHnQz1Lpeki9I")
-            )
 
             console.log(contractWithBasicSign);
             contractInterface = new ethers.utils.Interface(config.contractWithBasicSign.abi);
@@ -192,7 +166,6 @@ function App() {
       if (metaTxEnabled) {
         let userAddress = selectedAddress;
         let nonce = await contractWithBasicSign.getNonce(userAddress);
-        //let nonce = await contractWeb3.methods.getNonce(userAddress).call();
         let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
         let messageToSign = abi.soliditySHA3(
             ["uint256","address","uint256","bytes"],
@@ -240,8 +213,6 @@ function App() {
       let result;
       if(signType == PERSONAL_SIGN) {
         result = await contractWithBasicSign.getQuote();
-        //result = await contractWithBasicSign.getQuote();
-        //result = await contractWeb3.methods.getQuote().call();
       } else {
         result = await contract.getQuote();
       }
@@ -274,7 +245,6 @@ function App() {
   };
 
   const sendSignedTransaction = async (userAddress, functionData, r, s, v, signType) => {
-    if (contractWeb3) {
       try {
         let tx;
         if(signType == PERSONAL_SIGN) {
@@ -282,11 +252,6 @@ function App() {
           txData.from = selectedAddress;
           const txHash = await networkProvider.send("eth_sendTransaction",[txData]);
           tx = await networkProvider.waitForTransaction(txHash);
-          //console.log("pre-call");
-          //tx = await contractWeb3.methods
-          //.executeMetaTransaction(userAddress, functionData, r, s, v)
-          //.send({from: userAddress});
-          //console.log("post call");
         } else {
           tx = await contract.executeMetaTransaction(userAddress, functionData, r, s, v);
         }
@@ -302,7 +267,6 @@ function App() {
       } catch (error) {
         console.log(error);
       }
-    }
   };
 
   return (

@@ -1,0 +1,97 @@
+<html>
+
+<head>
+    <title>Mexa Standalone Example</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js" type="application/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@biconomy/mexa@latest/dist/mexa.js"></script>
+
+    <script>
+        let quote = "Default Quote";
+        let contractAddress = "0xCb7ECa3cd58Ef49F164F58D77C8A56ddDdfF5FA1";
+        let contractABI = [{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newForwarder","type":"address"}],"name":"setTrustedForwarder","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"name":"isTrustedForwarder","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"trustedForwarder","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"versionRecipient","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}];
+        let privateKey = "0x478af5bec0141de064d14408d8bf327e52921bc305efb64063771adab1f4796b";
+        let kovanRPCURL = "https://kovan.infura.io/v3/d126f392798444609246423b06116c77";
+        let contract;
+        let quoteDiv, button;
+        let quoteInput;
+        let userAddress;
+        let biconomy;
+        let biconomyProvider, ethersWalletProvider;
+
+        async function getQuote() {
+            if(contract) {
+                let quoteFromContract = await contract.getQuote();
+                if(quoteFromContract && quoteFromContract.currentQuote) {
+                    quote = quoteFromContract.currentQuote;
+                    setQuote(quote);
+                }
+            }
+        }
+
+        function setQuote(quote) {
+            if(quoteDiv) {
+                quoteDiv.innerHTML = quote;
+            }
+        }
+        
+        async function init() {
+            quoteDiv = document.getElementById("quote");
+            button = document.getElementById("send");
+            quoteInput = document.getElementById("input-quote");
+
+            if(button) {
+                button.addEventListener("click", async function(){
+                    if(quoteInput) {
+                        let newQuote = quoteInput.value;
+                        if(newQuote) {
+                            let tx = await contract.setQuote(newQuote, {from: userAddress});
+                            console.log(tx);
+                            getQuote();
+                        } else {
+                            alert("Please enter some quote");
+                        }
+                    }
+                });
+            }
+
+            if(window.ethereum) {
+                await window.ethereum.enable();
+            } else {
+                console.log("Please run index.html file in a server and use metamask wallet. Use http-server npm module to run a simple htttp server using command => http-server .");
+                alert("Server not running. Check logs for details.");
+                return;
+            }
+
+            let Biconomy = window.Biconomy;
+            console.log(Biconomy);
+            userAddress = window.ethereum.selectedAddress;
+            biconomy = new Biconomy(new ethers.providers.JsonRpcProvider(kovanRPCURL), { 
+                walletProvider: window.ethereum,
+                apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", 
+                debug: true 
+            });
+            
+            biconomy.onEvent(biconomy.READY, async () => {
+                // Initialize your dapp here like getting user accounts etc
+                console.log("ALL READY");
+                contract = new ethers.Contract(contractAddress, contractABI, biconomy.getSigner(userAddress));
+                getQuote();
+                
+            }).onEvent(biconomy.ERROR, (error, message) => {
+                console.log(error);
+                console.log(message);
+            });
+        }
+    </script>
+</head>
+
+<body onload="init()">
+    <div
+        style="display: flex; padding: 10px; flex-direction: column; justify-content: center; width: 20%; margin-left: auto; margin-right: auto">
+        <div id="quote" style="margin-bottom: 20px; text-align: center;"></div>
+        <input type="text" id="input-quote" style="margin-bottom: 5px" placeholder="Enter new quote" />
+        <button id="send">Send</button>
+    </div>
+</body>
+
+</html>

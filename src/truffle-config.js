@@ -55,10 +55,9 @@ module.exports = {
       timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     },
-    maticTestV3: {
-      provider: new HDWalletProvider(mnemonic, `https://testnetv3.matic.network`),
-      network_id: 15001,       // Matic's test network id
-      gasPrice: '0x0',
+    kovan: {
+      provider: new HDWalletProvider(mnemonic, `https://kovan.infura.io/v3/${infuraKey}`),
+      network_id: 42,       // kovan network id
       confirmations: 1,    // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )

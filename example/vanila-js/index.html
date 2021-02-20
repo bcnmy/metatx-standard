@@ -74,7 +74,7 @@
             biconomy.onEvent(biconomy.READY, async () => {
                 // Initialize your dapp here like getting user accounts etc
                 console.log("ALL READY");
-                contract = new ethers.Contract(contractAddress, contractABI, biconomy.getSigner(userAddress));
+                contract = new ethers.Contract(contractAddress, contractABI, biconomy.getProvider(userAddress));
                 getQuote();
                 
             }).onEvent(biconomy.ERROR, (error, message) => {

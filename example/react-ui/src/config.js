@@ -145,6 +145,6 @@ config.dai = {
 config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 config.usdtAddress = "0x8e1084f3599ba90991C3b2f9e25D920738C1496D";
 //config.usdcAddress = "0xA5d2a43d94B6a26054506D18ea44E4749f727721";
-config.erc20ForwarderAddress = "0x7483149Cb982cBC647d0049d4e5b73183Fea998B";
+config.erc20ForwarderAddress = "0x24751ABCefD939B0Cc22cBA7039fc0438c65C99c";
 
 module.exports = {config}

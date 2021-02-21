@@ -1,6 +1,6 @@
-pragma solidity 0.5.13;
+pragma solidity 0.6.2;
 
-import "./EIP712MetaTransaction.sol";
+import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 
 contract TestContract is BaseRelayRecipient {
 
@@ -25,4 +25,6 @@ contract TestContract is BaseRelayRecipient {
         currentQuote = quote;
         currentOwner = owner;
     }
+    
+    function versionRecipient() external virtual override view returns (string memory){return "1";}
 }

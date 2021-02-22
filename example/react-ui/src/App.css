@@ -13,6 +13,10 @@
   }
 }
 
+.tabpanel {
+  width: 80%;
+}
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
@@ -35,4 +39,32 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+
+.top-row {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  padding: 5px 5px 30px 5px;
+}
+
+.top-row-item {
+  margin-right: 10px;
+  margin-left: 10px;
+  text-shadow: 0px 1px 5px #222;
+}
+
+.top-row-item .label {
+  background-color: #3B444A;
+  color: white;
+  border-radius: 5px 0px 0px 5px;
+  padding: 8px 13px 8px 13px;
+}
+
+.top-row-item .label-value {
+  background-color: #2e7d32;
+  color: #fff;
+  border-radius: 0px 5px 5px 0px;
+  padding: 8px 13px 8px 13px;
 }

@@ -95,7 +95,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-          apiKey: "ivDpoR7cT.b00a1b2a-e42f-4cce-8202-dc0dac68fc1b",
+          apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
           debug: true,
         });
 

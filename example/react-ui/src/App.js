@@ -237,7 +237,8 @@ function App() {
           to: config.contract.address,
           token: biconomy.daiTokenAddress,
           txGas: Number(gasLimit),
-          data: functionSignature
+          data: functionSignature,
+          permitType : "DAI_Permit"
         });
 
         debugger;

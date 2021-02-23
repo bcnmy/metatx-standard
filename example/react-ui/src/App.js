@@ -24,7 +24,23 @@ let usdcDomainData = {
   verifyingContract : config.usdcAddress
 };
 
+let daiDomainType = [
+  { name: "name", type: "string" },
+  { name: "version", type: "string" },
+  { name: "chainId", type: "uint256" },
+  { name: "verifyingContract", type: "address" },
+];
+
+let eip2612PermitType = [
+  { name: "owner", type: "address" },
+  { name: "spender", type: "address" },
+  { name: "value", type: "uint256" },
+  { name: "nonce", type: "uint256" },
+  { name: "deadline", type: "uint256" },
+];
+
 let ethersProvider, signer;
+let usdcToken;
 let biconomy;
 let provider;
 let contract, contractInterface, contractWithBasicSign;
@@ -62,7 +78,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-            apiKey: "ivDpoR7cT.b00a1b2a-e42f-4cce-8202-dc0dac68fc1b",
+            apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
             debug: true,
           });
 
@@ -78,6 +94,12 @@ function App() {
             contract = new ethers.Contract(
               config.contract.address,
               config.contract.abi,
+              signer.connectUnchecked()
+            );
+
+            usdcToken = new ethers.Contract(
+              config.usdc.address,
+              config.usdc.abi,
               signer.connectUnchecked()
             );
 
@@ -160,7 +182,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token:biconomy.usdcTokenAddress,
+          token:config.usdcAddress,
           txGas:Number(gasLimit),
           data
         });
@@ -174,6 +196,140 @@ function App() {
         //signature param is optional. check network agnostics section for more details about this
         //userAddress is must when your provider does not have a signer with accounts 
         let transaction = await ercForwarderClient.sendTxEIP712({req:tx});
+        //returns an object containing code, log, message, txHash 
+        console.log(transaction);
+      
+        if(transaction && transaction.code == 200 && transaction.txHash) {
+          //event emitter methods
+          ethersProvider.once(transaction.txHash, (result) => {
+            // Emitted when the transaction has been mined
+            console.log(result);
+            setTransactionHash(transaction.txHash);
+            getQuoteFromNetwork();
+          });
+        } else {
+          showErrorMessage(transaction.message);
+        }
+      } else {
+        console.log("Sending normal transaction");
+        let tx = await contract.setQuote(newQuote);
+        console.log("Transaction hash : ", tx.hash);
+        showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+        let confirmation = await tx.wait();
+        console.log(confirmation);
+        setTransactionHash(tx.hash);
+
+        showSuccessMessage("Transaction confirmed on chain");
+        getQuoteFromNetwork();
+      }
+    } else {
+      showErrorMessage("Please enter the quote");
+    }
+  };
+
+  const onPermitAndSubmitEIP712 = async (event) => {
+    if (newQuote != "" && contract) {
+      setTransactionHash("");
+      if (metaTxEnabled) {
+
+        let userAddress = selectedAddress;
+        
+        //If your provider is not a signer with accounts then you must pass userAddress in the permti options
+        const usdcPermitOptions = {
+          spender: "0x24751ABCefD939B0Cc22cBA7039fc0438c65C99c",
+          domainData: usdcDomainData,
+          value: "100000000000000000000", 
+          deadline: Math.floor(Date.now() / 1000 + 3600),
+        }
+
+        console.log("getting permit to spend usdc tokens");
+        showInfoMessage(
+          `Getting signature and permit transaction to spend usdc token by Fee proxy contract`
+        );
+        
+        console.log("Sending meta transaction");
+        showInfoMessage("Building transaction to forward");
+        // txGas should be calculated and passed here or calculate within the method
+
+        let { data } = await contract.populateTransaction.setQuote(newQuote);
+        let gasPrice = await ethersProvider.getGasPrice();
+        let gasLimit = await ethersProvider.estimateGas({
+          to: config.contract.address,
+          from: userAddress,
+          data: data,
+        });
+        console.log(gasLimit.toString());
+        console.log(gasPrice.toString());
+        console.log(data);
+
+        const builtTx = await ercForwarderClient.buildTx({
+          to: config.contract.address,
+          token:config.usdcAddress,
+          txGas:Number(gasLimit),
+          data,
+          permitType : "EIP2612_Permit"
+        });
+        const tx = builtTx.request;
+        const fee = builtTx.cost;
+        console.log(tx);
+        console.log(fee);
+        alert(`You will be charged ${fee} amount of DAI ${config.usdcAddress} for this transaction`);
+        showInfoMessage(`Signing message for meta transaction`);
+
+        const nonce = await usdcToken.nonces(userAddress);
+        console.log(`nonce is : ${nonce}`);
+
+        const permitDataToSign = {
+          types: {
+            EIP712Domain: daiDomainType,
+            Permit: eip2612PermitType,
+          },
+          domain: usdcDomainData,
+          primaryType: "Permit",
+          message: {
+            owner: userAddress,
+            spender: usdcPermitOptions.spender,
+            nonce: parseInt(nonce),
+            value: usdcPermitOptions.value,
+            deadline: parseInt(usdcPermitOptions.deadline),
+          },
+        };
+
+        let result = await ethersProvider.send("eth_signTypedData_v3", [
+          userAddress,
+          JSON.stringify(permitDataToSign),
+        ]);
+
+        console.log(result);
+          
+        let metaInfo = {};
+        let permitOptions = {};
+
+        const signature = result.substring(2);
+        const r = "0x" + signature.substring(0, 64);
+        const s = "0x" + signature.substring(64, 128);
+        const v = parseInt(signature.substring(128, 130), 16);
+
+        permitOptions.holder = userAddress;
+        permitOptions.spender = usdcPermitOptions.spender;
+        permitOptions.value = usdcPermitOptions.value; 
+        permitOptions.nonce = parseInt(nonce.toString());
+        permitOptions.expiry = parseInt(usdcPermitOptions.deadline);
+        permitOptions.allowed = true;
+        permitOptions.v = v;
+        permitOptions.r = r;
+        permitOptions.s = s;
+
+        // validations of permit Type is needed for meta info and within buildTx
+
+        metaInfo.permitType = "EIP2612_Permit";
+        metaInfo.permitData = permitOptions;
+
+
+        //signature of this method is permitAndSendTxEIP712({req, signature = null, userAddress, metaInfo})
+        //signature param is optional. check network agnostics section for more details about this
+        //userAddress is must when your provider does not have a signer with accounts 
+        let transaction = await ercForwarderClient.permitAndSendTxEIP712({req:tx, metaInfo: metaInfo});
         //returns an object containing code, log, message, txHash 
         console.log(transaction);
       
@@ -279,7 +435,7 @@ function App() {
 
         const builtTx = await ercForwarderClient.buildTx({
           to: config.contract.address,
-          token:biconomy.usdcTokenAddress,
+          token:config.usdcAddress,
           txGas:Number(gasLimit),
           data
         });
@@ -392,7 +548,7 @@ function App() {
     console.log(signedTx);
 
     // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-    const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(signedTx, biconomy.usdcTokenAddress);
+    const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(signedTx, config.usdcAddress);
     /*console.log(dataToSign);
     const signParams = dataToSign.eip712Format;
     //https://github.com/ethers-io/ethers.js/issues/687
@@ -491,6 +647,9 @@ function App() {
               onClick={onSubmitEIP712}
             >
               Submit with EIP712
+            </Button>
+            <Button variant="contained" color="primary" onClick={onPermitAndSubmitEIP712}>
+              Permit and Submit with EIP712
             </Button>
             <Button
               variant="contained"

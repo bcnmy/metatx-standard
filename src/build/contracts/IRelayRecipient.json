@@ -45,14 +45,14 @@
     "absolutePath": "@opengsn/gsn/contracts/interfaces/IRelayRecipient.sol",
     "exportedSymbols": {
       "IRelayRecipient": [
-        144
+        164
       ]
     },
-    "id": 145,
+    "id": 165,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 121,
+        "id": 141,
         "literals": [
           "solidity",
           "^",
@@ -69,9 +69,9 @@
         "contractKind": "contract",
         "documentation": "a contract must implement this interface in order to support relayed transaction.\nIt is better to inherit the BaseRelayRecipient as its implementation.",
         "fullyImplemented": false,
-        "id": 144,
+        "id": 164,
         "linearizedBaseContracts": [
-          144
+          164
         ],
         "name": "IRelayRecipient",
         "nodeType": "ContractDefinition",
@@ -80,7 +80,7 @@
             "body": null,
             "documentation": "return if the forwarder is trusted to forward relayed transactions to us.\nthe forwarder is required to verify the sender's signature, and verify\nthe call is not a replay.",
             "functionSelector": "572b6c05",
-            "id": 128,
+            "id": 148,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -88,16 +88,16 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 124,
+              "id": 144,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 123,
+                  "id": 143,
                   "name": "forwarder",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 128,
+                  "scope": 148,
                   "src": "499:17:2",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -106,7 +106,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 122,
+                    "id": 142,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "499:7:2",
@@ -123,16 +123,16 @@
               "src": "498:19:2"
             },
             "returnParameters": {
-              "id": 127,
+              "id": 147,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 126,
+                  "id": 146,
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 128,
+                  "scope": 148,
                   "src": "546:4:2",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -141,7 +141,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 125,
+                    "id": 145,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "546:4:2",
@@ -156,7 +156,7 @@
               ],
               "src": "545:6:2"
             },
-            "scope": 144,
+            "scope": 164,
             "src": "471:81:2",
             "stateMutability": "view",
             "virtual": true,
@@ -165,7 +165,7 @@
           {
             "body": null,
             "documentation": "return the sender of this call.\nif the call came through our trusted forwarder, then the real sender is appended as the last 20 bytes\nof the msg.data.\notherwise, return `msg.sender`\nshould be used in the contract anywhere instead of msg.sender",
-            "id": 133,
+            "id": 153,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -173,22 +173,22 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 129,
+              "id": 149,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "872:2:2"
             },
             "returnParameters": {
-              "id": 132,
+              "id": 152,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 131,
+                  "id": 151,
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 133,
+                  "scope": 153,
                   "src": "906:15:2",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -197,7 +197,7 @@
                     "typeString": "address payable"
                   },
                   "typeName": {
-                    "id": 130,
+                    "id": 150,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "906:15:2",
@@ -213,7 +213,7 @@
               ],
               "src": "905:17:2"
             },
-            "scope": 144,
+            "scope": 164,
             "src": "853:70:2",
             "stateMutability": "view",
             "virtual": true,
@@ -222,7 +222,7 @@
           {
             "body": null,
             "documentation": "return the msg.data of this call.\nif the call came through our trusted forwarder, then the real sender was appended as the last 20 bytes\nof the msg.data - so this method will strip those 20 bytes off.\notherwise, return `msg.data`\nshould be used in the contract instead of msg.data, where the difference matters (e.g. when explicitly\nsigning or hashing the",
-            "id": 138,
+            "id": 158,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -230,22 +230,22 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 134,
+              "id": 154,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1360:2:2"
             },
             "returnParameters": {
-              "id": 137,
+              "id": 157,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 136,
+                  "id": 156,
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 138,
+                  "scope": 158,
                   "src": "1394:12:2",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -254,7 +254,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 135,
+                    "id": 155,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "1394:5:2",
@@ -269,7 +269,7 @@
               ],
               "src": "1393:14:2"
             },
-            "scope": 144,
+            "scope": 164,
             "src": "1343:65:2",
             "stateMutability": "view",
             "virtual": true,
@@ -279,7 +279,7 @@
             "body": null,
             "documentation": null,
             "functionSelector": "486ff0cd",
-            "id": 143,
+            "id": 163,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -287,22 +287,22 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 139,
+              "id": 159,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1439:2:2"
             },
             "returnParameters": {
-              "id": 142,
+              "id": 162,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 141,
+                  "id": 161,
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 143,
+                  "scope": 163,
                   "src": "1473:13:2",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -311,7 +311,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 140,
+                    "id": 160,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1473:6:2",
@@ -326,14 +326,14 @@
               ],
               "src": "1472:15:2"
             },
-            "scope": 144,
+            "scope": 164,
             "src": "1414:74:2",
             "stateMutability": "view",
             "virtual": true,
             "visibility": "external"
           }
         ],
-        "scope": 145,
+        "scope": 165,
         "src": "222:1268:2"
       }
     ],
@@ -344,7 +344,7 @@
       "absolutePath": "@opengsn/gsn/contracts/interfaces/IRelayRecipient.sol",
       "exportedSymbols": {
         "IRelayRecipient": [
-          144
+          164
         ]
       }
     },
@@ -358,7 +358,7 @@
             ".2"
           ]
         },
-        "id": 121,
+        "id": 141,
         "name": "PragmaDirective",
         "src": "31:23:2"
       },
@@ -375,10 +375,10 @@
           "documentation": "a contract must implement this interface in order to support relayed transaction.\nIt is better to inherit the BaseRelayRecipient as its implementation.",
           "fullyImplemented": false,
           "linearizedBaseContracts": [
-            144
+            164
           ],
           "name": "IRelayRecipient",
-          "scope": 145
+          "scope": 165
         },
         "children": [
           {
@@ -394,7 +394,7 @@
               ],
               "name": "isTrustedForwarder",
               "overrides": null,
-              "scope": 144,
+              "scope": 164,
               "stateMutability": "view",
               "virtual": true,
               "visibility": "public"
@@ -407,7 +407,7 @@
                       "constant": false,
                       "name": "forwarder",
                       "overrides": null,
-                      "scope": 128,
+                      "scope": 148,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -421,17 +421,17 @@
                           "stateMutability": "nonpayable",
                           "type": "address"
                         },
-                        "id": 122,
+                        "id": 142,
                         "name": "ElementaryTypeName",
                         "src": "499:7:2"
                       }
                     ],
-                    "id": 123,
+                    "id": 143,
                     "name": "VariableDeclaration",
                     "src": "499:17:2"
                   }
                 ],
-                "id": 124,
+                "id": 144,
                 "name": "ParameterList",
                 "src": "498:19:2"
               },
@@ -442,7 +442,7 @@
                       "constant": false,
                       "name": "",
                       "overrides": null,
-                      "scope": 128,
+                      "scope": 148,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bool",
@@ -455,22 +455,22 @@
                           "name": "bool",
                           "type": "bool"
                         },
-                        "id": 125,
+                        "id": 145,
                         "name": "ElementaryTypeName",
                         "src": "546:4:2"
                       }
                     ],
-                    "id": 126,
+                    "id": 146,
                     "name": "VariableDeclaration",
                     "src": "546:4:2"
                   }
                 ],
-                "id": 127,
+                "id": 147,
                 "name": "ParameterList",
                 "src": "545:6:2"
               }
             ],
-            "id": 128,
+            "id": 148,
             "name": "FunctionDefinition",
             "src": "471:81:2"
           },
@@ -486,7 +486,7 @@
               ],
               "name": "_msgSender",
               "overrides": null,
-              "scope": 144,
+              "scope": 164,
               "stateMutability": "view",
               "virtual": true,
               "visibility": "internal"
@@ -499,7 +499,7 @@
                   ]
                 },
                 "children": [],
-                "id": 129,
+                "id": 149,
                 "name": "ParameterList",
                 "src": "872:2:2"
               },
@@ -510,7 +510,7 @@
                       "constant": false,
                       "name": "",
                       "overrides": null,
-                      "scope": 133,
+                      "scope": 153,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address payable",
@@ -524,22 +524,22 @@
                           "stateMutability": "payable",
                           "type": "address payable"
                         },
-                        "id": 130,
+                        "id": 150,
                         "name": "ElementaryTypeName",
                         "src": "906:15:2"
                       }
                     ],
-                    "id": 131,
+                    "id": 151,
                     "name": "VariableDeclaration",
                     "src": "906:15:2"
                   }
                 ],
-                "id": 132,
+                "id": 152,
                 "name": "ParameterList",
                 "src": "905:17:2"
               }
             ],
-            "id": 133,
+            "id": 153,
             "name": "FunctionDefinition",
             "src": "853:70:2"
           },
@@ -555,7 +555,7 @@
               ],
               "name": "_msgData",
               "overrides": null,
-              "scope": 144,
+              "scope": 164,
               "stateMutability": "view",
               "virtual": true,
               "visibility": "internal"
@@ -568,7 +568,7 @@
                   ]
                 },
                 "children": [],
-                "id": 134,
+                "id": 154,
                 "name": "ParameterList",
                 "src": "1360:2:2"
               },
@@ -579,7 +579,7 @@
                       "constant": false,
                       "name": "",
                       "overrides": null,
-                      "scope": 138,
+                      "scope": 158,
                       "stateVariable": false,
                       "storageLocation": "memory",
                       "type": "bytes",
@@ -592,22 +592,22 @@
                           "name": "bytes",
                           "type": "bytes"
                         },
-                        "id": 135,
+                        "id": 155,
                         "name": "ElementaryTypeName",
                         "src": "1394:5:2"
                       }
                     ],
-                    "id": 136,
+                    "id": 156,
                     "name": "VariableDeclaration",
                     "src": "1394:12:2"
                   }
                 ],
-                "id": 137,
+                "id": 157,
                 "name": "ParameterList",
                 "src": "1393:14:2"
               }
             ],
-            "id": 138,
+            "id": 158,
             "name": "FunctionDefinition",
             "src": "1343:65:2"
           },
@@ -624,7 +624,7 @@
               ],
               "name": "versionRecipient",
               "overrides": null,
-              "scope": 144,
+              "scope": 164,
               "stateMutability": "view",
               "virtual": true,
               "visibility": "external"
@@ -637,7 +637,7 @@
                   ]
                 },
                 "children": [],
-                "id": 139,
+                "id": 159,
                 "name": "ParameterList",
                 "src": "1439:2:2"
               },
@@ -648,7 +648,7 @@
                       "constant": false,
                       "name": "",
                       "overrides": null,
-                      "scope": 143,
+                      "scope": 163,
                       "stateVariable": false,
                       "storageLocation": "memory",
                       "type": "string",
@@ -661,32 +661,32 @@
                           "name": "string",
                           "type": "string"
                         },
-                        "id": 140,
+                        "id": 160,
                         "name": "ElementaryTypeName",
                         "src": "1473:6:2"
                       }
                     ],
-                    "id": 141,
+                    "id": 161,
                     "name": "VariableDeclaration",
                     "src": "1473:13:2"
                   }
                 ],
-                "id": 142,
+                "id": 162,
                 "name": "ParameterList",
                 "src": "1472:15:2"
               }
             ],
-            "id": 143,
+            "id": 163,
             "name": "FunctionDefinition",
             "src": "1414:74:2"
           }
         ],
-        "id": 144,
+        "id": 164,
         "name": "ContractDefinition",
         "src": "222:1268:2"
       }
     ],
-    "id": 145,
+    "id": 165,
     "name": "SourceUnit",
     "src": "31:1460:2"
   },
@@ -696,7 +696,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-02-22T11:07:41.169Z",
+  "updatedAt": "2021-02-23T12:09:24.003Z",
   "devdoc": {
     "methods": {}
   },

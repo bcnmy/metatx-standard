@@ -12,6 +12,10 @@ contract TestContract is BaseRelayRecipient {
         trustedForwarder = _trustedForwarder;
     }
 
+    function setTrustedForwarder(address _trustedForwarder) public {
+        trustedForwarder = _trustedForwarder;
+    }
+    
     /**
      * 
      */

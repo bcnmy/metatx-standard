@@ -116,13 +116,13 @@ function App() {
             if (metaTxEnabled) {
                 console.log("Sending meta transaction");
                 // NOTE: prepend 0x in private key to be used with web3.js
-                let privateKey = "0x2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
+                let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
                 let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
                 let nonce = await contract.methods.getNonce(userAddress).call();
                 let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
                 let messageToSign = constructMetaTransactionMessage(nonce, chainId, functionSignature, config.contract.address);
                 
-                let {signature} = web3.eth.accounts.sign(messageToSign, privateKey);
+                let {signature} = web3.eth.accounts.sign("0x" + messageToSign.toString("hex"), privateKey);
                 let { r, s, v } = getSignatureParameters(signature);
                 let executeMetaTransactionData = contract.methods.executeMetaTransaction(userAddress, functionSignature, r, s, v).encodeABI();
                 let txParams = {

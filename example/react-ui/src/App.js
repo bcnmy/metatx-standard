@@ -8,9 +8,12 @@ import Box from '@material-ui/core/Box';
 
 import Ethers_Custom_EIP712Sign from './components/Ethers_Custom_EIP712Sign';
 import Ethers_Custom_PersonalSign from './components/Ethers_Custom_PersonalSign';
+import Ethers_EIP2771_EIP712Sign from './components/Ethers_EIP2771_EIP712Sign';
+import Ethers_EIP2771_PersonalSign from './components/Ethers_EIP2771_PersonalSign';
 import Web3_Custom_EIP712Sign from './components/Web3_Custom_EIP712Sign';
 import Web3_Custom_PersonalSign from './components/Web3_Custom_PersonalSign';
-import Ethers_EIP2771_EIP712Sign from './components/Ethers_EIP2771_EIP712Sign';
+import Web3_EIP2771_EIP712Sign from './components/Web3_EIP2771_EIP712Sign';
+import Web3_EIP2771_PersonalSign from './components/Web3_EIP2771_PersonalSign';
 
 import "./App.css";
 import Button from "@material-ui/core/Button";
@@ -103,10 +106,10 @@ function App() {
           <Web3_Custom_PersonalSign />
         </TabPanel>
         <TabPanel value={value} index={2}>
-          Item Three
+          <Web3_EIP2771_EIP712Sign />
         </TabPanel>
         <TabPanel value={value} index={3}>
-          Item Four
+          <Web3_EIP2771_PersonalSign />
         </TabPanel>
         <TabPanel value={value} index={4}>
           <Ethers_Custom_EIP712Sign />
@@ -118,7 +121,7 @@ function App() {
           <Ethers_EIP2771_EIP712Sign />
         </TabPanel>
         <TabPanel value={value} index={7}>
-          Item Eight
+          <Ethers_EIP2771_PersonalSign />
         </TabPanel>
       </div>
       <NotificationContainer />

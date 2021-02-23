@@ -118,7 +118,7 @@ function App() {
                     contract = new ethers.Contract(
                         config.contract.address,
                         config.contract.abi,
-                        biconomy.getProvider(userAddress)
+                        biconomy.getSignerByAddress(userAddress)
                     );
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);

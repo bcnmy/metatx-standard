@@ -18,6 +18,9 @@ import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 
+//todo
+// forward code will be updated once EIP2771 , Custom and Network Agnostics all variations are added 
+
 let config = {
     contract: {
         address: "0x880176EDA9f1608A2Bf182385379bDcC1a65Dfcf",

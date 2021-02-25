@@ -45,7 +45,7 @@ let domainData = {
     salt: "42"
 };
 
-let walletProvider, walletSigner;
+let ethersProvider,walletProvider, walletSigner;
 let contract, contractInterface;
 
 const useStyles = makeStyles((theme) => ({
@@ -106,6 +106,7 @@ function App() {
                   This provider is linked to your wallet.
                   If needed, substitute your wallet solution in place of window.ethereum 
                 */
+                ethersProvider = new ethers.providers.Web3Provider(biconomy);
                 walletProvider = new ethers.providers.Web3Provider(window.ethereum);
                 walletSigner = walletProvider.getSigner();
 
@@ -184,59 +185,106 @@ function App() {
         }
     };
 
-    const onSubmitWithPrivateKey = async event => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            
+    const onSubmitWithPrivateKey = async (event) => {
+      if (newQuote != "" && contract) {
+        setTransactionHash("");
+
+        try {
+          if (metaTxEnabled) {
+            showInfoMessage(`Getting user signature`);
+            let privateKey = 
+              "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
+            let wallet = new ethers.Wallet(privateKey);
+            let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
+            let nonce = await contract.getNonce(userAddress);
+            let functionSignature = contractInterface.encodeFunctionData(
+              "setQuote",
+              [newQuote]
+            );
+            let message = {};
+            message.nonce = parseInt(nonce);
+            message.from = userAddress;
+            message.functionSignature = functionSignature;
+
+            // NOTE: DO NOT use JSON.stringify on dataToSign object
+            const dataToSign = {
+              types: {
+                EIP712Domain: domainType,
+                MetaTransaction: metaTransactionType,
+              },
+              domain: domainData,
+              primaryType: "MetaTransaction",
+              message: message,
+            };
+
+            // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
+            // instead of chainId
+            const signature = sigUtil.signTypedMessage(
+              new Buffer.from(privateKey, "hex"),
+              { data: dataToSign },
+              "V3"
+            );
+            let { r, s, v } = getSignatureParameters(signature);
+            let rawTx, tx;
+            rawTx = {
+              to: config.contract.address,
+              data: contractInterface.encodeFunctionData(
+                "executeMetaTransaction",
+                [userAddress, functionSignature, r, s, v]
+              ),
+              from: userAddress,
+            };
+            tx = await wallet.signTransaction(rawTx);
+
+            let transactionHash;
             try {
-
-                if (metaTxEnabled) {
-                    showInfoMessage(`Getting user signature`);
-                    let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
-                    let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-                    let nonce = await contract.getNonce(userAddress);
-                    let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
-                    let message = {};
-                    message.nonce = parseInt(nonce);
-                    message.from = userAddress;
-                    message.functionSignature = functionSignature;
-
-                    // NOTE: DO NOT use JSON.stringify on dataToSign object
-                    const dataToSign = {
-                        types: {
-                            EIP712Domain: domainType,
-                            MetaTransaction: metaTransactionType
-                        },
-                        domain: domainData,
-                        primaryType: "MetaTransaction",
-                        message: message
-                    };
-
-                    // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
-                    // instead of chainId
-                    const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V3');
-                    let { r, s, v } = getSignatureParameters(signature);
-                    sendSignedTransaction(userAddress, functionSignature, r, s, v);
-                } else {
-                    console.log("Sending normal transaction");
-                    let tx = await contract.setQuote(newQuote);
-                    console.log("Transaction hash : ", tx.hash);
-                    showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-                    let confirmation = await tx.wait();
-                    console.log(confirmation);
-                    setTransactionHash(tx.hash);
-
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                }
+              let receipt = await ethersProvider.sendTransaction(tx);
+              console.log(receipt);
             } catch (error) {
+              // Ethers check the hash from user's signed tx and hash returned from Biconomy
+              // Both hash are expected to be different as biconomy send the transaction from its relayers
+              if (error.returnedHash && error.expectedHash) {
+                console.log("Transaction hash : ", error.returnedHash);
+                transactionHash = error.returnedHash;
+              } else {
                 console.log(error);
-                handleClose();
+                showErrorMessage("Error while sending transaction");
+              }
             }
-        } else {
-            showErrorMessage("Please enter the quote");
+
+            if (transactionHash) {
+              showInfoMessage(
+                `Transaction sent by relayer with hash ${transactionHash}`
+              );
+              let receipt = await ethersProvider.waitForTransaction(
+                transactionHash
+              );
+              console.log(receipt);
+              showSuccessMessage("Transaction confirmed on chain");
+              getQuoteFromNetwork();
+            } else {
+              showErrorMessage("Could not get transaction hash");
+            }
+          } else {
+            console.log("Sending normal transaction");
+            let tx = await contract.setQuote(newQuote);
+            console.log("Transaction hash : ", tx.hash);
+            showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+            let confirmation = await tx.wait();
+            console.log(confirmation);
+            setTransactionHash(tx.hash);
+
+            showSuccessMessage("Transaction confirmed on chain");
+            getQuoteFromNetwork();
+          }
+        } catch (error) {
+          console.log(error);
+          handleClose();
         }
-    }
+      } else {
+        showErrorMessage("Please enter the quote");
+      }
+    };
 
     const getSignatureParameters = signature => {
         if (!ethers.utils.isHexString(signature)) {

@@ -100,11 +100,22 @@ function App() {
           <Tab label="Ethers + Custom + Personal Sign" {...a11yProps(5)} />
           <Tab label="Ethers + EIP2771 + EIP712 Sign" {...a11yProps(6)} />
           <Tab label="Ethers + EIP2771 + Personal Sign" {...a11yProps(7)} />
-          <Tab label="Ethers + Forward + EIP712 Sign" {...a11yProps(8)} />
+          <Tab label="Ethers + Forward + EIP712 Sign" {...a11yProps(8)} /> 
           <Tab label="Web3 + Custom + EIP712 Sign + API" {...a11yProps(9)} />
           <Tab label="Ethers + Custom + EIP712 Sign + API" {...a11yProps(10)} />
           <Tab label="Web3 + Custom + Personal Sign + API" {...a11yProps(11)} />
           <Tab label="Ethers + Custom + EIP712 Sign + API" {...a11yProps(12)} />
+          {/*To Be Added
+             Web3 + EIP2771 + EIP712 Sign + API
+             Web3 + EIP2771 + Personal Sign + API 
+             Ethers + EIP2771 + EIP712 Sign + API
+             Ethers + EIP2771 + Personal Sign + API
+             
+             Ethers + Forward + Personal Sign
+             Web3 + Forward + EIP712 Sign
+             Web3 + Forward + Personal Sign
+             Ethers + Forward Permit Execute + EIP712 Sign              
+          */}
         </Tabs>
 
         <TabPanel value={value} index={0}>

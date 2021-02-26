@@ -17,6 +17,9 @@ import Web3_EIP2771_EIP712Sign from './components/Web3_EIP2771_EIP712Sign';
 import Web3_EIP2771_PersonalSign from './components/Web3_EIP2771_PersonalSign';
 import Web3_Custom_EIP712Sign_API from './components/Web3_Custom_EIP712Sign_API';
 import Ethers_Custom_EIP712Sign_API from './components/Ethers_Custom_EIP712Sign_API';
+import Web3_Custom_PersonalSign_API from './components/Web3_Custom_PersonalSign_API';
+import Ethers_Custom_PersonalSign_API from './components/Ethers_Custom_PersonalSign_API';
+
 
 import "./App.css";
 import Button from "@material-ui/core/Button";
@@ -104,7 +107,7 @@ function App() {
           <Tab label="Web3 + Custom + EIP712 Sign + API" {...a11yProps(9)} />
           <Tab label="Ethers + Custom + EIP712 Sign + API" {...a11yProps(10)} />
           <Tab label="Web3 + Custom + Personal Sign + API" {...a11yProps(11)} />
-          <Tab label="Ethers + Custom + EIP712 Sign + API" {...a11yProps(12)} />
+          <Tab label="Ethers + Custom + Personal Sign + API" {...a11yProps(12)} />
           {/*To Be Added
              Web3 + EIP2771 + EIP712 Sign + API
              Web3 + EIP2771 + Personal Sign + API 
@@ -148,9 +151,16 @@ function App() {
         <TabPanel value={value} index={9}>
           <Web3_Custom_EIP712Sign_API />
         </TabPanel>
-        <TabPanel value={value} index={9}>
+        <TabPanel value={value} index={10}>
           <Ethers_Custom_EIP712Sign_API />
         </TabPanel>
+        <TabPanel value={value} index={11}>
+          <Web3_Custom_PersonalSign_API />
+        </TabPanel>
+        <TabPanel value={value} index={12}>
+          <Ethers_Custom_PersonalSign_API />
+        </TabPanel>
+
       </div>
       <NotificationContainer />
     </div>

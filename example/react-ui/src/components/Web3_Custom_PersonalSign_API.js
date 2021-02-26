@@ -15,10 +15,13 @@ import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
+import {toBuffer} from "ethereumjs-util";
+let abi = require('ethereumjs-abi')
 let sigUtil = require("eth-sig-util");
+
 let config = {
     contract: {
-        address: "0xE17e55652aA76C9198dE0E22c0b25f98245532eC",
+        address: "0x1E1c36546F6ddD71e8e6aEDf135B82F7EEaA08b9",
         abi: [{ "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "userAddress", "type": "address" }, { "indexed": false, "internalType": "addresspayable", "name": "relayerAddress", "type": "address" }, { "indexed": false, "internalType": "bytes", "name": "functionSignature", "type": "bytes" }], "name": "MetaTransactionExecuted", "type": "event" }, { "constant": false, "inputs": [{ "internalType": "address", "name": "userAddress", "type": "address" }, { "internalType": "bytes", "name": "functionSignature", "type": "bytes" }, { "internalType": "bytes32", "name": "sigR", "type": "bytes32" }, { "internalType": "bytes32", "name": "sigS", "type": "bytes32" }, { "internalType": "uint8", "name": "sigV", "type": "uint8" }], "name": "executeMetaTransaction", "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }], "payable": true, "stateMutability": "payable", "type": "function" }, { "constant": true, "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "getNonce", "outputs": [{ "internalType": "uint256", "name": "nonce", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "payable": false, "stateMutability": "view", "type": "function" }]
     }
 }
@@ -45,6 +48,7 @@ let domainData = {
 
 let web3, walletWeb3;
 let contract;
+let salt = 42;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -136,22 +140,9 @@ function App() {
                 let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
                 let nonce = await contract.methods.getNonce(userAddress).call();
                 let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-                let message = {};
-                message.nonce = parseInt(nonce);
-                message.from = userAddress;
-                message.functionSignature = functionSignature;
-
-                const dataToSign = {
-                    types: {
-                        EIP712Domain: domainType,
-                        MetaTransaction: metaTransactionType
-                    },
-                    domain: domainData,
-                    primaryType: "MetaTransaction",
-                    message: message
-                };
-
-                const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V4');
+                let messageToSign = constructMetaTransactionMessage(nonce, salt, functionSignature, config.contract.address);
+                
+                let {signature} = web3.eth.accounts.sign("0x" + messageToSign.toString("hex"), privateKey);
                 let { r, s, v } = getSignatureParameters(signature);
                 sendTransaction(userAddress, functionSignature, r, s, v);
             } else {
@@ -181,39 +172,15 @@ function App() {
                 let userAddress = selectedAddress;
                 let nonce = await contract.methods.getNonce(userAddress).call();
                 let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-                let message = {};
-                message.nonce = parseInt(nonce);
-                message.from = userAddress;
-                message.functionSignature = functionSignature;
-
-                const dataToSign = JSON.stringify({
-                    types: {
-                        EIP712Domain: domainType,
-                        MetaTransaction: metaTransactionType
-                    },
-                    domain: domainData,
-                    primaryType: "MetaTransaction",
-                    message: message
-                });
+                let messageToSign = constructMetaTransactionMessage(nonce, salt, functionSignature, config.contract.address);
                 
-                // NOTE: Using walletWeb3 here, as it is connected to the wallet where user account is present.
-                walletWeb3.currentProvider.send(
-                    {
-                        jsonrpc: "2.0",
-                        id: 999999999999,
-                        method: "eth_signTypedData_v4",
-                        params: [userAddress, dataToSign]
-                    },
-                    function (error, response) {
-                        console.info(`User signature is ${response.result}`);
-                        if (error || (response && response.error)) {
-                            showErrorMessage("Could not get user signature");
-                        } else if (response && response.result) {
-                            let { r, s, v } = getSignatureParameters(response.result);
-                            sendTransaction(userAddress, functionSignature, r, s, v);
-                        }
-                    }
+                // NOTE: We are using walletWeb3 here to get signature from connected wallet
+                const signature = await walletWeb3.eth.personal.sign(
+                "0x" + messageToSign.toString("hex"),
+                userAddress
                 );
+                let { r, s, v } = getSignatureParameters(signature);
+                sendTransaction(userAddress, functionSignature, r, s, v);
             } else {
                 console.log("Sending normal transaction");
                 contract.methods
@@ -285,6 +252,13 @@ function App() {
         }
     };
 
+    const constructMetaTransactionMessage = (nonce, salt, functionSignature, contractAddress) => {
+        return abi.soliditySHA3(
+            ["uint256","address","uint256","bytes"],
+            [nonce, contractAddress, salt, toBuffer(functionSignature)]
+        );
+    }
+
     const showErrorMessage = message => {
         NotificationManager.error(message, "Error", 5000);
     };
@@ -328,7 +302,7 @@ function App() {
                     },
                     body: JSON.stringify({
                       "to": config.contract.address,
-                      "apiId": "f93b5089-574e-47b7-92a1-2a9fff66215a",
+                      "apiId": "9bde7ec7-ef8f-485a-b655-ec88476fb548",
                       "params": [userAddress, functionData, r, s, v],
                       "from": userAddress
                     })

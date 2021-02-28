@@ -12,10 +12,10 @@ contract EIP712Base {
 
     bytes32 internal constant EIP712_DOMAIN_TYPEHASH = keccak256(bytes("EIP712Domain(string name,string version,uint256 salt,address verifyingContract)"));
 
-    bytes32 internal domainSeperator;
+    bytes32 internal domainSeparator;
 
     constructor(string memory name, string memory version) public {
-        domainSeperator = keccak256(abi.encode(
+        domainSeparator = keccak256(abi.encode(
             EIP712_DOMAIN_TYPEHASH,
             keccak256(bytes(name)),
             keccak256(bytes(version)),
@@ -30,8 +30,8 @@ contract EIP712Base {
         }
     }
 
-    function getDomainSeperator() private view returns(bytes32) {
-        return domainSeperator;
+    function getDomainSeparator() private view returns(bytes32) {
+        return domainSeparator;
     }
 
     /**
@@ -42,7 +42,7 @@ contract EIP712Base {
     * "\\x01" is the version byte to make it compatible to EIP-191
     */
     function toTypedMessageHash(bytes32 messageHash) internal view returns(bytes32) {
-        return keccak256(abi.encodePacked("\x19\x01", getDomainSeperator(), messageHash));
+        return keccak256(abi.encodePacked("\x19\x01", getDomainSeparator(), messageHash));
     }
 
 }

@@ -252,7 +252,7 @@ function App() {
                     to: config.contract.address,
                     from: userAddress,
                     gasLimit: gasLimit,
-                    signatureType: "PERSONAL_SIGN" // Or ommit this because by default mexa will consider personal sign
+                    signatureType: "PERSONAL_SIGN" // Or omit this because by default mexa will consider personal sign
                 };
                 let tx = await provider.send("eth_sendTransaction", [txParams])
 

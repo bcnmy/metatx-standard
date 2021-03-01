@@ -23,26 +23,6 @@ let config = {
     }
 }
 
-const domainType = [
-    { name: "name", type: "string" },
-    { name: "version", type: "string" },
-    { name: "salt", type: "uint256" },
-    { name: "verifyingContract", type: "address" }
-];
-
-const metaTransactionType = [
-    { name: "nonce", type: "uint256" },
-    { name: "from", type: "address" },
-    { name: "functionSignature", type: "bytes" }
-];
-
-let domainData = {
-    name: "TestContract",
-    version: "1",
-    verifyingContract: config.contract.address,
-    salt: 42
-};
-
 let web3, walletWeb3, biconomy;
 let contract;
 

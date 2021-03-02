@@ -282,7 +282,6 @@ function App() {
             setTransactionHash("");
             try {
                 if (metaTxEnabled) {
-                    showInfoMessage(`Getting user signature`);
                     let privateKey = "bf096e6fb9754860c4c99eb336c0579db994a3ef7fb3f7db869ad2f1972fc755";
                     let userAddress = "0xf7AB2d00f379167c339691c23B23111eB598B3fb";
                     let userSigner = new ethers.Wallet(privateKey);
@@ -323,7 +322,7 @@ function App() {
           
                     const hashToSign = getDataToSignForPersonalSign(req);
 
-                    const signature = await walletSigner.signMessage(hashToSign);
+                    const signature = await userSigner.signMessage(hashToSign);
                       sendTransaction({
                         userAddress,
                         request:req,

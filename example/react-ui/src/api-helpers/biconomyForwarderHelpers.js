@@ -1,5 +1,4 @@
 import {ethers} from 'ethers';
-const {config} = require("./config");
 const abi = require("ethereumjs-abi");
 let helperAttributes = {};
 let supportedNetworks = [42,4,5]; //add more
@@ -41,7 +40,7 @@ const getContractAddresses = async (networkId) => {
     }/api/v2/meta-tx/systemInfo?networkId=${networkId}`;
     const response = await fetch(apiInfo);
     const systemInfo = await response.json();
-    console.log("Response JSON " + JSON.stringify(responseJson));
+    console.log("Response JSON " + JSON.stringify(systemInfo));
     contractAddresses.biconomyForwarderAddress = systemInfo.biconomyForwarderAddress;
     return contractAddresses;
   };
@@ -89,8 +88,8 @@ const buildForwardTxRequest = async ({account, to, gasLimitNum, batchId, batchNo
  * @param {*} request - forward request object
  * @param {*} networkId 
  */
-const getDataToSignForEIP712 = (request,networkId) => {
-    const contractAddresses = getContractAddresses(networkId);
+const getDataToSignForEIP712 = async (request,networkId) => {
+    const contractAddresses = await getContractAddresses(networkId);
     const forwarderAddress = contractAddresses.biconomyForwarderAddress;
     let domainData = helperAttributes.biconomyForwarderDomainData;
     domainData.salt = networkId;
@@ -142,7 +141,7 @@ const getDataToSignForPersonalSign = (request) => {
  * get the domain seperator that needs to be passed while using EIP712 signature type
  * @param {*} networkId 
  */
-const getDomainSeperator = (networkId) => {
+const getDomainSeperator = async (networkId) => {
     const contractAddresses = await getContractAddresses(networkId);
     const forwarderAddress = contractAddresses.biconomyForwarderAddress;
     let domainData = helperAttributes.biconomyForwarderDomainData;

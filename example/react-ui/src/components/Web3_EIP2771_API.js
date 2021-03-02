@@ -168,7 +168,8 @@ function App() {
             const messageToSign = getDataToSignForPersonalSign(request, 42);
             let {signature} = web3.eth.accounts.sign("0x" + messageToSign.toString("hex"), privateKey);
            
-            sendTransaction({userAddress, request, sig:signature, signatureType:biconomy.PERSONAL_SIGN});           
+            sendTransaction({userAddress, request, sig:signature, signatureType:biconomy.PERSONAL_SIGN});  
+            //notice domain seperator is not passed here         
         } else {
             showErrorMessage("Please enter the quote");
         }
@@ -284,8 +285,8 @@ function App() {
                 console.log(request);
 
                 //you do not need domain seperator in case of personal sign
-                const domainSeparator = await getDomainSeperator(42);
-                console.log(domainSeparator);
+                //const domainSeparator = await getDomainSeperator(42);
+                //console.log(domainSeparator);
 
                 const hashToSign =  getDataToSignForPersonalSign(request);
 

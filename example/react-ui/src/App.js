@@ -34,12 +34,13 @@ const metaTransactionType = [
 ];
 
 let domainData = {
-  name: 'Unirace',
+  name: 'TestContract',
   version: '1',
-  chainId: 5,
+  chainId: 42,
   verifyingContract: config.contract.address
 };
-let chainId = 5;
+let chainId = 42;
+let signType;
 
 let ethersProvider, signer;
 let contract, contractInterface, contractWithBasicSign;
@@ -95,14 +96,15 @@ function App() {
               config.contract.abi,
               signer.connectUnchecked()
             );
-            /*contractWithBasicSign = new ethers.Contract(
+            contractWithBasicSign = new ethers.Contract(
               config.contractWithBasicSign.address,
               config.contractWithBasicSign.abi,
               signer.connectUnchecked()
-            );*/
+            );
             contractInterface = new ethers.utils.Interface(config.contract.abi);
             setSelectedAddress(await signer.getAddress());
-            //getQuoteFromNetwork();
+            signType = EIP712_SIGN;
+            getQuoteFromNetwork(signType);
             provider.on("accountsChanged", function(accounts) {
               setSelectedAddress(accounts[0]);
             });
@@ -132,10 +134,7 @@ function App() {
         debugger;
         let userAddress = selectedAddress;
         let nonce = await contract.getNonce(userAddress);
-        const raceIndex = 0;
-        const horseIndex = 1;
-        const amount = 10;
-        let functionSignature = contractInterface.encodeFunctionData("createBet", [raceIndex,horseIndex,amount]);
+        let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
         let message = {};
         message.nonce = parseInt(nonce);
         message.from = userAddress;
@@ -161,9 +160,9 @@ function App() {
         let confirmation = await tx.wait();
         console.log(confirmation);
         setTransactionHash(tx.hash);
-
+        signType = EIP712_SIGN;
         showSuccessMessage("Transaction confirmed on chain");
-        //getQuoteFromNetwork();
+        getQuoteFromNetwork(signType);
       }
     } else {
       showErrorMessage("Please enter the quote");
@@ -192,9 +191,9 @@ function App() {
         let confirmation = await tx.wait();
         console.log(confirmation);
         setTransactionHash(tx.hash);
-
+        signType = PERSONAL_SIGN;
         showSuccessMessage("Transaction confirmed on chain");
-        //getQuoteFromNetwork();
+        getQuoteFromNetwork(signType);
       }
     } else {
       showErrorMessage("Please enter the quote or check contract and signer object");
@@ -273,7 +272,7 @@ function App() {
         setTransactionHash(tx.hash);
 
         showSuccessMessage("Transaction confirmed on chain");
-        //getQuoteFromNetwork(signType);
+        getQuoteFromNetwork(signType);
 
       } catch (error) {
         console.log(error);

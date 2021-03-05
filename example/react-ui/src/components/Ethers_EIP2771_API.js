@@ -29,8 +29,16 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0x880176EDA9f1608A2Bf182385379bDcC1a65Dfcf",
+        address: "0x6ec90770285D545B9872795b7D9f833025F4dF9F",
         abi: [{ "inputs": [{ "internalType": "address", "name": "forwarder", "type": "address" }], "name": "isTrustedForwarder", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "trustedForwarder", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "versionRecipient", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function", "constant": true }]
+    },
+    apiKey: {
+        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
+        prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
+    },
+    api: {
+        test: "https://test-api.biconomy.io",
+        prod: "https://api.biconomy.io"
     }
 }
 
@@ -87,7 +95,7 @@ function App() {
                 let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
                 biconomy = new Biconomy(jsonRpcProvider, {
                     walletProvider: window.ethereum,
-                    apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9",
+                    apiKey: config.apiKey.test,
                     debug: true
                 });
 
@@ -393,15 +401,16 @@ function App() {
             params = [request, sig];
           }
           try {
-            fetch(`https://api.biconomy.io/api/v2/meta-tx/native`, {
+            fetch(`${config.api.test}/api/v2/meta-tx/native`, {
               method: "POST",
               headers: {
-                "x-api-key": "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9",
+                "x-api-key": config.apiKey.test,
                 "Content-Type": "application/json;charset=utf-8",
               },
               body: JSON.stringify({
                 to: config.contract.address,
-                apiId: "ca45b2dc-0279-4952-87cd-bbc584427538",
+                apiId: "34bfa8b9-57e7-4d32-b983-63c3f698cddd",
+              //apiId: "ca45b2dc-0279-4952-87cd-bbc584427538",
                 params: params,
                 from: userAddress,
                 signatureType: signatureType

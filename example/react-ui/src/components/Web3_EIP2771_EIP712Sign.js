@@ -18,8 +18,12 @@ import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 let config = {
     contract: {
-        address: "0x880176EDA9f1608A2Bf182385379bDcC1a65Dfcf",
+        address: "0x6ec90770285D545B9872795b7D9f833025F4dF9F",
         abi: [{ "inputs": [{ "internalType": "address", "name": "forwarder", "type": "address" }], "name": "isTrustedForwarder", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "trustedForwarder", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "versionRecipient", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function", "constant": true }]
+    },
+    apiKey: {
+        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
+        prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
     }
 }
 
@@ -68,7 +72,7 @@ function App() {
                 setLoadingMessage("Initializing Biconomy ...");
                 biconomy = new Biconomy(kovanProvider, {
                     walletProvider: window.ethereum,
-                    apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9",
+                    apiKey: config.apiKey.test,
                     debug: true
                 });
 

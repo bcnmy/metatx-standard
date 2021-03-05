@@ -10,6 +10,8 @@ import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import Web3 from "web3";
+//web3 has some issue regarding uint256 to bytes32
+import { ethers } from "ethers";
 import {Biconomy} from "@biconomy/mexa";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
@@ -18,16 +20,20 @@ import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 let config = {
     contract: {
-        address: "0xE17e55652aA76C9198dE0E22c0b25f98245532eC",
-        abi: [{ "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "userAddress", "type": "address" }, { "indexed": false, "internalType": "addresspayable", "name": "relayerAddress", "type": "address" }, { "indexed": false, "internalType": "bytes", "name": "functionSignature", "type": "bytes" }], "name": "MetaTransactionExecuted", "type": "event" }, { "constant": false, "inputs": [{ "internalType": "address", "name": "userAddress", "type": "address" }, { "internalType": "bytes", "name": "functionSignature", "type": "bytes" }, { "internalType": "bytes32", "name": "sigR", "type": "bytes32" }, { "internalType": "bytes32", "name": "sigS", "type": "bytes32" }, { "internalType": "uint8", "name": "sigV", "type": "uint8" }], "name": "executeMetaTransaction", "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }], "payable": true, "stateMutability": "payable", "type": "function" }, { "constant": true, "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "getNonce", "outputs": [{ "internalType": "uint256", "name": "nonce", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "payable": false, "stateMutability": "view", "type": "function" }]
+        address: "0x853bfD0160d67DF13a9F70409f9038f6473585Bd",
+        abi: [{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"addresspayable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"}]
+    },
+    apiKey: {
+        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
+        prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
     }
 }
 
 const domainType = [
     { name: "name", type: "string" },
     { name: "version", type: "string" },
-    { name: "salt", type: "uint256" },
-    { name: "verifyingContract", type: "address" }
+    { name: "verifyingContract", type: "address" },
+    { name: "salt", type: "bytes32" },
 ];
 
 const metaTransactionType = [
@@ -36,13 +42,16 @@ const metaTransactionType = [
     { name: "functionSignature", type: "bytes" }
 ];
 
+
+
+
+
 let domainData = {
     name: "TestContract",
     version: "1",
     verifyingContract: config.contract.address,
-    salt: 42
+    salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(42)).toHexString(), 32)
 };
-
 let web3, walletWeb3;
 let contract;
 
@@ -86,7 +95,7 @@ function App() {
                 await provider.enable();
                 let kovanProvider = new Web3.providers.HttpProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
                 setLoadingMessage("Initializing Biconomy ...");
-                const biconomy = new Biconomy(kovanProvider, { apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", debug: true });
+                const biconomy = new Biconomy(kovanProvider, { apiKey: config.apiKey.test, debug: true });
 
                 // This web3 instance is used to read normally and write to contract via meta transactions.
                 web3 = new Web3(biconomy);

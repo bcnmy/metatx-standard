@@ -20,16 +20,24 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0xE17e55652aA76C9198dE0E22c0b25f98245532eC",
-        abi: [{ "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "userAddress", "type": "address" }, { "indexed": false, "internalType": "addresspayable", "name": "relayerAddress", "type": "address" }, { "indexed": false, "internalType": "bytes", "name": "functionSignature", "type": "bytes" }], "name": "MetaTransactionExecuted", "type": "event" }, { "constant": false, "inputs": [{ "internalType": "address", "name": "userAddress", "type": "address" }, { "internalType": "bytes", "name": "functionSignature", "type": "bytes" }, { "internalType": "bytes32", "name": "sigR", "type": "bytes32" }, { "internalType": "bytes32", "name": "sigS", "type": "bytes32" }, { "internalType": "uint8", "name": "sigV", "type": "uint8" }], "name": "executeMetaTransaction", "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }], "payable": true, "stateMutability": "payable", "type": "function" }, { "constant": true, "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "getNonce", "outputs": [{ "internalType": "uint256", "name": "nonce", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "payable": false, "stateMutability": "view", "type": "function" }]
+        address: "0x853bfD0160d67DF13a9F70409f9038f6473585Bd",
+        abi: [{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"addresspayable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"}]
+    },
+    apiKey: {
+        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
+        prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
+    },
+    api: {
+        test: "https://test-api.biconomy.io",
+        prod: "https://api.biconomy.io"
     }
 }
 
 const domainType = [
     { name: "name", type: "string" },
     { name: "version", type: "string" },
-    { name: "salt", type: "uint256" },
-    { name: "verifyingContract", type: "address" }
+    { name: "verifyingContract", type: "address" },
+    { name: "salt", type: "bytes32" },
 ];
 
 const metaTransactionType = [
@@ -42,7 +50,7 @@ let domainData = {
     name: "TestContract",
     version: "1",
     verifyingContract: config.contract.address,
-    salt: "42"
+    salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(42)).toHexString(), 32)
 };
 
 let ethersProvider,walletProvider, walletSigner;
@@ -100,7 +108,7 @@ function App() {
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
                 biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77"),
-                    { apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", debug: true });
+                    { apiKey: config.apiKey.test, debug: true });
 
                 /*
                   This provider is linked to your wallet.
@@ -298,15 +306,16 @@ function App() {
     const sendTransaction = async (userAddress, functionData, r, s, v) => {
         if (ethersProvider && contract) {
             try {
-                fetch(`https://api.biconomy.io/api/v2/meta-tx/native`, {
+                fetch(`${config.api.test}/api/v2/meta-tx/native`, {
                     method: "POST",
                     headers: {
-                      "x-api-key" : "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9",
+                      "x-api-key" : config.apiKey.test,
                       'Content-Type': 'application/json;charset=utf-8'
                     },
                     body: JSON.stringify({
                       "to": config.contract.address,
-                      "apiId": "f93b5089-574e-47b7-92a1-2a9fff66215a",
+                      "apiId": "ab6a62bf-c58f-4040-9084-0fad85f3345a",
+                    //"apiId": "f93b5089-574e-47b7-92a1-2a9fff66215a",
                       "params": [userAddress, functionData, r, s, v],
                       "from": userAddress
                     })

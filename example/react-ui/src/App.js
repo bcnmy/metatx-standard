@@ -17,48 +17,6 @@ let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 
 
-const domainType = [
-  {
-    name: "name",
-    type: "string",
-  },
-  {
-    name: "version",
-    type: "string",
-  },
-  {
-    name: "chainId",
-    type: "uint256",
-  },
-  {
-    name: "verifyingContract",
-    type: "address",
-  },
-];
-
-const metaTransactionType = [
-  {
-    name: "nonce",
-    type: "uint256",
-  },
-  {
-    name: "from",
-    type: "address",
-  },
-  {
-    name: "functionSignature",
-    type: "bytes",
-  },
-];
-
-
-let domainData = {
-  name: "TestContract",
-  version: "1",
-  chainId: 42,
-  verifyingContract: config.contract.address,
-};
-
 let web3;
 let contract;
 let biconomy;

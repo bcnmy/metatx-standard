@@ -154,7 +154,7 @@ function App() {
         setNewQuote(event.target.value);
     };
 
-    const onSubmitWithEIP712Sign = async () => {
+    const onSubmitWithEIP712Sign = async (tokenAddress) => {
       if (newQuote != "" && contract) {
         setTransactionHash("");
         if (metaTxEnabled) {
@@ -442,7 +442,7 @@ function App() {
                             onChange={onQuoteChange}
                             value={newQuote}
                         />
-                        <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
+                        <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign(config.usdc.address)} style={{ marginLeft: "10px" }}>
                             Submit EIP712
             </Button>
 

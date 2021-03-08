@@ -494,7 +494,7 @@ function App() {
               <Typography>
                 Check your transaction hash
                 <Link
-                  href={`https://mumbai-explorer.matic.today/tx/${transactionHash}`}
+                  href={`https://kovan.etherscan.io/tx/${transactionHash}`}
                   target="_blank"
                   className={classes.link}
                 >

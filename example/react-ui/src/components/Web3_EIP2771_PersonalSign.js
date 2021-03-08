@@ -280,7 +280,7 @@ function App() {
                 {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
                     <Typography>
                         Check your transaction hash
-            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}`} target="_blank"
+            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
                             className={classes.link}>
                             here
             </Link>

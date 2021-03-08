@@ -167,7 +167,7 @@ function App() {
                     "from": userAddress,
                     "to": config.contract.address,
                     "value": "0x0",
-                    "gas": "100000",
+                    "gas": "500000",
                     "data": executeMetaTransactionData
                 };
                 const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
@@ -389,7 +389,7 @@ function App() {
                 {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
                     <Typography>
                         Check your transaction hash
-            <Link href={`https://mumbai-explorer.matic.today/tx/${transactionHash}`} target="_blank"
+            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
                             className={classes.link}>
                             here
             </Link>

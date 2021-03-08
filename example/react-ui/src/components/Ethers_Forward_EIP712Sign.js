@@ -29,8 +29,28 @@ let config = {
     }
 }
 
-let walletProvider, walletSigner;
+config.erc20ForwarderAddress = "0x9A60349561E0489faB15A6cc5ad9F75061db0F52";
+config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
+config.usdtAddress = "0x8e1084f3599ba90991C3b2f9e25D920738C1496D";
+
+config.usdc = {
+    address: "0x6043fD7126e4229d6FcaC388c9E1C8d333CCb8fA",
+    abi: [{"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"symbol","type":"string"},{"internalType":"uint256","name":"initialBalance","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"authorizer","type":"address"},{"indexed":true,"internalType":"bytes32","name":"nonce","type":"bytes32"}],"name":"AuthorizationCanceled","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"authorizer","type":"address"},{"indexed":true,"internalType":"bytes32","name":"nonce","type":"bytes32"}],"name":"AuthorizationUsed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_account","type":"address"}],"name":"Blacklisted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newBlacklister","type":"address"}],"name":"BlacklisterChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"burner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Burn","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newMasterMinter","type":"address"}],"name":"MasterMinterChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"minter","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"minter","type":"address"},{"indexed":false,"internalType":"uint256","name":"minterAllowedAmount","type":"uint256"}],"name":"MinterConfigured","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldMinter","type":"address"}],"name":"MinterRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":false,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newAddress","type":"address"}],"name":"PauserChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newRescuer","type":"address"}],"name":"RescuerChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_account","type":"address"}],"name":"UnBlacklisted","type":"event"},{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"},{"inputs":[],"name":"APPROVE_WITH_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"CANCEL_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"DECREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"DOMAIN_SEPARATOR","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"INCREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"PERMIT_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"TRANSFER_WITH_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"validAfter","type":"uint256"},{"internalType":"uint256","name":"validBefore","type":"uint256"},{"internalType":"bytes32","name":"nonce","type":"bytes32"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"approveWithAuthorization","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"authorizer","type":"address"},{"internalType":"bytes32","name":"nonce","type":"bytes32"}],"name":"authorizationState","outputs":[{"internalType":"enumGasAbstraction.AuthorizationState","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_account","type":"address"}],"name":"blacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"blacklister","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"burn","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"authorizer","type":"address"},{"internalType":"bytes32","name":"nonce","type":"bytes32"},
+  {"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"cancelAuthorization","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"minter","type":"address"},{"internalType":"uint256","name":"minterAllowedAmount","type":"uint256"}],"name":"configureMinter","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"currency","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"decrement","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"decrement","type":"uint256"},{"internalType":"uint256","name":"validAfter","type":"uint256"},{"internalType":"uint256","name":"validBefore","type":"uint256"},{"internalType":"bytes32","name":"nonce","type":"bytes32"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"decreaseAllowanceWithAuthorization","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"increment","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"increment","type":"uint256"},{"internalType":"uint256","name":"validAfter","type":"uint256"},{"internalType":"uint256","name":"validBefore","type":"uint256"},{"internalType":"bytes32","name":"nonce","type":"bytes32"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"increaseAllowanceWithAuthorization","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"tokenName","type":"string"},{"internalType":"string","name":"tokenSymbol","type":"string"},{"internalType":"string","name":"tokenCurrency","type":"string"},{"internalType":"uint8","name":"tokenDecimals","type":"uint8"},{"internalType":"address","name":"newMasterMinter","type":"address"},{"internalType":"address","name":"newPauser","type":"address"},{"internalType":"address","name":"newBlacklister","type":"address"},{"internalType":"address","name":"newOwner","type":"address"}],"name":"initialize","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"newName","type":"string"}],"name":"initializeV2","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_account","type":"address"}],"name":"isBlacklisted","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isMinter","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"masterMinter","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"minter","type":"address"}],"name":"minterAllowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"nonces","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"pause","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"pauser","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"deadline","type":"uint256"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"permit","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"minter","type":"address"}],"name":"removeMinter","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"contractIERC20","name":"tokenContract","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"rescueERC20","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"rescuer","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"validAfter","type":"uint256"},{"internalType":"uint256","name":"validBefore","type":"uint256"},{"internalType":"bytes32","name":"nonce","type":"bytes32"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"transferWithAuthorization","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_account","type":"address"}],"name":"unBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"unpause","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_newBlacklister","type":"address"}],"name":"updateBlacklister","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_newMasterMinter","type":"address"}],"name":"updateMasterMinter","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_newPauser","type":"address"}],"name":"updatePauser","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newRescuer","type":"address"}],"name":"updateRescuer","outputs":[],"stateMutability":"nonpayable","type":"function"}] 
+  };
+
+let usdcDomainData = {
+    name : "USDC Coin",
+    version : "1",
+    chainId : 42,
+    verifyingContract : config.usdc.address
+  };
+
+let walletProvider, walletSigner, ethersProvider;
 let contract, contractInterface;
+let ercForwarderClient, permitClient;
+let usdcToken, daiToken;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -75,12 +95,13 @@ function App() {
                 window.ethereum.isMetaMask
             ) {
                 // Ethereum user detected. You can now use the provider.
+                debugger;
                 const provider = window["ethereum"];
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
                 let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
-                biconomy = new Biconomy(jsonRpcProvider, {
+                biconomy = new Biconomy(provider, {
                     walletProvider: window.ethereum,
                     apiKey: config.apiKey.test,
                     debug: true
@@ -90,6 +111,7 @@ function App() {
                   This provider is linked to your wallet.
                   If needed, substitute your wallet solution in place of window.ethereum 
                 */
+                ethersProvider = new ethers.providers.Web3Provider(biconomy);
                 walletProvider = new ethers.providers.Web3Provider(window.ethereum);
                 walletSigner = walletProvider.getSigner();
 
@@ -104,6 +126,15 @@ function App() {
                         config.contract.abi,
                         biconomy.getSignerByAddress(userAddress)
                     );
+
+                    usdcToken = new ethers.Contract(
+                        config.usdc.address,
+                        config.usdc.abi,
+                        biconomy.getSignerByAddress(userAddress)
+                      );
+          
+                    ercForwarderClient = biconomy.erc20ForwarderClient;
+                    permitClient = biconomy.permitClient;
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();
@@ -124,26 +155,101 @@ function App() {
     };
 
     const onSubmitWithEIP712Sign = async () => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            if (metaTxEnabled) {
-                showInfoMessage(`Getting user signature`);
-                sendTransaction(userAddress, newQuote);
-            } else {
-                console.log("Sending normal transaction");
-                let tx = await contract.setQuote(newQuote);
-                console.log("Transaction hash : ", tx.hash);
-                showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-                let confirmation = await tx.wait();
-                console.log(confirmation);
-                setTransactionHash(tx.hash);
+      if (newQuote != "" && contract) {
+        setTransactionHash("");
+        if (metaTxEnabled) {
+          let userAddress = selectedAddress;
 
-                showSuccessMessage("Transaction confirmed on chain");
-                getQuoteFromNetwork();
-            }
+          debugger;
+          //If your provider is not a signer with accounts then you must pass userAddress in the permti options
+          const usdcPermitOptions = {
+            domainData: usdcDomainData,
+            value: "100000000000000000000",
+            deadline: Math.floor(Date.now() / 1000 + 3600),
+          };
+
+          const daiPermitOptions = {
+            // spender: config.erc20ForwarderAddress,
+            expiry: Math.floor(Date.now() / 1000 + 3600),
+            allowed: true,
+          };
+
+          console.log("getting permit to spend usdc tokens");
+          showInfoMessage(
+            `Getting signature and permit transaction to spend usdc token by Fee proxy contract`
+          );
+
+          //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
+          //Users need to pass provider object from window, spender address (erc20 forwarder OR the fee proxy address) and DAI's address for your network
+
+          //OR use biconomy's permitclient member as below!
+          // If you'd like to see demo for spending DAI please check the branch erc20-forwarder-demo
+          // If you'd like to see demo for spending USDT please check the branch erc20-metatx-api
+
+          // This step only needs to be done once and is valid during the given deadline
+          let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
+          await permitTx.wait(1);
+
+          console.log("Sending meta transaction");
+          showInfoMessage("Building transaction to forward");
+          // txGas should be calculated and passed here or calculate within the method
+
+          let { data } = await contract.populateTransaction.setQuote(newQuote);
+          let gasPrice = await ethersProvider.getGasPrice();
+          let gasLimit = await ethersProvider.estimateGas({
+            to: config.contract.address,
+            from: userAddress,
+            data: data,
+          });
+          console.log(gasLimit.toString());
+          console.log(gasPrice.toString());
+          console.log(data);
+
+          const builtTx = await ercForwarderClient.buildTx({
+            to: config.contract.address,
+            token: config.usdc.address,
+            txGas: Number(gasLimit),
+            data,
+          });
+          const tx = builtTx.request;
+          const fee = builtTx.cost;
+          console.log(tx);
+          console.log(fee);
+          showInfoMessage(`Signing message for meta transaction`);
+
+          //signature of this method is sendTxEIP712({req, signature = null, userAddress})
+          //signature param is optional. check network agnostics section for more details about this
+          //userAddress is must when your provider does not have a signer with accounts
+          let transaction = await ercForwarderClient.sendTxEIP712({ req: tx });
+          //returns an object containing code, log, message, txHash
+          console.log(transaction);
+
+          if (transaction && transaction.code == 200 && transaction.txHash) {
+            //event emitter methods
+            ethersProvider.once(transaction.txHash, (result) => {
+              // Emitted when the transaction has been mined
+              console.log(result);
+              setTransactionHash(transaction.txHash);
+              getQuoteFromNetwork();
+            });
+          } else {
+            showErrorMessage(transaction.message);
+          }
         } else {
-            showErrorMessage("Please enter the quote");
+          console.log("Sending normal transaction");
+          let tx = await contract.setQuote(newQuote);
+          console.log("Transaction hash : ", tx.hash);
+          showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+          let confirmation = await tx.wait();
+          console.log(confirmation);
+          setTransactionHash(tx.hash);
+
+          showSuccessMessage("Transaction confirmed on chain");
+          getQuoteFromNetwork();
         }
+      } else {
+        showErrorMessage("Please enter the quote");
+      }
     };
 
     const onSubmitWithPrivateKey = async () => {
@@ -151,43 +257,87 @@ function App() {
             setTransactionHash("");
             try {
                 if (metaTxEnabled) {
-                    showInfoMessage(`Getting user signature`);
-                    let privateKey = "bf096e6fb9754860c4c99eb336c0579db994a3ef7fb3f7db869ad2f1972fc755";
-                    let userAddress = "0xf7AB2d00f379167c339691c23B23111eB598B3fb";
-                    let userSigner = new ethers.Wallet(privateKey);
-                    let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
+                  const usdcPermitOptions = {
+                    domainData: usdcDomainData,
+                    value: "100000000000000000000",
+                    deadline: Math.floor(Date.now() / 1000 + 3600),
+                  };
 
-                    let rawTx = {
-                        to: config.contract.address,
-                        data: functionSignature,
-                        from: userAddress
-                    };
+                  let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
+                  await permitTx.wait(1);
+                  let userAddress = selectedAddress;
 
-                    let signedTx = await userSigner.signTransaction(rawTx);
-                    // should get user message to sign for EIP712 or personal signature types
-                    const forwardData = await biconomy.getForwardRequestAndMessageToSign(signedTx);
-                    console.log(forwardData);
+                  //sendSignedRawTransaction(userAddress, newQuote);
+                  let privateKey =
+                    "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44";
+                  let wallet = new ethers.Wallet(privateKey);
+                  let functionSignature = contractInterface.encodeFunctionData(
+                    "setQuote",
+                    [newQuote]
+                  );
 
-                    // optionally one can sign using sigUtil
-                    const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: forwardData.eip712Format }, 'V3');
+                  let gasPrice = await ethersProvider.getGasPrice();
+                  let gasLimit = await ethersProvider.estimateGas({
+                    to: config.contract.address,
+                    from: userAddress,
+                    data: functionSignature,
+                  });
+                  console.log(gasLimit.toString());
+                  console.log(gasPrice.toString());
+                  console.log(functionSignature);
 
-                    let data = {
-                        signature: signature,
-                        forwardRequest: forwardData.request,
-                        rawTransaction: signedTx,
-                        signatureType: biconomy.EIP712_SIGN,
-                    };
+                  let rawTx, signedTx;
 
-                    let provider = biconomy.getEthersProvider();
-                    // send signed transaction with ethers
-                    // promise resolves to transaction hash                  
-                    let txHash = await provider.send("eth_sendRawTransaction", [data]);
-                    showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
-                    let receipt = await provider.waitForTransaction(txHash);
-                    setTransactionHash(txHash);
-                    showSuccessMessage("Transaction confirmed on chain");
+                  rawTx = {
+                    to: config.contract.address,
+                    data: functionSignature,
+                    from: userAddress,
+                    value: "0x0",
+                    //gasLimit: web3.utils.toHex(gasLimit),
+                  };
+
+                  signedTx = await wallet.signTransaction(rawTx);
+                  console.log(signedTx);
+
+                  // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
+                  const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(
+                    signedTx,
+                    config.usdcAddress
+                  );
+
+                  console.log(`${forwardRequestData.cost} amount of tokens will be charged`);
+                  const signature = sigUtil.signTypedMessage(
+                    new Buffer.from(privateKey, "hex"),
+                    {
+                      data: forwardRequestData.eip712Format, // option to get personalFormat also
+                    },
+                    "V4"
+                  );
+
+                  let data = {
+                    signature: signature,
+                    forwardRequest: forwardRequestData.request,
+                    rawTransaction: signedTx,
+                    signatureType: biconomy.EIP712_SIGN,
+                  };
+
+                  let tx = await ethersProvider.send("eth_sendRawTransaction", [
+                    data,
+                  ]);
+
+                  console.log("Transaction hash : ", tx);
+                  showInfoMessage(
+                    `Transaction sent by relayer with hash ${tx}`
+                  );
+
+                  //event emitter methods
+                  ethersProvider.once(tx, (transaction) => {
+                    // Emitted when the transaction has been mined
+                    console.log(transaction);
+                    setTransactionHash(tx);
                     getQuoteFromNetwork();
-                    console.log(receipt);
+                  });
+                  
                 } else {
                     console.log("Sending normal transaction");
                     let tx = await contract.setQuote(newQuote);

@@ -21,6 +21,7 @@ import Web3_Custom_PersonalSign_API from './components/Web3_Custom_PersonalSign_
 import Ethers_Custom_PersonalSign_API from './components/Ethers_Custom_PersonalSign_API';
 import Web3_EIP2771_API from './components/Web3_EIP2771_API.js';
 import Ethers_EIP2771_API from './components/Ethers_EIP2771_API';
+import Ethers_Forward_PersonalSign from './components/Ethers_Forward_PersonalSign';
 
 
 import "./App.css";
@@ -112,6 +113,7 @@ function App() {
           <Tab label="Ethers + Custom + Personal Sign + API" {...a11yProps(12)} />
           <Tab label="Web3 + EIP2771 + API" {...a11yProps(13)} />
           <Tab label="Ethers + EIP2771 + API" {...a11yProps(14)} />
+          <Tab label="Ethers + Forward + Personal Sign" {...a11yProps(15)} />
           {/*To Be Added
              Ethers + Forward + Personal Sign
              Web3 + Forward + EIP712 Sign
@@ -164,6 +166,9 @@ function App() {
         </TabPanel>
         <TabPanel value={value} index={14}>
           <Ethers_EIP2771_API />
+        </TabPanel>
+        <TabPanel value={value} index={15}>
+          <Ethers_Forward_PersonalSign />
         </TabPanel>
 
       </div>

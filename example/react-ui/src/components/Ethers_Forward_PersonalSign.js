@@ -154,7 +154,7 @@ function App() {
         setNewQuote(event.target.value);
     };
 
-    const onSubmitWithEIP712Sign = async () => {
+    const onSubmitWithPersonalSign = async () => {
       if (newQuote != "" && contract) {
         setTransactionHash("");
         if (metaTxEnabled) {
@@ -181,8 +181,6 @@ function App() {
 
           //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
           //Users need to pass provider object from window, spender address (erc20 forwarder OR the fee proxy address) and DAI's address for your network
-
-          //OR use biconomy's permitclient member as below!  
 
           // This step only needs to be done once and is valid during the given deadline
           let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
@@ -218,7 +216,7 @@ function App() {
           //signature of this method is sendTxEIP712({req, signature = null, userAddress})
           //signature param is optional. check network agnostics section for more details about this
           //userAddress is must when your provider does not have a signer with accounts
-          let transaction = await ercForwarderClient.sendTxEIP712({ req: tx });
+          let transaction = await ercForwarderClient.sendTxPersonalSign({ req: tx });
           //returns an object containing code, log, message, txHash
           console.log(transaction);
 
@@ -304,19 +302,13 @@ function App() {
                   );
 
                   console.log(`${forwardRequestData.cost} amount of tokens will be charged`);
-                  const signature = sigUtil.signTypedMessage(
-                    new Buffer.from(privateKey, "hex"),
-                    {
-                      data: forwardRequestData.eip712Format, // option to get personalFormat also
-                    },
-                    "V4"
-                  );
+                  const signature = await wallet.signMessage(forwardRequestData.personalSignatureFormat);
 
                   let data = {
                     signature: signature,
                     forwardRequest: forwardRequestData.request,
                     rawTransaction: signedTx,
-                    signatureType: biconomy.EIP712_SIGN,
+                    signatureType: biconomy.PERSONAL_SIGN,
                   };
 
                   let tx = await ethersProvider.send("eth_sendRawTransaction", [
@@ -442,8 +434,8 @@ function App() {
                             onChange={onQuoteChange}
                             value={newQuote}
                         />
-                        <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
-                            Submit EIP712
+                        <Button variant="contained" color="primary" onClick={onSubmitWithPersonalSign} style={{ marginLeft: "10px" }}>
+                            Submit Personal Sign
             </Button>
 
                         <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>

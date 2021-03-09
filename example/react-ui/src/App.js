@@ -15,23 +15,26 @@ import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 const { config } = require("./config");
 
-const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" }
-];
+const domainType = [{
+  name: "name",
+  type: "string"
+}, {
+  name: "version",
+  type: "string"
+}, {
+  name: "verifyingContract",
+  type: "address"
+}, {
+  name: "salt",
+  type: "bytes32"
+}];
+const metaTransactionType = [{ name: "nonce", type: "uint256" },{ name: "from", type: "address" },{ name: "functionSignature", type: "bytes" }];
 
-const metaTransactionType = [
-  { name: "nonce", type: "uint256" },
-  { name: "from", type: "address" },
-  { name: "functionSignature", type: "bytes" }
-];
-
-let domainData = {
-  name: "TestContract",
+const domainData = {
+  name: "<>", 
   version: "1",
-  verifyingContract: config.contract.address
+  verifyingContract: "<>",
+  salt: '0x' + (80001).toString(16).padStart(64, '0')
 };
 
 let web3;
@@ -69,23 +72,16 @@ function App() {
           await provider.enable();
           if (provider.networkVersion == "80001") {
             domainData.chainId = 80001;
-          const biconomy = new Biconomy(provider,{apiKey: "emxBQWVss.dba9922c-1cd9-49d3-bfab-90d9dba77c53", debug: true});
-          web3 = new Web3(biconomy);
+          web3 = new Web3(provider);
 
-          biconomy.onEvent(biconomy.READY, () => {
-            // Initialize your dapp here like getting user accounts etc
             contract = new web3.eth.Contract(
               config.contract.abi,
               config.contract.address
             );
             setSelectedAddress(provider.selectedAddress);
-            getQuoteFromNetwork();
             provider.on("accountsChanged", function(accounts) {
               setSelectedAddress(accounts[0]);
             });
-          }).onEvent(biconomy.ERROR, (error, message) => {
-            // Handle error while initializing mexa
-          });
         } else {
            showErrorMessage("Please change the network in metamask to Mumbai Testnet");
         }
@@ -100,70 +96,6 @@ function App() {
     setNewQuote(event.target.value);
   };
 
-  const onSubmitWithPrivateKey = async () => {
-    if (newQuote != "" && contract) {
-      setTransactionHash("");
-      if (metaTxEnabled) {
-        console.log("Sending meta transaction");
-        let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
-        let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-        let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        let message = {};
-        message.nonce = parseInt(nonce);
-        message.from = userAddress;
-        message.functionSignature = functionSignature;
-
-        const dataToSign = {
-          types: {
-            EIP712Domain: domainType,
-            MetaTransaction: metaTransactionType
-          },
-          domain: domainData,
-          primaryType: "MetaTransaction",
-          message: message
-        };
-
-        const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), {data: dataToSign}, 'V4');
-        let { r, s, v } = getSignatureParameters(signature);
-        let executeMetaTransactionData = contract.methods.executeMetaTransaction(userAddress, functionSignature, r, s, v).encodeABI();
-        let txParams = {
-          "from": userAddress,
-          "to": config.contract.address,
-          "value": "0x0",
-          "gas": "100000",
-          "data": executeMetaTransactionData
-        };
-        const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
-        let receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction, (error, txHash) => {
-          if (error) {
-              return console.error(error);
-          }
-          console.log("Transaction hash is ", txHash);
-          showInfoMessage(`Transaction sent to blockchain with hash ${txHash}`);
-        });
-        setTransactionHash(receipt.transactionHash);
-        showSuccessMessage("Transaction confirmed");
-        getQuoteFromNetwork();
-      } else {
-        console.log("Sending normal transaction");
-        contract.methods
-          .setQuote(newQuote)
-          .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
-            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-          })
-          .once("confirmation", function(confirmationNumber, receipt) {
-            setTransactionHash(receipt.transactionHash);
-            showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
-          });
-      }
-    } else {
-      showErrorMessage("Please enter the quote");
-    }
-  }
-
   const onSubmit = async event => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
@@ -171,7 +103,7 @@ function App() {
         console.log("Sending meta transaction");
         let userAddress = selectedAddress;
         let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+        let functionSignature = contract.methods.approve(userAddress,"10000000000000000000").encodeABI();
         let message = {};
         message.nonce = parseInt(nonce);
         message.from = userAddress;
@@ -211,7 +143,7 @@ function App() {
                 sig: response.result
               });
               console.log(`Recovered ${recovered}`);
-              sendSignedTransaction(userAddress, functionSignature, r, s, v);
+              sendTransaction(userAddress, functionSignature, r, s, v);
             }
           }
         );
@@ -226,7 +158,6 @@ function App() {
           .once("confirmation", function(confirmationNumber, receipt) {
             setTransactionHash(receipt.transactionHash);
             showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
           });
       }
     } else {
@@ -252,31 +183,6 @@ function App() {
     };
   };
 
-  const getQuoteFromNetwork = () => {
-    if (web3 && contract) {
-      contract.methods
-        .getQuote()
-        .call()
-        .then(function(result) {
-          console.log(result);
-          if (
-            result &&
-            result.currentQuote != undefined &&
-            result.currentOwner != undefined
-          ) {
-            if (result.currentQuote == "") {
-              showErrorMessage("No quotes set on blockchain yet");
-            } else {
-              setQuote(result.currentQuote);
-              setOwner(result.currentOwner);
-            }
-          } else {
-            showErrorMessage("Not able to get quote information from Network");
-          }
-        });
-    }
-  };
-
   const showErrorMessage = message => {
     NotificationManager.error(message, "Error", 5000);
   };
@@ -289,37 +195,58 @@ function App() {
     NotificationManager.info(message, "Info", 3000);
   };
 
-  const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
+  const sendTransaction = async (userAddress, functionData, r, s, v) => {
     if (web3 && contract) {
-      try {
-        let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .estimateGas({ from: userAddress });
-        let gasPrice = await web3.eth.getGasPrice();
-        console.log(gasLimit);
-        console.log(gasPrice);
-        let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .send({
-            from: userAddress,
-            gasPrice:gasPrice,
-            gasLimit:gasLimit
-          });
-
-        tx.on("transactionHash", function(hash) {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-        }).once("confirmation", function(confirmationNumber, receipt) {
-          console.log(receipt);
-          setTransactionHash(receipt.transactionHash);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
-        });
-      } catch (error) {
-        console.log(error);
-      }
+        try {
+            fetch(`https://api.biconomy.io/api/v2/meta-tx/native`, {
+                method: "POST",
+                headers: {
+                  "x-api-key" : "qmmBqJJvr.e4e26f4d-1fa1-48c5-b38b-edb9bfa2d78e",
+                  'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({
+                  "to": config.contract.address,
+                  "apiId": "822a7b42-89a5-4bc8-96c9-63d15e6d3ef2",
+                  "params": [userAddress, functionData, r, s, v],
+                  "from": userAddress
+                })
+              })
+              .then(response=>response.json())
+              .then(async function(result) {
+                console.log(result);
+                showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
+      
+                let receipt = await getTransactionReceiptMined(result.txHash, 2000);
+                setTransactionHash(result.txHash);
+                showSuccessMessage("Transaction confirmed on chain");
+                // getQuoteFromNetwork();
+              }).catch(function(error) {
+                  console.log(error)
+                });
+        } catch (error) {
+            console.log(error);
+        }
+    }
+};
+const getTransactionReceiptMined = (txHash, interval) => {
+  const self = this;
+  const transactionReceiptAsync = async function(resolve, reject) {
+    var receipt = await web3.eth.getTransactionReceipt(txHash);
+    if (receipt == null) {
+        setTimeout(
+            () => transactionReceiptAsync(resolve, reject),
+            interval ? interval : 500);
+    } else {
+        resolve(receipt);
     }
   };
+
+  if (typeof txHash === "string") {
+      return new Promise(transactionReceiptAsync);
+  } else {
+      throw new Error("Invalid Type: " + txHash);
+  }
+};
 
   return (
     <div className="App">
@@ -354,18 +281,13 @@ function App() {
       <section>
         <div className="submit-container">
           <div className="submit-row">
-            <input
-              type="text"
-              placeholder="Enter your quote"
-              onChange={onQuoteChange}
-              value={newQuote}
-            />
+            
             <Button variant="contained" color="primary" onClick={onSubmit}>
               Submit
             </Button>
-            <Button variant="contained" color="primary" onClick={onSubmitWithPrivateKey} style={{marginLeft: "10px"}}>
+            {/* <Button variant="contained" color="primary" onClick={onSubmitWithPrivateKey} style={{marginLeft: "10px"}}>
               Submit (using private key)
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>

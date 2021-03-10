@@ -11,7 +11,6 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import Web3 from "web3";
 //web3 has some issue regarding uint256 to bytes32
-import { ethers } from "ethers";
 import {Biconomy} from "@biconomy/mexa";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
@@ -42,15 +41,11 @@ const metaTransactionType = [
     { name: "functionSignature", type: "bytes" }
 ];
 
-
-
-
-
 let domainData = {
     name: "TestContract",
     version: "1",
     verifyingContract: config.contract.address,
-    salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(42)).toHexString(), 32)
+    salt: '0x' + (42).toString(16).padStart(64, '0')
 };
 let web3, walletWeb3;
 let contract;
@@ -95,7 +90,7 @@ function App() {
                 await provider.enable();
                 let kovanProvider = new Web3.providers.HttpProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
                 setLoadingMessage("Initializing Biconomy ...");
-                const biconomy = new Biconomy(kovanProvider, { apiKey: config.apiKey.test, debug: true });
+                const biconomy = new Biconomy(kovanProvider, { apiKey: config.apiKey.prod, debug: true });
 
                 // This web3 instance is used to read normally and write to contract via meta transactions.
                 web3 = new Web3(biconomy);

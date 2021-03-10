@@ -111,7 +111,7 @@ function App() {
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
                 biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77"),
-                    { apiKey: config.apiKey.test, debug: true });
+                    { apiKey: config.apiKey.prod, debug: true });
 
                 /*
                   This provider is linked to your wallet.
@@ -301,7 +301,7 @@ function App() {
                 fetch(`${config.api.test}/api/v2/meta-tx/native`, {
                     method: "POST",
                     headers: {
-                      "x-api-key" : config.apiKey.test,
+                      "x-api-key" : config.apiKey.prod,
                       'Content-Type': 'application/json;charset=utf-8'
                     },
                     body: JSON.stringify({

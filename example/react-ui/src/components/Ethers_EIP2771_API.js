@@ -95,7 +95,7 @@ function App() {
                 let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
                 biconomy = new Biconomy(jsonRpcProvider, {
                     walletProvider: window.ethereum,
-                    apiKey: config.apiKey.test,
+                    apiKey: config.apiKey.prod,
                     debug: true
                 });
 
@@ -404,7 +404,7 @@ function App() {
             fetch(`${config.api.test}/api/v2/meta-tx/native`, {
               method: "POST",
               headers: {
-                "x-api-key": config.apiKey.test,
+                "x-api-key": config.apiKey.prod,
                 "Content-Type": "application/json;charset=utf-8",
               },
               body: JSON.stringify({

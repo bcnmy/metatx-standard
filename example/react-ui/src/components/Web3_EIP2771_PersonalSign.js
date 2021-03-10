@@ -74,7 +74,7 @@ function App() {
                 setLoadingMessage("Initializing Biconomy ...");
                 biconomy = new Biconomy(kovanProvider, {
                     walletProvider: window.ethereum,
-                    apiKey: config.apiKey.test,
+                    apiKey: config.apiKey.prod,
                     debug: true
                 });
 

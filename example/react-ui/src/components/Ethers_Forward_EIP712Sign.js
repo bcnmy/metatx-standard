@@ -9,7 +9,7 @@ import "react-notifications/lib/notifications.css";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import { ethers } from "ethers";
+import { ethers, providers } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -78,6 +78,7 @@ function App() {
     const [quote, setQuote] = useState("This is a default quote");
     const [owner, setOwner] = useState("Default Owner Address");
     const [newQuote, setNewQuote] = useState("");
+    const [newToken, setNewToken] = useState("");
     const [selectedAddress, setSelectedAddress] = useState("");
     const [metaTxEnabled] = useState(true);
     const [transactionHash, setTransactionHash] = useState("");
@@ -103,7 +104,7 @@ function App() {
                 let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
                 biconomy = new Biconomy(provider, {
                     walletProvider: window.ethereum,
-                    apiKey: config.apiKey.test,
+                    apiKey: config.apiKey.prod,
                     debug: true
                 });
 
@@ -154,19 +155,28 @@ function App() {
         setNewQuote(event.target.value);
     };
 
-    const onSubmitWithEIP712Sign = async (tokenAddress) => {
+    const onTokenChange = event => {
+      setNewToken(event.target.value);
+  };
+
+    const onSubmitWithEIP712Sign = async () => {
       if (newQuote != "" && contract) {
         setTransactionHash("");
         if (metaTxEnabled) {
           let userAddress = selectedAddress;
 
-          debugger;
+          console.log(usdcDomainData);
+
           //If your provider is not a signer with accounts then you must pass userAddress in the permit options
+
           const usdcPermitOptions = {
             domainData: usdcDomainData,
             value: "100000000000000000000",
-            deadline: Math.floor(Date.now() / 1000 + 3600),
+            userAddress: userAddress,
+            deadline: Number(Math.floor(Date.now() / 1000 + 3600)),
           };
+
+          console.log(usdcPermitOptions);
 
           const daiPermitOptions = {
             // spender: config.erc20ForwarderAddress,
@@ -442,7 +452,7 @@ function App() {
                             onChange={onQuoteChange}
                             value={newQuote}
                         />
-                        <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign(config.usdc.address)} style={{ marginLeft: "10px" }}>
+                        <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
                             Submit EIP712
             </Button>
 

@@ -103,7 +103,7 @@ function App() {
                 let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
                 biconomy = new Biconomy(provider, {
                     walletProvider: window.ethereum,
-                    apiKey: config.apiKey.test,
+                    apiKey: config.apiKey.prod,
                     debug: true
                 });
 
@@ -183,8 +183,8 @@ function App() {
           //Users need to pass provider object from window, spender address (erc20 forwarder OR the fee proxy address) and DAI's address for your network
 
           // This step only needs to be done once and is valid during the given deadline
-          let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
-          await permitTx.wait(1);
+          //let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
+          //await permitTx.wait(1);
 
           console.log("Sending meta transaction");
           showInfoMessage("Building transaction to forward");

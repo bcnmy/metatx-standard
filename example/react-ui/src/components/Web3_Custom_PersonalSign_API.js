@@ -34,26 +34,6 @@ let config = {
     }
 }
 
-const domainType = [
-    { name: "name", type: "string" },
-    { name: "version", type: "string" },
-    { name: "salt", type: "uint256" },
-    { name: "verifyingContract", type: "address" }
-];
-
-const metaTransactionType = [
-    { name: "nonce", type: "uint256" },
-    { name: "from", type: "address" },
-    { name: "functionSignature", type: "bytes" }
-];
-
-let domainData = {
-    name: "TestContract",
-    version: "1",
-    verifyingContract: config.contract.address,
-    salt: 42
-};
-
 let web3, walletWeb3;
 let contract;
 let salt = 42;
@@ -98,7 +78,7 @@ function App() {
                 await provider.enable();
                 let kovanProvider = new Web3.providers.HttpProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
                 setLoadingMessage("Initializing Biconomy ...");
-                const biconomy = new Biconomy(kovanProvider, { apiKey: config.apiKey.test, debug: true });
+                const biconomy = new Biconomy(kovanProvider, { apiKey: config.apiKey.prod, debug: true });
 
                 // This web3 instance is used to read normally and write to contract via meta transactions.
                 web3 = new Web3(biconomy);
@@ -305,7 +285,7 @@ function App() {
                 fetch(`${config.api.test}/api/v2/meta-tx/native`, {
                     method: "POST",
                     headers: {
-                      "x-api-key" : config.apiKey.test,
+                      "x-api-key" : config.apiKey.prod,
                       'Content-Type': 'application/json;charset=utf-8'
                     },
                     body: JSON.stringify({

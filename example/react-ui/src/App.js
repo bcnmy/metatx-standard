@@ -78,7 +78,7 @@ function App() {
         await provider.enable();
 
         biconomy = new Biconomy(provider, {
-            apiKey: "m60yDrUs7.5c3b23fa-0b93-46ac-86f9-79e998d8f361",
+            apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9",
             debug: true,
           });
 
@@ -236,7 +236,7 @@ function App() {
         
         //If your provider is not a signer with accounts then you must pass userAddress in the permti options
         const usdcPermitOptions = {
-          spender: "0x24751ABCefD939B0Cc22cBA7039fc0438c65C99c",
+          spender: config.erc20ForwarderAddress,
           domainData: usdcDomainData,
           value: "100000000000000000000", 
           deadline: Math.floor(Date.now() / 1000 + 3600),

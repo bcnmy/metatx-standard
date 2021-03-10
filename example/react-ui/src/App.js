@@ -77,7 +77,7 @@ function App() {
         // Ethereum user detected. You can now use the provider.
           provider = window["ethereum"];
           await provider.enable();
-          biconomy = new Biconomy(provider,{apiKey: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209", debug: true});
+          biconomy = new Biconomy(provider,{apiKey: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9", debug: true});
           web3 = new Web3(biconomy);
           ethersProvider = new ethers.providers.Web3Provider(biconomy);
           
@@ -213,8 +213,6 @@ function App() {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
-       
-          debugger;
           const daiPermitOptions = {
             spender: config.erc20ForwarderAddress,
             expiry: Math.floor(Date.now() / 1000 + 3600),
@@ -299,9 +297,6 @@ function App() {
         metaInfo.permitType = "DAI_Permit";
         metaInfo.permitData = permitOptions;
       
-       
-        debugger;
-  
         //signature of this method is sendTxEIP712({req, signature = null, userAddress, metaInfo})
         let transaction = await ercForwarderClient.permitAndSendTxEIP712({req:tx, metaInfo: metaInfo});
 

@@ -298,7 +298,7 @@ function App() {
     const sendTransaction = async (userAddress, functionData, r, s, v) => {
         if (ethersProvider && contract) {
             try {
-                fetch(`${config.api.test}/api/v2/meta-tx/native`, {
+                fetch(`${config.api.prod}/api/v2/meta-tx/native`, {
                     method: "POST",
                     headers: {
                       "x-api-key" : config.apiKey.prod,

@@ -416,7 +416,7 @@ function App() {
             params = [request, sig];
           }
           try {
-            fetch(`${config.api.test}/api/v2/meta-tx/native`, {
+            fetch(`${config.api.prod}/api/v2/meta-tx/native`, {
               method: "POST",
               headers: {
                 "x-api-key": config.apiKey.prod,

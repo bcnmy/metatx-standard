@@ -207,7 +207,8 @@ function App() {
       setNewToken(event.target.value);
   };
 
-    const onSubmitWithEIP712Sign = async () => {
+    //EIP712 only
+    const onSubmitWithUSDC = async () => {
       if (newQuote != "" && contract) {
         setTransactionHash("");
         if (metaTxEnabled) {
@@ -225,12 +226,6 @@ function App() {
           };
 
           console.log(usdcPermitOptions);
-
-          const daiPermitOptions = {
-            // spender: config.erc20ForwarderAddress,
-            expiry: Math.floor(Date.now() / 1000 + 3600),
-            allowed: true,
-          };
 
           console.log("getting permit to spend usdc tokens");
           showInfoMessage(
@@ -278,7 +273,7 @@ function App() {
           //userAddress is must when your provider does not have a signer with accounts
           let transaction = await ercForwarderClient.sendTxEIP712({ req: tx });
           //returns an object containing code, log, message, txHash
-          console.log(transaction);
+          console.log('here ' + transaction.txHash);
 
           if (transaction && transaction.code == 200 && transaction.txHash) {
             //event emitter methods
@@ -307,7 +302,185 @@ function App() {
         showErrorMessage("Please enter the quote");
       }
     };
+    
+    // EIP712 only!
+    const onSubmitWithDAI = async () => {
+        if (newQuote != "" && contract) {
+          setTransactionHash("");
+          if (metaTxEnabled) {
+            let userAddress = selectedAddress;
+  
+            console.log(usdcDomainData);
+  
+            //If your provider is not a signer with accounts then you must pass userAddress in the permit options
+  
+            const daiPermitOptions = {
+                spender: config.erc20ForwarderAddress,
+                expiry: Math.floor(Date.now() / 1000 + 3600),
+                allowed: true,
+              };
+  
+            console.log(daiPermitOptions);
+  
+            console.log("getting permit to spend DAI tokens");
+            showInfoMessage(
+              `Getting signature and permit transaction to spend DAI token by ERC20 Forwarder contract`
+            );
+  
+            //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
+            //Users need to pass provider object from window, spender address (erc20 forwarder OR the fee proxy address) and DAI's address for your network
+  
+            //OR use biconomy's permitclient member as below!  
+  
+            // This step only needs to be done once and is valid during the given deadline
+            let permitTx = await permitClient.daiPermit(daiPermitOptions);
+            await permitTx.wait(1);
+  
+            console.log("Sending meta transaction");
+            showInfoMessage("Building transaction to forward");
+            // txGas should be calculated and passed here or calculate within the method
+  
+            let { data } = await contract.populateTransaction.setQuote(newQuote);
+            let gasPrice = await ethersProvider.getGasPrice();
+            let gasLimit = await ethersProvider.estimateGas({
+              to: config.contract.address,
+              from: userAddress,
+              data: data,
+            });
+            console.log(gasLimit.toString());
+            console.log(gasPrice.toString());
+            console.log(data);
+  
+            const builtTx = await ercForwarderClient.buildTx({
+              to: config.contract.address,
+              token: config.dai.address,
+              txGas: Number(gasLimit),
+              data,
+            });
+            const tx = builtTx.request;
+            const fee = builtTx.cost;
+            console.log(tx);
+            console.log(fee);
+            alert(`You will be charged ${fee} amount of DAI ${biconomy.daiTokenAddress} for this transaction`);
+            showInfoMessage(`Signing message for meta transaction`);
+  
+            //signature of this method is sendTxEIP712({req, signature = null, userAddress})
+            //signature param is optional. check network agnostics section for more details about this
+            //userAddress is must when your provider does not have a signer with accounts
+            let transaction = await ercForwarderClient.sendTxEIP712({ req: tx });
+            //returns an object containing code, log, message, txHash
+            console.log(transaction);
+  
+            if (transaction && transaction.code == 200 && transaction.txHash) {
+              //event emitter methods
+              ethersProvider.once(transaction.txHash, (result) => {
+                // Emitted when the transaction has been mined
+                console.log(result);
+                console.log('this works!');
+                console.log(transaction.txHash);
+                setTransactionHash(transaction.txHash);
+                getQuoteFromNetwork();
+              });
+            } else {
+              showErrorMessage(transaction.message);
+            }
+          } else {
+            console.log("Sending normal transaction");
+            let tx = await contract.setQuote(newQuote);
+            console.log("Transaction hash : ", tx.hash);
+            showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+            let confirmation = await tx.wait();
+            console.log(confirmation);
+            setTransactionHash(tx.hash);
+  
+            showSuccessMessage("Transaction confirmed on chain");
+            getQuoteFromNetwork();
+          }
+        } else {
+          showErrorMessage("Please enter the quote");
+        }
+      };
 
+      // EIP712 only
+      const onSubmitWithUSDT = async () => {
+        if (newQuote != "" && contract) {
+          setTransactionHash("");
+          if (metaTxEnabled) {
+            let userAddress = selectedAddress;
+  
+            console.log(usdcDomainData);
+  
+            //If your provider is not a signer with accounts then you must pass userAddress in the permit options
+  
+            // user must approve USDT once to give allowance to erc20ForwarderAddress
+           
+            // assuming we already have allowance
+            console.log("Sending meta transaction");
+            showInfoMessage("Building transaction to forward");
+            // txGas should be calculated and passed here or calculate within the method
+  
+            let { data } = await contract.populateTransaction.setQuote(newQuote);
+            let gasPrice = await ethersProvider.getGasPrice();
+            let gasLimit = await ethersProvider.estimateGas({
+              to: config.contract.address,
+              from: userAddress,
+              data: data,
+            });
+            console.log(gasLimit.toString());
+            console.log(gasPrice.toString());
+            console.log(data);
+  
+            const builtTx = await ercForwarderClient.buildTx({
+              to: config.contract.address,
+              token: config.usdtAddress,
+              txGas: Number(gasLimit),
+              data,
+            });
+            const tx = builtTx.request;
+            const fee = builtTx.cost;
+            console.log(tx);
+            console.log(fee);
+            alert(`You will be charged ${fee} amount of USDT ${config.usdtAddress} for this transaction`);
+            showInfoMessage(`Signing message for meta transaction`);
+
+  
+            //signature of this method is sendTxEIP712({req, signature = null, userAddress})
+            //signature param is optional. check network agnostics section for more details about this
+            //userAddress is must when your provider does not have a signer with accounts
+            let transaction = await ercForwarderClient.sendTxEIP712({ req: tx });
+            //returns an object containing code, log, message, txHash
+            console.log(transaction);
+            console.log(transaction.txHash);
+  
+            if (transaction && transaction.code == 200 && transaction.txHash) {
+              //event emitter methods
+              ethersProvider.once(transaction.txHash, (result) => {
+                // Emitted when the transaction has been mined
+                console.log(result);
+                setTransactionHash(transaction.txHash);
+                getQuoteFromNetwork();
+              });
+            } else {
+              showErrorMessage(transaction.message);
+            }
+          } else {
+            console.log("Sending normal transaction");
+            let tx = await contract.setQuote(newQuote);
+            console.log("Transaction hash : ", tx.hash);
+            showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+            let confirmation = await tx.wait();
+            console.log(confirmation);
+            setTransactionHash(tx.hash);
+  
+            showSuccessMessage("Transaction confirmed on chain");
+            getQuoteFromNetwork();
+          }
+        } else {
+          showErrorMessage("Please enter the quote");
+        }
+      };
+
+    // can make two of these for DAI and for USDC
     const onPermitAndSubmitWithEIP712Sign = async () => {
       if (newQuote != "" && contract) {
         setTransactionHash("");
@@ -459,113 +632,6 @@ function App() {
       }
     };
 
-    const onSubmitWithPrivateKey = async () => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            try {
-                if (metaTxEnabled) {
-                  const usdcPermitOptions = {
-                    domainData: usdcDomainData,
-                    value: "100000000000000000000",
-                    deadline: Math.floor(Date.now() / 1000 + 3600),
-                  };
-
-                  let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
-                  await permitTx.wait(1);
-                  let userAddress = selectedAddress;
-
-                  //sendSignedRawTransaction(userAddress, newQuote);
-                  let privateKey =
-                    "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44";
-                  let wallet = new ethers.Wallet(privateKey);
-                  let functionSignature = contractInterface.encodeFunctionData(
-                    "setQuote",
-                    [newQuote]
-                  );
-
-                  let gasPrice = await ethersProvider.getGasPrice();
-                  let gasLimit = await ethersProvider.estimateGas({
-                    to: config.contract.address,
-                    from: userAddress,
-                    data: functionSignature,
-                  });
-                  console.log(gasLimit.toString());
-                  console.log(gasPrice.toString());
-                  console.log(functionSignature);
-
-                  let rawTx, signedTx;
-
-                  rawTx = {
-                    to: config.contract.address,
-                    data: functionSignature,
-                    from: userAddress,
-                    value: "0x0",
-                    //gasLimit: web3.utils.toHex(gasLimit),
-                  };
-
-                  signedTx = await wallet.signTransaction(rawTx);
-                  console.log(signedTx);
-
-                  // should get user message to sign EIP712/personal for trusted and ERC forwarder approach
-                  const forwardRequestData = await biconomy.getForwardRequestAndMessageToSign(
-                    signedTx,
-                    config.usdc.address
-                  );
-
-                  console.log(`${forwardRequestData.cost} amount of tokens will be charged`);
-                  const signature = sigUtil.signTypedMessage(
-                    new Buffer.from(privateKey, "hex"),
-                    {
-                      data: forwardRequestData.eip712Format, // option to get personalFormat also
-                    },
-                    "V4"
-                  );
-
-                  let data = {
-                    signature: signature,
-                    forwardRequest: forwardRequestData.request,
-                    rawTransaction: signedTx,
-                    signatureType: biconomy.EIP712_SIGN,
-                  };
-
-                  let tx = await ethersProvider.send("eth_sendRawTransaction", [
-                    data,
-                  ]);
-
-                  console.log("Transaction hash : ", tx);
-                  showInfoMessage(
-                    `Transaction sent by relayer with hash ${tx}`
-                  );
-
-                  //event emitter methods
-                  ethersProvider.once(tx, (transaction) => {
-                    // Emitted when the transaction has been mined
-                    console.log(transaction);
-                    setTransactionHash(tx);
-                    getQuoteFromNetwork();
-                  });
-                  
-                } else {
-                    console.log("Sending normal transaction");
-                    let tx = await contract.setQuote(newQuote);
-                    console.log("Transaction hash : ", tx.hash);
-                    showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-                    let confirmation = await tx.wait();
-                    console.log(confirmation);
-                    setTransactionHash(tx.hash);
-
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                }
-            } catch (error) {
-                console.log(error);
-                handleClose();
-            }
-        } else {
-            showErrorMessage("Please enter the quote");
-        }
-    }
-
     const getDaiPermitSignature = async (holder, spender, nonce, expiry) => {
      
       const domain = [
@@ -650,78 +716,106 @@ function App() {
     };
 
     return (
-        <div className="App">
-            <section className="top-row">
-                <div className="top-row-item">
-                    <span className="label">Library </span>
-                    <span className="label-value">ethers.js</span>
-                </div>
-                <div className="top-row-item">
-                    <span className="label">Meta Transaction</span>
-                    <span className="label-value">EIP-2771</span>
-                </div>
-                <div className="top-row-item">
-                    <span className="label">Signature Type</span>
-                    <span className="label-value">EIP-712 Signature</span>
-                </div>
-            </section>
-            <section className="main">
-                <div className="mb-wrap mb-style-2">
-                    <blockquote cite="http://www.gutenberg.org/ebboks/11">
-                        <p>{quote}</p>
-                    </blockquote>
-                </div>
+      <div className="App">
+        <section className="top-row">
+          <div className="top-row-item">
+            <span className="label">Library </span>
+            <span className="label-value">ethers.js</span>
+          </div>
+          <div className="top-row-item">
+            <span className="label">Meta Transaction</span>
+            <span className="label-value">EIP-2771</span>
+          </div>
+          <div className="top-row-item">
+            <span className="label">Signature Type</span>
+            <span className="label-value">EIP-712 Signature</span>
+          </div>
+        </section>
+        <section className="main">
+          <div className="mb-wrap mb-style-2">
+            <blockquote cite="http://www.gutenberg.org/ebboks/11">
+              <p>{quote}</p>
+            </blockquote>
+          </div>
 
-                <div className="mb-attribution">
-                    <p className="mb-author">{owner}</p>
-                    {selectedAddress.toLowerCase() === owner.toLowerCase() && (
-                        <cite className="owner">You are the owner of the quote</cite>
-                    )}
-                    {selectedAddress.toLowerCase() !== owner.toLowerCase() && (
-                        <cite>You are not the owner of the quote</cite>
-                    )}
-                </div>
-            </section>
-            <section>
-                {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
-                    <Typography>
-                        Check your transaction hash
-            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
-                            className={classes.link}>
-                            here
-            </Link>
-                    </Typography>
-                </Box>}
-            </section>
-            <section>
-                <div className="submit-container">
-                    <div className="submit-row">
-                        <input
-                            type="text"
-                            placeholder="Enter your quote"
-                            onChange={onQuoteChange}
-                            value={newQuote}
-                        />
-                        <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
-                            Submit EIP712
-            </Button>
+          <div className="mb-attribution">
+            <p className="mb-author">{owner}</p>
+            {selectedAddress.toLowerCase() === owner.toLowerCase() && (
+              <cite className="owner">You are the owner of the quote</cite>
+            )}
+            {selectedAddress.toLowerCase() !== owner.toLowerCase() && (
+              <cite>You are not the owner of the quote</cite>
+            )}
+          </div>
+        </section>
+        <section>
+          {transactionHash !== "" && (
+            <Box className={classes.root} mt={2} p={2}>
+              <Typography>
+                Check your transaction hash
+                <Link
+                  href={`https://kovan.etherscan.io/tx/${transactionHash}`}
+                  target="_blank"
+                  className={classes.link}
+                >
+                  here
+                </Link>
+              </Typography>
+            </Box>
+          )}
+        </section>
+        <section>
+          <div className="submit-container">
+            <div className="submit-row">
+              <input
+                type="text"
+                placeholder="Enter your quote"
+                onChange={onQuoteChange}
+                value={newQuote}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={onSubmitWithUSDC}
+                style={{ marginLeft: "10px" }}
+              >
+                Pay with USDC
+              </Button>
 
-            <Button variant="contained" color="primary" onClick={onPermitAndSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
+              {/*<Button variant="contained" color="primary" onClick={onPermitAndSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
                             Permit And Submit EIP712
-            </Button>
+                    </Button>*/}
 
-                        <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
-                            Submit (Private Key)
-            </Button>
-                    </div>
-                </div>
-            </section>
-            <Backdrop className={classes.backdrop} open={backdropOpen} onClick={handleClose}>
-                <CircularProgress color="inherit" />
-                <div style={{ paddingLeft: "10px" }}>{loadingMessage}</div>
-            </Backdrop>
-            <NotificationContainer />
-        </div>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={onSubmitWithDAI}
+                style={{ marginLeft: "10px" }}
+              >
+                Pay with DAI
+              </Button>
+
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={onSubmitWithUSDT}
+                style={{ marginLeft: "10px" }}
+              >
+                Pay with USDT
+              </Button>
+            </div>
+          </div>
+        </section>
+        <Backdrop
+          className={classes.backdrop}
+          open={backdropOpen}
+          onClick={handleClose}
+        >
+          <CircularProgress color="inherit" />
+          <div style={{ paddingLeft: "10px" }}>{loadingMessage}</div>
+        </Backdrop>
+        <NotificationContainer />
+      </div>
     );
 }
 

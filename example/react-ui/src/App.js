@@ -22,7 +22,7 @@ import Ethers_Custom_PersonalSign_API from './components/Ethers_Custom_PersonalS
 import Web3_EIP2771_API from './components/Web3_EIP2771_API.js';
 import Ethers_EIP2771_API from './components/Ethers_EIP2771_API';
 import Ethers_Forward_PersonalSign from './components/Ethers_Forward_PersonalSign';
-
+import Ethers_Forward_AllTokens from './components/Ethers_Forward_AllTokens';
 
 import "./App.css";
 import Button from "@material-ui/core/Button";
@@ -114,6 +114,7 @@ function App() {
           <Tab label="Web3 + EIP2771 + API" {...a11yProps(13)} />
           <Tab label="Ethers + EIP2771 + API" {...a11yProps(14)} />
           <Tab label="Ethers + Forward + Personal Sign" {...a11yProps(15)} />
+          <Tab label="Ethers + Forward + All Tokens" {...a11yProps(16)} />
           {/*To Be Added
              Ethers + Forward + Personal Sign
              Web3 + Forward + EIP712 Sign
@@ -169,6 +170,9 @@ function App() {
         </TabPanel>
         <TabPanel value={value} index={15}>
           <Ethers_Forward_PersonalSign />
+        </TabPanel>
+        <TabPanel value={value} index={16}>
+          <Ethers_Forward_AllTokens />
         </TabPanel>
 
       </div>

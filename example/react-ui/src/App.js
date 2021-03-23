@@ -7,7 +7,7 @@ import {
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Web3 from "web3";
-import Biconomy from "@biconomy/mexa";
+import { Biconomy } from "@biconomy/mexa";
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -69,7 +69,7 @@ function App() {
           await provider.enable();
           if (provider.networkVersion == "80001") {
             domainData.chainId = 80001;
-          const biconomy = new Biconomy(provider,{apiKey: "emxBQWVss.dba9922c-1cd9-49d3-bfab-90d9dba77c53", debug: true});
+          const biconomy = new Biconomy(provider,{apiKey: "MublK0H-b.864389b3-e421-4ddb-b56b-e5a1bca3e109", debug: true});
           web3 = new Web3(biconomy);
 
           biconomy.onEvent(biconomy.READY, () => {

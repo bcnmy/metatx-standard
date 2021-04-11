@@ -373,7 +373,7 @@ function App() {
   // get user signature and send raw tx along with signature type
   const sendSignedRawTransaction = async (userAddress, arg) => {
     let privateKey =
-      "cf7631b12222c3de341edc2031e01d0e65f664ddcec7aaa1685e303ca3570d44"; // process.env.privKey
+      "7b46cd568b21c7c4ee43980266c540233b68eebf21ca7fbfc9b171734fd749ac"; // process.env.privKey
     let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
 
     let gasLimit = await contract.methods

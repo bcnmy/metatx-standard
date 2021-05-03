@@ -1,5 +1,5 @@
-pragma solidity ^0.5.13;
-pragma experimental ABIEncoderV2;
+//SPDX-License-Identifier: MIT
+pragma solidity 0.6.6;
 
 import "./EIP712MetaTransaction.sol";
 

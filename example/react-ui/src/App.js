@@ -19,84 +19,161 @@ import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 let config = {
   contract: {
-    address: "0xe55348C7994f0f76CD0eB68003fD5A42025247a7",
+    address: "0x10101e93530D2992Ca49674eBf19d85f40348C41",
     abi: [
       {
-        anonymous: false,
-        inputs: [
+        "inputs": [
           {
-            indexed: false,
-            internalType: "address",
-            name: "userAddress",
-            type: "address",
+            "internalType": "address",
+            "name": "userAddress",
+            "type": "address"
           },
           {
-            indexed: false,
-            internalType: "addresspayable",
-            name: "relayerAddress",
-            type: "address",
+            "internalType": "bytes",
+            "name": "functionSignature",
+            "type": "bytes"
           },
           {
-            indexed: false,
-            internalType: "bytes",
-            name: "functionSignature",
-            type: "bytes",
+            "internalType": "bytes32",
+            "name": "sigR",
+            "type": "bytes32"
           },
+          {
+            "internalType": "bytes32",
+            "name": "sigS",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint8",
+            "name": "sigV",
+            "type": "uint8"
+          }
         ],
-        name: "MetaTransactionExecuted",
-        type: "event",
-      },
-      {
-        inputs: [
-          { internalType: "address", name: "userAddress", type: "address" },
-          { internalType: "bytes", name: "functionSignature", type: "bytes" },
-          { internalType: "bytes32", name: "sigR", type: "bytes32" },
-          { internalType: "bytes32", name: "sigS", type: "bytes32" },
-          { internalType: "uint8", name: "sigV", type: "uint8" },
+        "name": "executeMetaTransaction",
+        "outputs": [
+          {
+            "internalType": "bytes",
+            "name": "",
+            "type": "bytes"
+          }
         ],
-        name: "executeMetaTransaction",
-        outputs: [{ internalType: "bytes", name: "", type: "bytes" }],
-        stateMutability: "payable",
-        type: "function",
+        "stateMutability": "payable",
+        "type": "function"
       },
       {
-        inputs: [{ internalType: "address", name: "user", type: "address" }],
-        name: "getNonce",
-        outputs: [{ internalType: "uint256", name: "nonce", type: "uint256" }],
-        stateMutability: "view",
-        type: "function",
-      },
-      {
-        inputs: [],
-        name: "getQuote",
-        outputs: [
-          { internalType: "string", name: "currentQuote", type: "string" },
-          { internalType: "address", name: "currentOwner", type: "address" },
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "userAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address payable",
+            "name": "relayerAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes",
+            "name": "functionSignature",
+            "type": "bytes"
+          }
         ],
-        stateMutability: "view",
-        type: "function",
+        "name": "MetaTransactionExecuted",
+        "type": "event"
       },
       {
-        inputs: [],
-        name: "owner",
-        outputs: [{ internalType: "address", name: "", type: "address" }],
-        stateMutability: "view",
-        type: "function",
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "newQuote",
+            "type": "string"
+          }
+        ],
+        "name": "setQuote",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
       },
       {
-        inputs: [],
-        name: "quote",
-        outputs: [{ internalType: "string", name: "", type: "string" }],
-        stateMutability: "view",
-        type: "function",
+        "inputs": [],
+        "name": "getChainID",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
       },
       {
-        inputs: [{ internalType: "string", name: "newQuote", type: "string" }],
-        name: "setQuote",
-        outputs: [],
-        stateMutability: "nonpayable",
-        type: "function",
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          }
+        ],
+        "name": "getNonce",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "nonce",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
+      {
+        "inputs": [],
+        "name": "getQuote",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "currentQuote",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "currentOwner",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "quote",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
     ],
   },
   apiKey: {
@@ -108,8 +185,8 @@ let config = {
 const domainType = [
   { name: "name", type: "string" },
   { name: "version", type: "string" },
+  { name: "chainId", type: "uint256" },
   { name: "verifyingContract", type: "address" },
-  { name: "salt", type: "bytes32" },
 ];
 
 const metaTransactionType = [
@@ -121,8 +198,8 @@ const metaTransactionType = [
 let domainData = {
   name: "TestContract",
   version: "1",
+  chainId: 1287,
   verifyingContract: config.contract.address,
-  salt: "0x" + (1287).toString(16).padStart(64, "0"),
 };
 let web3, walletWeb3;
 let contract;

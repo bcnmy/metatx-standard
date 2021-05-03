@@ -1,4 +1,4 @@
-pragma solidity ^0.5.13;
+pragma solidity 0.6.6;
 
 contract EIP712Base {
 
@@ -13,8 +13,11 @@ contract EIP712Base {
 
     bytes32 internal domainSeperator;
 
+    uint256 private _chainid;
+
     constructor(string memory name, string memory version) public {
-        domainSeperator = keccak256(abi.encode(
+      
+      domainSeperator = keccak256(abi.encode(
 			EIP712_DOMAIN_TYPEHASH,
 			keccak256(bytes(name)),
 			keccak256(bytes(version)),
@@ -23,10 +26,10 @@ contract EIP712Base {
 		));
     }
 
-    function getChainID() internal pure returns (uint256 id) {
-		assembly {
-			id := 80001
-		}
+    function getChainID() public pure returns (uint256 id) {
+	  assembly {
+            id := chainid()
+        }
 	}
 
     function getDomainSeperator() private view returns(bytes32) {

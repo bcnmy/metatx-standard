@@ -1,189 +1,342 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { makeStyles } from '@material-ui/core/styles';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
-
-import Ethers_Custom_EIP712Sign from './components/Ethers_Custom_EIP712Sign';
-import Ethers_Custom_PersonalSign from './components/Ethers_Custom_PersonalSign';
-import Ethers_EIP2771_EIP712Sign from './components/Ethers_EIP2771_EIP712Sign';
-import Ethers_Forward_EIP712Sign from './components/Ethers_Forward_EIP712Sign';
-import Ethers_EIP2771_PersonalSign from './components/Ethers_EIP2771_PersonalSign';
-import Web3_Custom_EIP712Sign from './components/Web3_Custom_EIP712Sign';
-import Web3_Custom_PersonalSign from './components/Web3_Custom_PersonalSign';
-import Web3_EIP2771_EIP712Sign from './components/Web3_EIP2771_EIP712Sign';
-import Web3_EIP2771_PersonalSign from './components/Web3_EIP2771_PersonalSign';
-import Web3_Custom_EIP712Sign_API from './components/Web3_Custom_EIP712Sign_API';
-import Ethers_Custom_EIP712Sign_API from './components/Ethers_Custom_EIP712Sign_API';
-import Web3_Custom_PersonalSign_API from './components/Web3_Custom_PersonalSign_API';
-import Ethers_Custom_PersonalSign_API from './components/Ethers_Custom_PersonalSign_API';
-import Web3_EIP2771_API from './components/Web3_EIP2771_API.js';
-import Ethers_EIP2771_API from './components/Ethers_EIP2771_API';
-import Ethers_Forward_PersonalSign from './components/Ethers_Forward_PersonalSign';
-import Ethers_Forward_AllTokens from './components/Ethers_Forward_AllTokens';
-import Gas_Estimation_Exercise from './components/Gas_Estimation_Exercise';
-
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import Button from "@material-ui/core/Button";
 import {
-  NotificationContainer,
-  NotificationManager
+    NotificationContainer,
+    NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      className="tabpanel"
-      hidden={value !== index}
-      id={`vertical-tabpanel-${index}`}
-      aria-labelledby={`vertical-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box p={3}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Portis from '@portis/web3';
+import Web3 from "web3";
+//web3 has some issue regarding uint256 to bytes32
+import {Biconomy} from "@biconomy/mexa";
+import { makeStyles } from '@material-ui/core/styles';
+import Link from '@material-ui/core/Link';
+import Typography from '@material-ui/core/Typography';
+import { Box } from "@material-ui/core";
+let config = {
+    contract: {
+        address: "0x853bfD0160d67DF13a9F70409f9038f6473585Bd",
+        abi: [{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"addresspayable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"}]
+    },
+    apiKey: {
+        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
+        prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
+    }
 }
 
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.any.isRequired,
-  value: PropTypes.any.isRequired,
+const domainType = [
+    { name: "name", type: "string" },
+    { name: "version", type: "string" },
+    { name: "verifyingContract", type: "address" },
+    { name: "salt", type: "bytes32" },
+];
+
+const metaTransactionType = [
+    { name: "nonce", type: "uint256" },
+    { name: "from", type: "address" },
+    { name: "functionSignature", type: "bytes" }
+];
+
+let domainData = {
+    name: "TestContract",
+    version: "1",
+    verifyingContract: config.contract.address,
+    salt: '0x' + (42).toString(16).padStart(64, '0')
 };
-
-function a11yProps(index) {
-  return {
-    id: `vertical-tab-${index}`,
-    'aria-controls': `vertical-tabpanel-${index}`,
-  };
-}
+let web3, walletWeb3;
+let contract;
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-    backgroundColor: theme.palette.background.paper,
-    display: 'flex',
-    height: 700,
-  },
-  tabs: {
-    borderRight: `1px solid ${theme.palette.divider}`,
-  },
+    root: {
+        '& > * + *': {
+            marginLeft: theme.spacing(2),
+        },
+    },
+    link: {
+        marginLeft: "5px"
+    },
+    backdrop: {
+        zIndex: theme.zIndex.drawer + 1,
+        color: '#fff',
+        opacity: '.85!important',
+        background: '#000'
+    },
 }));
 
 function App() {
+    const classes = useStyles();
+    const [backdropOpen, setBackdropOpen] = React.useState(true);
+    const [loadingMessage, setLoadingMessage] = React.useState(" Loading Application ...");
+    const [quote, setQuote] = useState("This is a default quote");
+    const [owner, setOwner] = useState("Default Owner Address");
+    const [newQuote, setNewQuote] = useState("");
+    const [selectedAddress, setSelectedAddress] = useState("");
+    const [metaTxEnabled, setMetaTxEnabled] = useState(true);
+    const [transactionHash, setTransactionHash] = useState("");
 
-  const classes = useStyles();
-  const [value, setValue] = React.useState(0);
+    useEffect(() => {
+        async function init() {
+            if (
+                typeof window.ethereum !== "undefined" &&
+                window.ethereum.isMetaMask
+            ) {
+                // Ethereum user detected. You can now use the provider.
+                const portis = new Portis('<PORTIS_DAPP_ID>', 'kovan');
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
+                setLoadingMessage("Initializing Biconomy ...");
+                const biconomy = new Biconomy(portis.provider, { apiKey: config.apiKey.prod, debug: true });
 
-  return (
-    <div className="App">
-      <div className={classes.root}>
-        <Tabs
-          orientation="vertical"
-          variant="scrollable"
-          value={value}
-          onChange={handleChange}
-          aria-label="Vertical tabs example"
-          className={classes.tabs}
-        >
-          <Tab label="Web3 + Custom + EIP712 Sign" {...a11yProps(0)} />
-          <Tab label="Web3 + Custom + Personal Sign" {...a11yProps(1)} />
-          <Tab label="Web3 + EIP2771 + EIP712 Sign" {...a11yProps(2)} />
-          <Tab label="Web3 + EIP2771 + Personal Sign" {...a11yProps(3)} />
-          <Tab label="Ethers + Custom + EIP712 Sign" {...a11yProps(4)} />
-          <Tab label="Ethers + Custom + Personal Sign" {...a11yProps(5)} />
-          <Tab label="Ethers + EIP2771 + EIP712 Sign" {...a11yProps(6)} />
-          <Tab label="Ethers + EIP2771 + Personal Sign" {...a11yProps(7)} />
-          <Tab label="Ethers + Forward + EIP712 Sign" {...a11yProps(8)} /> 
-          <Tab label="Web3 + Custom + EIP712 Sign + API" {...a11yProps(9)} />
-          <Tab label="Ethers + Custom + EIP712 Sign + API" {...a11yProps(10)} />
-          <Tab label="Web3 + Custom + Personal Sign + API" {...a11yProps(11)} />
-          <Tab label="Ethers + Custom + Personal Sign + API" {...a11yProps(12)} />
-          <Tab label="Web3 + EIP2771 + API" {...a11yProps(13)} />
-          <Tab label="Ethers + EIP2771 + API" {...a11yProps(14)} />
-          <Tab label="Ethers + Forward + Personal Sign" {...a11yProps(15)} />
-          <Tab label="Ethers + Forward + All Tokens" {...a11yProps(16)} />
-          <Tab label="Gas + Estimation + Mainnet + Exercise" {...a11yProps(17)} />
-          {/*To Be Added
-             Ethers + Forward + Personal Sign
-             Web3 + Forward + EIP712 Sign
-             Web3 + Forward + Personal Sign
-             Ethers + Forward Permit Execute + EIP712 Sign              
-          */}
-        </Tabs>
+                // This web3 instance is used to read normally and write to contract via meta transactions.
+                web3 = new Web3(biconomy);
 
-        <TabPanel value={value} index={0}>
-          <Web3_Custom_EIP712Sign />
-        </TabPanel>
-        <TabPanel value={value} index={1}>
-          <Web3_Custom_PersonalSign />
-        </TabPanel>
-        <TabPanel value={value} index={2}>
-          <Web3_EIP2771_EIP712Sign />
-        </TabPanel>
-        <TabPanel value={value} index={3}>
-          <Web3_EIP2771_PersonalSign />
-        </TabPanel>
-        <TabPanel value={value} index={4}>
-          <Ethers_Custom_EIP712Sign />
-        </TabPanel>
-        <TabPanel value={value} index={5}>
-          <Ethers_Custom_PersonalSign/>
-        </TabPanel>
-        <TabPanel value={value} index={6}>
-          <Ethers_EIP2771_EIP712Sign />
-        </TabPanel>
-        <TabPanel value={value} index={7}>
-          <Ethers_EIP2771_PersonalSign />
-        </TabPanel>
-        <TabPanel value={value} index={8}>
-          <Ethers_Forward_EIP712Sign />
-        </TabPanel>
-        <TabPanel value={value} index={9}>
-          <Web3_Custom_EIP712Sign_API />
-        </TabPanel>
-        <TabPanel value={value} index={10}>
-          <Ethers_Custom_EIP712Sign_API />
-        </TabPanel>
-        <TabPanel value={value} index={11}>
-          <Web3_Custom_PersonalSign_API />
-        </TabPanel>
-        <TabPanel value={value} index={12}>
-          <Ethers_Custom_PersonalSign_API />
-        </TabPanel>
-        <TabPanel value={value} index={13}>
-          <Web3_EIP2771_API />
-        </TabPanel>
-        <TabPanel value={value} index={14}>
-          <Ethers_EIP2771_API />
-        </TabPanel>
-        <TabPanel value={value} index={15}>
-          <Ethers_Forward_PersonalSign />
-        </TabPanel>
-        <TabPanel value={value} index={16}>
-          <Ethers_Forward_AllTokens />
-        </TabPanel>
-        <TabPanel value={value} index={17}>
-          <Gas_Estimation_Exercise />
-        </TabPanel>
+                biconomy.onEvent(biconomy.READY, () => {
+                    // Initialize your dapp here like getting user accounts etc
+                    contract = new web3.eth.Contract(
+                        config.contract.abi,
+                        config.contract.address
+                    );
+                    
+                    setSelectedAddress("<EOA address>");
+                    getQuoteFromNetwork();
+                }).onEvent(biconomy.ERROR, (error, message) => {
+                    // Handle error while initializing mexa
+                });
+            } else {
+                showErrorMessage("Metamask not installed");
+            }
+        }
+        init();
+    }, []);
 
-      </div>
-      <NotificationContainer />
-    </div>
-  );
+    const handleClose = () => {
+        setBackdropOpen(false);
+    };
+
+    const onQuoteChange = event => {
+        setNewQuote(event.target.value);
+    };
+
+    const onSubmit = async event => {
+        if (newQuote != "" && contract) {
+            setTransactionHash("");
+            if (metaTxEnabled) {
+                console.log("Sending meta transaction");
+                let userAddress = selectedAddress;
+                let nonce = await contract.methods.getNonce(userAddress).call();
+                let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
+                let message = {};
+                message.nonce = parseInt(nonce);
+                message.from = userAddress;
+                message.functionSignature = functionSignature;
+
+                const dataToSign = JSON.stringify({
+                    types: {
+                        EIP712Domain: domainType,
+                        MetaTransaction: metaTransactionType
+                    },
+                    domain: domainData,
+                    primaryType: "MetaTransaction",
+                    message: message
+                });
+                
+                // NOTE: Using walletWeb3 here, as it is connected to the wallet where user account is present.
+                web3.currentProvider.send(
+                    {
+                        jsonrpc: "2.0",
+                        id: 999999999999,
+                        method: "eth_signTypedData_v3",
+                        params: [userAddress, dataToSign]
+                    },
+                    function (error, response) {
+                        console.info(`User signature is ${response.result}`);
+                        if (error || (response && response.error)) {
+                            showErrorMessage("Could not get user signature");
+                        } else if (response && response.result) {
+                            let { r, s, v } = getSignatureParameters(response.result);
+                            sendSignedTransaction(userAddress, functionSignature, r, s, v);
+                        }
+                    }
+                );
+            } else {
+                console.log("Sending normal transaction");
+                contract.methods
+                    .setQuote(newQuote)
+                    .send({ from: selectedAddress })
+                    .on("transactionHash", function (hash) {
+                        showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
+                    })
+                    .once("confirmation", function (confirmationNumber, receipt) {
+                        setTransactionHash(receipt.transactionHash);
+                        showSuccessMessage("Transaction confirmed");
+                        getQuoteFromNetwork();
+                    });
+            }
+        } else {
+            showErrorMessage("Please enter the quote");
+        }
+    };
+
+    const getSignatureParameters = signature => {
+        if (!web3.utils.isHexStrict(signature)) {
+            throw new Error(
+                'Given value "'.concat(signature, '" is not a valid hex string.')
+            );
+        }
+        var r = signature.slice(0, 66);
+        var s = "0x".concat(signature.slice(66, 130));
+        var v = "0x".concat(signature.slice(130, 132));
+        v = web3.utils.hexToNumber(v);
+        if (![27, 28].includes(v)) v += 27;
+        return {
+            r: r,
+            s: s,
+            v: v
+        };
+    };
+
+    const getQuoteFromNetwork = () => {
+        setLoadingMessage("Getting Quote from contact ...");
+        try {
+            if (web3 && contract) {
+                contract.methods
+                    .getQuote()
+                    .call()
+                    .then(function (result) {
+                        handleClose();
+                        console.log(result);
+                        if (
+                            result &&
+                            result.currentQuote != undefined &&
+                            result.currentOwner != undefined
+                        ) {
+                            if (result.currentQuote == "") {
+                                showErrorMessage("No quotes set on blockchain yet");
+                            } else {
+                                setQuote(result.currentQuote);
+                                setOwner(result.currentOwner);
+                            }
+                        } else {
+                            showErrorMessage("Not able to get quote information from Network");
+                        }
+                    });
+            } else {
+                handleClose();
+            }
+        } catch(error) {
+            handleClose();
+            console.log(error);
+        }
+    };
+
+    const showErrorMessage = message => {
+        NotificationManager.error(message, "Error", 5000);
+    };
+
+    const showSuccessMessage = message => {
+        NotificationManager.success(message, "Message", 3000);
+    };
+
+    const showInfoMessage = message => {
+        NotificationManager.info(message, "Info", 3000);
+    };
+
+    const sendSignedTransaction = async (userAddress, functionData, r, s, v) => {
+        if (web3 && contract) {
+            try {
+                let gasLimit = await contract.methods
+                    .executeMetaTransaction(userAddress, functionData, r, s, v)
+                    .estimateGas({ from: userAddress });
+                let gasPrice = await web3.eth.getGasPrice();
+                let tx = contract.methods
+                    .executeMetaTransaction(userAddress, functionData, r, s, v)
+                    .send({
+                        from: userAddress
+                    });
+
+                tx.on("transactionHash", function (hash) {
+                    console.log(`Transaction hash is ${hash}`);
+                    showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
+                }).once("confirmation", function (confirmationNumber, receipt) {
+                    console.log(receipt);
+                    setTransactionHash(receipt.transactionHash);
+                    showSuccessMessage("Transaction confirmed on chain");
+                    getQuoteFromNetwork();
+                });
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    };
+
+    return (
+        <div className="App">
+            <section className="top-row">
+                <div className="top-row-item">
+                    <span className="label">Library </span>
+                    <span className="label-value">web3.js</span>
+                </div>
+                <div className="top-row-item">
+                    <span className="label">Meta Transaction</span>
+                    <span className="label-value">Custom Approach</span>
+                </div>
+                <div className="top-row-item">
+                    <span className="label">Signature Type</span>
+                    <span className="label-value">EIP712 Signature</span>
+                </div>
+            </section>
+            <section className="main">
+                <div className="mb-wrap mb-style-2">
+                    <blockquote cite="http://www.gutenberg.org/ebboks/11">
+                        <p>{quote}</p>
+                    </blockquote>
+                </div>
+
+                <div className="mb-attribution">
+                    <p className="mb-author">{owner}</p>
+                    {selectedAddress.toLowerCase() === owner.toLowerCase() && (
+                        <cite className="owner">You are the owner of the quote</cite>
+                    )}
+                    {selectedAddress.toLowerCase() !== owner.toLowerCase() && (
+                        <cite>You are not the owner of the quote</cite>
+                    )}
+                </div>
+            </section>
+            <section>
+                {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
+                    <Typography>
+                        Check your transaction hash
+            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
+                            className={classes.link}>
+                            here
+            </Link>
+                    </Typography>
+                </Box>}
+            </section>
+            <section>
+                <div className="submit-container">
+                    <div className="submit-row">
+                        <input
+                            type="text"
+                            placeholder="Enter your quote"
+                            onChange={onQuoteChange}
+                            value={newQuote}
+                        />
+                        <Button variant="contained" color="primary" onClick={onSubmit}>
+                            Submit
+            </Button>
+                    </div>
+                </div>
+            </section>
+            <Backdrop className={classes.backdrop} open={backdropOpen} onClick={handleClose}>
+                <CircularProgress color="inherit" />
+                <div style={{ paddingLeft: "10px" }}>{loadingMessage}</div>
+            </Backdrop>
+            <NotificationContainer />
+        </div>
+    );
 }
 
 export default App;

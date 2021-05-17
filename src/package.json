@@ -19,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@openzeppelin/contracts": "^3.4.0",
+    "@openzeppelin/contracts-upgradeable": "^4.1.0",
     "chai": "^4.2.0",
     "eth-sig-util": "^2.5.3",
     "ganache-cli": "^6.10.2",

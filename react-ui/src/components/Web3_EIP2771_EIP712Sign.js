@@ -88,7 +88,7 @@ let config = {
   },
 };
 
-let web3, walletWeb3, biconomy;
+let web3, walletWeb3;
 let contract;
 
 const useStyles = makeStyles((theme) => ({
@@ -182,14 +182,12 @@ function App() {
     setNewQuote(event.target.value);
   };
 
-
   const onSubmit = async (event) => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
         let tx = contract.methods.setQuote(newQuote).send({
           from: selectedAddress,
-          signatureType: biconomy.EIP712_SIGN,
         });
 
         tx.on("transactionHash", function (hash) {

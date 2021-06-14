@@ -88,7 +88,7 @@ let config = {
   },
 };
 
-let web3, walletWeb3;
+let web3, walletWeb3, biconomy;
 let contract;
 
 const useStyles = makeStyles((theme) => ({
@@ -188,6 +188,7 @@ function App() {
       if (metaTxEnabled) {
         let tx = contract.methods.setQuote(newQuote).send({
           from: selectedAddress,
+          signatureType: biconomy.EIP712_SIGN
         });
 
         tx.on("transactionHash", function (hash) {
@@ -343,13 +344,6 @@ function App() {
             />
             <Button variant="contained" color="primary" onClick={onSubmit}>
               Submit
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={onSubmitWithPrivateKey}
-              style={{ marginLeft: "10px" }}>
-              Submit (using private key)
             </Button>
           </div>
         </div>

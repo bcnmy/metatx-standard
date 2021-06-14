@@ -87,7 +87,7 @@ let config = {
   },
 };
 
-let web3, walletWeb3, biconomy;
+let web3, walletWeb3;
 let contract;
 
 const useStyles = makeStyles((theme) => ({
@@ -130,12 +130,6 @@ function App() {
         // Ethereum user detected. You can now use the provider.
         const provider = window["ethereum"];
         await provider.enable();
-        let kovanProvider = new Web3.providers.HttpProvider(
-          "https://kovan.infura.io/v3/d126f392798444609246423b06116c77"
-        );
-        setLoadingMessage("Initializing Biconomy ...");
-    
-        // This web3 instance is used to read normally and write to contract via meta transactions.
         web3 = new Web3(window.ethereum);
 
         // This web3 instance is used to get user signature from connected wallet
@@ -169,66 +163,12 @@ function App() {
     setNewQuote(event.target.value);
   };
 
-  const onSubmitWithPrivateKey = async () => {
-    if (newQuote != "" && contract) {
-      setTransactionHash("");
-      console.log("Sending meta transaction");
-      let privateKey =
-        "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
-      let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-      let txParams = {
-        from: userAddress,
-        to: config.contract.address,
-        data: contract.methods.setQuote(newQuote).encodeABI(),
-        gasLimit: web3.utils.toHex(300000),
-      };
-      const signedTx = await web3.eth.accounts.signTransaction(
-        txParams,
-        `0x${privateKey}`
-      );
-      const forwardData = await biconomy.getForwardRequestAndMessageToSign(
-        signedTx.rawTransaction
-      );
-      const signature = sigUtil.signTypedMessage(
-        new Buffer.from(privateKey, "hex"),
-        { data: forwardData.eip712Format },
-        "V4"
-      );
-      let rawTransaction = signedTx.rawTransaction;
-      let data = {
-        signature: signature,
-        forwardRequest: forwardData.request,
-        rawTransaction: rawTransaction,
-        signatureType: biconomy.EIP712_SIGN,
-      };
-
-      web3.eth
-        .sendSignedTransaction(data)
-        .on("transactionHash", (hash) => {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(
-            `Transaction sent via Biconomy. Waiting for confirmation.`
-          );
-        })
-        .once("confirmation", (confirmation, receipt) => {
-          console.log(`Transaction Confirmed.`);
-          console.log(receipt);
-          setTransactionHash(receipt.transactionHash);
-          showSuccessMessage("Transaction confirmed");
-          getQuoteFromNetwork();
-        });
-    } else {
-      showErrorMessage("Please enter the quote");
-    }
-  };
-
   const onSubmit = async (event) => {
     if (newQuote != "" && contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
         let tx = contract.methods.setQuote(newQuote).send({
           from: selectedAddress,
-          signatureType: biconomy.EIP712_SIGN,
         });
 
         tx.on("transactionHash", function (hash) {

@@ -10,6 +10,7 @@ import Backdrop from "@material-ui/core/Backdrop";
 import CircularProgress from "@material-ui/core/CircularProgress";
 
 import Web3 from "web3";
+import { Biconomy } from "@biconomy/mexa";
 import { makeStyles } from "@material-ui/core/styles";
 import Link from "@material-ui/core/Link";
 import Typography from "@material-ui/core/Typography";
@@ -82,7 +83,7 @@ let config = {
     ],
   },
   apiKey: {
-    test: "TJDXpaFFg.f15dffd7-f673-4395-b563-22fd299dac68",
+    test: "gvVMVZ-Ri.19b1dc58-cffc-4f53-97c6-4bdecf59871d",
     prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9",
   },
 };
@@ -134,13 +135,21 @@ function App() {
           "https://kovan.infura.io/v3/d126f392798444609246423b06116c77"
         );
         setLoadingMessage("Initializing Biconomy ...");
-    
+        biconomy = new Biconomy(window.ethereum, {
+          walletProvider: window.ethereum,
+          apiKey: config.apiKey.test,
+          debug: true,
+        });
+
         // This web3 instance is used to read normally and write to contract via meta transactions.
-        web3 = new Web3(window.ethereum);
+        web3 = new Web3(biconomy);
 
         // This web3 instance is used to get user signature from connected wallet
         walletWeb3 = new Web3(window.ethereum);
 
+        biconomy
+          .onEvent(biconomy.READY, () => {
+            // Initialize your dapp here like getting user accounts etc
             contract = new web3.eth.Contract(
               config.contract.abi,
               config.contract.address
@@ -150,6 +159,10 @@ function App() {
             provider.on("accountsChanged", function (accounts) {
               setSelectedAddress(accounts[0]);
             });
+          })
+          .onEvent(biconomy.ERROR, (error, message) => {
+            // Handle error while initializing mexa
+          });
       } else {
         showErrorMessage("Metamask not installed");
       }

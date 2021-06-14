@@ -80,11 +80,7 @@ let config = {
         constant: true,
       },
     ],
-  },
-  apiKey: {
-    test: "TJDXpaFFg.f15dffd7-f673-4395-b563-22fd299dac68",
-    prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9",
-  },
+  }
 };
 
 let web3, walletWeb3;

@@ -160,20 +160,7 @@ function App() {
                 setSelectedAddress(userAddress);
 
                 biconomy.onEvent(biconomy.READY, async () => {
-
-                    // Initialize your dapp here like getting user accounts etc
-                    /*contract = new ethers.Contract(
-                        config.contract.address,
-                        config.contract.abi,
-                        biconomy.getSignerByAddress(userAddress)
-                    );
-
-                    usdcToken = new ethers.Contract(
-                        config.usdc.address,
-                        config.usdc.abi,
-                        biconomy.getSignerByAddress(userAddress)
-                      );*/
-                    
+ 
                       contract = new web3.eth.Contract(
                         config.contract.abi,
                         config.contract.address
@@ -211,23 +198,23 @@ function App() {
             setTransactionHash("");
             if (metaTxEnabled) {
                 showInfoMessage(`Getting user signature`);
-
-                let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
-                let userAddressCustom = "0xE1E763551A85F04B4687f0035885E7F710A46aA6"; // update your user address per private key and replace userAddress
-
-                let userAddress = selectedAddress;
+                debugger;
+                let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
+                let userAddressCustom = "0xFAd8e64BF2d15B28a87Fcdf441AD9f8f38757a02"; // update your user address per private key and replace userAddress
+                let receiver = "0x90d25917D46b5b6c92c0f213A4BA83698d36A97C";
+                let userAddress = userAddressCustom;
                 let nonce = await contract.methods.getNonce(userAddress).call();
 
                 let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
                 let multiplyingFactor = 1.1;
-                let newTokenGasPrice = ethers.BigNumber.from(tokenGasPrice).mul(ethers.BigNumber.from(multiplyingFactor.toString())).toString();
+                let newTokenGasPrice = (parseFloat(tokenGasPrice) * parseFloat(multiplyingFactor.toString())).toString();
+                tokenGasPrice = parseInt(newTokenGasPrice).toString();
                 console.log("type of:  " + typeof(tokenGasPrice));
                 console.log("type of:  " + typeof(newTokenGasPrice));
 
                 console.log(usdcDomainData);
 
-                //If your provider is not a signer with accounts then you must pass userAddress in the permit options
-
+            
                 const usdcPermitOptions = {
                   domainData: usdcDomainData,
                   spender: config.contract.address,
@@ -257,7 +244,8 @@ function App() {
                   },
                 };
 
-                const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: permitDataToSign }, 'V4'); //v3 or v4
+                debugger; 
+                const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: permitDataToSign }, 'V3'); //v3 or v4
                 let { r, s, v } = getSignatureParameters(signature);
 
                 let permitOptions = {};
@@ -271,33 +259,8 @@ function App() {
                 permitOptions.r = r;
                 permitOptions.s = s;
 
-               
-                //let functionSignature = contractInterface.encodeFunctionData("transfer", [Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000"]);
-                let functionSignature = contractInterface.methods.permitEIP2612AndTransfer(Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000000",permitOptions).encodeABI();
-                let message = {};
-                message.nonce = parseInt(nonce);
-                message.from = userAddress;
-                message.functionSignature = functionSignature;
-
-                const dataToSign = JSON.stringify({
-                    types: {
-                        EIP712Domain: domainType,
-                        MetaTransaction: metaTransactionType
-                    },
-                    domain: domainData,
-                    primaryType: "MetaTransaction",
-                    message: message
-                });
-
-                // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
-                // instead of chainId
-
-                const signatureNew = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V4'); //v3 or v4
-                let { rR, sS, vV } = getSignatureParameters(signatureNew);
-
-                //sendSignedTransactionTransfer(userAddress, functionSignature, rR, sS, vV);
-
-                sendSignedTransactionWithPermit(userAddress, permitOptions, tokenGasPrice);
+                let functionSignature = contract.methods.permitEIP2612AndTransfer(Number(tokenGasPrice),config.usdc.address,receiver,"10000000000000000",permitOptions).encodeABI();
+                sendSignedTransactionWithPermit(userAddress, functionSignature);
             } else {
                 console.log("Sending normal transaction");
                 let tx = await contract.setQuote(newQuote);
@@ -316,113 +279,63 @@ function App() {
     };
 
     const onTransferWithPrivateKey = async event => {
-    if (newQuote != "" && contract) {
-        setTransactionHash("");
-        if (metaTxEnabled) {
-            showInfoMessage(`Getting user signature`);
+        if (newQuote != "" && contract) {
+            setTransactionHash("");
+            if (metaTxEnabled) {
+                debugger;
+                showInfoMessage(`Getting user signature`);
+                let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
+                let userAddressCustom = "0xFAd8e64BF2d15B28a87Fcdf441AD9f8f38757a02"; // update your user (sender) address per private key and replace userAddress
+                let receiver = "0x90d25917D46b5b6c92c0f213A4BA83698d36A97C";
+                let userAddress = userAddressCustom;
+                let nonce = await contract.methods.getNonce(userAddress).call();
+                console.log(`nonce is : ${nonce}`);
+                let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
+                let multiplyingFactor = 1.1;
+                let newTokenGasPrice = (parseFloat(tokenGasPrice) * parseFloat(multiplyingFactor.toString())).toString();
+                tokenGasPrice = parseInt(newTokenGasPrice).toString();
+                console.log("type of:  " + typeof(tokenGasPrice));
+                console.log("type of:  " + typeof(newTokenGasPrice));
 
-            let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
-            let userAddressCustom = "0xE1E763551A85F04B4687f0035885E7F710A46aA6"; // update your user address per private key and replace userAddress
+                let functionSignature = contract.methods.transfer(Number(tokenGasPrice),config.usdc.address,receiver,"10000000000000").encodeABI();
+                let message = {};
+                message.nonce = parseInt(nonce);
+                message.from = userAddress;
+                message.functionSignature = functionSignature;
 
-            let userAddress = selectedAddress;
-            let nonce = await contract.methods.getNonce(userAddress).call();
+                debugger;
 
-            let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
-            let multiplyingFactor = 1.1;
-            let newTokenGasPrice = ethers.BigNumber.from(tokenGasPrice).mul(ethers.BigNumber.from(multiplyingFactor.toString())).toString();
-            console.log("type of:  " + typeof(tokenGasPrice));
-            console.log("type of:  " + typeof(newTokenGasPrice));
+                const dataToSign = {
+                    types: {
+                        EIP712Domain: domainType,
+                        MetaTransaction: metaTransactionType
+                    },
+                    domain: domainData,
+                    primaryType: "MetaTransaction",
+                    message: message
+                };
 
-            console.log(usdcDomainData);
+                // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
+                // instead of chainId
 
-            //If your provider is not a signer with accounts then you must pass userAddress in the permit options
+                const signatureNew = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V3'); //v3 or v4
+                let { r, s, v } = getSignatureParameters(signatureNew);
 
-            const usdcPermitOptions = {
-              domainData: usdcDomainData,
-              spender: config.contract.address,
-              value: "10000000000000000000000",  // kovan USDC has 18 decimals so this would change accordingly for mainnet
-              userAddress: userAddress,
-              deadline: Number(Math.floor(Date.now() / 1000 + 3600)),
-            };
-
-            console.log(usdcPermitOptions);
-
-            const usdcNonce = await usdcToken.methods.nonces(userAddress).call();
-            console.log(`nonce is : ${usdcNonce}`);
-
-            const permitDataToSign = {
-              types: {
-                EIP712Domain: usdcDomainType,
-                Permit: eip2612PermitType,
-              },
-              domain: usdcDomainData,
-              primaryType: "Permit",
-              message: {
-                owner: userAddress,
-                spender: usdcPermitOptions.spender,
-                nonce: parseInt(usdcNonce),
-                value: usdcPermitOptions.value,
-                deadline: parseInt(usdcPermitOptions.deadline),
-              },
-            };
-
-            const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: permitDataToSign }, 'V4'); //v3 or v4
-            let { r, s, v } = getSignatureParameters(signature);
-
-            let permitOptions = {};
-            permitOptions.holder = userAddress;
-            permitOptions.spender = usdcPermitOptions.spender;
-            permitOptions.value = usdcPermitOptions.value;
-            permitOptions.nonce = parseInt(usdcNonce.toString());
-            permitOptions.expiry = parseInt(usdcPermitOptions.deadline);
-            permitOptions.allowed = true;
-            permitOptions.v = v;
-            permitOptions.r = r;
-            permitOptions.s = s;
-
-           
-            //let functionSignature = contractInterface.encodeFunctionData("transfer", [Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000"]);
-            let functionSignature = contractInterface.methods.permitEIP2612AndTransfer(Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000000",permitOptions).encodeABI();
-            let message = {};
-            message.nonce = parseInt(nonce);
-            message.from = userAddress;
-            message.functionSignature = functionSignature;
-
-            const dataToSign = JSON.stringify({
-                types: {
-                    EIP712Domain: domainType,
-                    MetaTransaction: metaTransactionType
-                },
-                domain: domainData,
-                primaryType: "MetaTransaction",
-                message: message
-            });
-
-            // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
-            // instead of chainId
-
-            const signatureNew = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V4'); //v3 or v4
-            let { rR, sS, vV } = getSignatureParameters(signatureNew);
-
-            //sendSignedTransactionTransfer(userAddress, functionSignature, rR, sS, vV);
-
-            sendSignedTransactionWithPermit(userAddress, permitOptions, tokenGasPrice);
+                sendSignedTransactionTransfer(userAddress, functionSignature, r, s, v);
+            } else {
+                console.log("Sending normal transaction");
+                let tx = await contract.setQuote(newQuote);
+                console.log("Transaction hash : ", tx.hash);
+                showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+                let confirmation = await tx.wait();
+                console.log(confirmation);
+                setTransactionHash(tx.hash);
+                showSuccessMessage("Transaction confirmed on chain");
+            }
         } else {
-            console.log("Sending normal transaction");
-            let tx = await contract.setQuote(newQuote);
-            console.log("Transaction hash : ", tx.hash);
-            showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-            let confirmation = await tx.wait();
-            console.log(confirmation);
-            setTransactionHash(tx.hash);
-
-            showSuccessMessage("Transaction confirmed on chain");
-            //getQuoteFromNetwork();
+            showErrorMessage("Please enter the quote");
         }
-    } else {
-        showErrorMessage("Please enter the quote");
-    }
-};
+    };
 
     const getSignatureParameters = signature => {
         if (!web3.utils.isHexStrict(signature)) {
@@ -454,41 +367,64 @@ function App() {
         NotificationManager.info(message, "Info", 3000);
     };
 
-    const sendSignedTransactionWithPermit = async (userAddress, permitOptions, tokenGasPrice) => {
+    const sendSignedTransactionWithPermit = async (userAddress, functionSignature) => {
         try {
             showInfoMessage(`Sending transaction via Biconomy`);
             debugger;
-            let tx = await contract.permitEIP2612AndTransfer(Number(tokenGasPrice),config.usdc.address,"0xD370F90E1cf24b239f0106387f363732ab560ED1",ethers.BigNumber.from("9906868555466608797"),permitOptions);
+
+            let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
+            // paste your private key here for the user address being passsed
+            
+            let txParams = {
+                "from": userAddress,
+                "to": config.contract.address,
+                "value": "0x0",
+                "gas": "500000",
+                "data": functionSignature
+            };
+            const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
             showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
-            await tx.wait(1);
-            console.log("Transaction hash : ", tx.hash);
-            //let confirmation = await tx.wait();
-            console.log(tx);
-            setTransactionHash(tx.hash);
-
+            let receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction, (error, txHash) => {
+              if (error) {
+                return console.error(error);
+                }
+            });
+            console.log("Transaction hash : ", receipt.transactionHash);
+            setTransactionHash(receipt.transactionHash);
             showSuccessMessage("Transaction confirmed on chain");
-            //getQuoteFromNetwork();
-
         } catch (error) {
             console.log(error);
             handleClose();
         }
     };
 
-    const sendSignedTransactionTransfer = async (userAddress, functionData, r, s, v) => {
+    const sendSignedTransactionTransfer = async (userAddress, functionSignature, r, s, v) => {
         try {
             showInfoMessage(`Sending transaction via Biconomy`);
             debugger;
-            let tx = await contract.executeMetaTransaction(userAddress, functionData, r, s, v);
-            showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
-            await tx.wait(1);
-            console.log("Transaction hash : ", tx.hash);
-            //let confirmation = await tx.wait();
-            console.log(tx);
-            setTransactionHash(tx.hash);
+ 
+            let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
+            // paste your private key here for the user address being passsed
+            
+            let executeMetaTransactionData = contract.methods.executeMetaTransaction(userAddress, functionSignature, r, s, v).encodeABI();
 
-            showSuccessMessage("Transaction confirmed on chain");
-            //getQuoteFromNetwork();
+            let txParams = {
+                "from": userAddress,
+                "to": config.contract.address,
+                "value": "0x0",
+                "gas": "500000",
+                "data": executeMetaTransactionData
+            };
+            const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
+            showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
+            let receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction, (error, txHash) => {
+              if (error) {
+                return console.error(error);
+                }
+            });
+            console.log("Transaction hash : ", receipt.transactionHash);
+            setTransactionHash(receipt.transactionHash);
+            showSuccessMessage("Transaction confirmed on chain");           
 
         } catch (error) {
             console.log(error);

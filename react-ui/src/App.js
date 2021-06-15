@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
-import Web3_EIP2771_EIP712Sign from "./components/Web3_EIP2771_EIP712Sign";
+import Web3_Custom_EIP712Sign from "./components/Web3_Custom_EIP712Sign";
 import "./App.css";
 import {
   NotificationContainer,
@@ -61,7 +61,7 @@ function App() {
   return (
     <div className="App">
       <div className={classes.root}>
-        <Web3_EIP2771_EIP712Sign />
+        <Web3_Custom_EIP712Sign />
       </div>
       <NotificationContainer />
     </div>

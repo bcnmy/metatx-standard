@@ -8,7 +8,7 @@ import {
 import "react-notifications/lib/notifications.css";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
-
+import Web3 from "web3";
 import { ethers } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
 
@@ -29,6 +29,7 @@ let config = {
     }
 }
 
+// kovan USDC
 config.usdc = {
     address: "0x6043fD7126e4229d6FcaC388c9E1C8d333CCb8fA",
     abi: [{"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"symbol","type":"string"},{"internalType":"uint256","name":"initialBalance","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"authorizer","type":"address"},{"indexed":true,"internalType":"bytes32","name":"nonce","type":"bytes32"}],"name":"AuthorizationCanceled","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"authorizer","type":"address"},{"indexed":true,"internalType":"bytes32","name":"nonce","type":"bytes32"}],"name":"AuthorizationUsed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_account","type":"address"}],"name":"Blacklisted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newBlacklister","type":"address"}],"name":"BlacklisterChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"burner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Burn","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newMasterMinter","type":"address"}],"name":"MasterMinterChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"minter","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"minter","type":"address"},{"indexed":false,"internalType":"uint256","name":"minterAllowedAmount","type":"uint256"}],"name":"MinterConfigured","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldMinter","type":"address"}],"name":"MinterRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":false,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newAddress","type":"address"}],"name":"PauserChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newRescuer","type":"address"}],"name":"RescuerChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_account","type":"address"}],"name":"UnBlacklisted","type":"event"},{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"},{"inputs":[],"name":"APPROVE_WITH_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"CANCEL_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"DECREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"DOMAIN_SEPARATOR","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"INCREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"PERMIT_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"TRANSFER_WITH_AUTHORIZATION_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"validAfter","type":"uint256"},{"internalType":"uint256","name":"validBefore","type":"uint256"},{"internalType":"bytes32","name":"nonce","type":"bytes32"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"approveWithAuthorization","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"authorizer","type":"address"},{"internalType":"bytes32","name":"nonce","type":"bytes32"}],"name":"authorizationState","outputs":[{"internalType":"enumGasAbstraction.AuthorizationState","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_account","type":"address"}],"name":"blacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"blacklister","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"burn","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"authorizer","type":"address"},{"internalType":"bytes32","name":"nonce","type":"bytes32"},
@@ -50,6 +51,7 @@ const metaTransactionType = [
     { name: "functionSignature", type: "bytes" }
 ];
 
+// domain data for kovan USDC
 let usdcDomainData = {
   name: "USDC Coin",
   version: "1",
@@ -76,10 +78,11 @@ let domainData = {
     name: "ERC20Transfer",
     version: "1",
     verifyingContract: config.contract.address,
-    salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(42)).toHexString(), 32)
+    salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(42)).toHexString(), 32) //NOTE: replace chainId from 42 to 1 for mainnet
 };
 
 let ethersProvider,walletProvider, walletSigner;
+let web3, walletWeb3;
 let contract, contractInterface;
 let usdcToken;
 
@@ -138,11 +141,18 @@ function App() {
                 biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/190611c4be284c0193d645d80947a851"),
                     { apiKey: config.apiKey.prod, debug: true });
 
+                ethersProvider = new ethers.providers.Web3Provider(biconomy);
+
+                 // This web3 instance is used to read normally and write to contract via meta transactions.
+                 web3 = new Web3(biconomy);
+
+                 // This web3 instance is used to get user signature from connected wallet
+                walletWeb3 = new Web3(window.ethereum);
+
                 /*
                   This provider is linked to your wallet.
                   If needed, substitute your wallet solution in place of window.ethereum 
                 */
-                ethersProvider = new ethers.providers.Web3Provider(biconomy);
                 walletProvider = new ethers.providers.Web3Provider(window.ethereum);
                 walletSigner = walletProvider.getSigner();
 
@@ -152,7 +162,7 @@ function App() {
                 biconomy.onEvent(biconomy.READY, async () => {
 
                     // Initialize your dapp here like getting user accounts etc
-                    contract = new ethers.Contract(
+                    /*contract = new ethers.Contract(
                         config.contract.address,
                         config.contract.abi,
                         biconomy.getSignerByAddress(userAddress)
@@ -162,13 +172,23 @@ function App() {
                         config.usdc.address,
                         config.usdc.abi,
                         biconomy.getSignerByAddress(userAddress)
-                      );
+                      );*/
+                    
+                      contract = new web3.eth.Contract(
+                        config.contract.abi,
+                        config.contract.address
+                    );
+
+                    usdcToken = new web3.eth.Contract(
+                        config.usdc.abi,
+                        config.usdc.address
+                    );
 
                     ercForwarderClient = biconomy.erc20ForwarderClient;
                     permitClient = biconomy.permitClient;
 
+                    //not needed
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
-                    //getQuoteFromNetwork();
                 }).onEvent(biconomy.ERROR, (error, message) => {
                     // Handle error while initializing mexa
                     console.log(message);
@@ -185,62 +205,24 @@ function App() {
         setNewQuote(event.target.value);
     };
 
-    const onSubmitWithEIP712Sign = async event => {
+
+    const onPermitAndTransferWithPrivateKey = async event => {
         if (newQuote != "" && contract) {
             setTransactionHash("");
             if (metaTxEnabled) {
                 showInfoMessage(`Getting user signature`);
+
+                let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
+                let userAddressCustom = "0xE1E763551A85F04B4687f0035885E7F710A46aA6"; // update your user address per private key and replace userAddress
+
                 let userAddress = selectedAddress;
-                let nonce = await contract.getNonce(userAddress);
-                let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
-                let message = {};
-                message.nonce = parseInt(nonce);
-                message.from = userAddress;
-                message.functionSignature = functionSignature;
-
-                const dataToSign = JSON.stringify({
-                    types: {
-                        EIP712Domain: domainType,
-                        MetaTransaction: metaTransactionType
-                    },
-                    domain: domainData,
-                    primaryType: "MetaTransaction",
-                    message: message
-                });
-
-                // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
-                // instead of chainId
-                let signature = await walletProvider.send("eth_signTypedData_v3", [userAddress, dataToSign])
-                let { r, s, v } = getSignatureParameters(signature);
-                sendSignedTransaction(userAddress, functionSignature, r, s, v);
-            } else {
-                console.log("Sending normal transaction");
-                let tx = await contract.setQuote(newQuote);
-                console.log("Transaction hash : ", tx.hash);
-                showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-                let confirmation = await tx.wait();
-                console.log(confirmation);
-                setTransactionHash(tx.hash);
-
-                showSuccessMessage("Transaction confirmed on chain");
-                //getQuoteFromNetwork();
-            }
-        } else {
-            showErrorMessage("Please enter the quote");
-        }
-    };
-
-    const onSubmitWithEIP712SignForERC20Transfer = async event => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            if (metaTxEnabled) {
-                showInfoMessage(`Getting user signature`);
-                let userAddress = selectedAddress;
-                let nonce = await contract.getNonce(userAddress);
-                debugger;
+                let nonce = await contract.methods.getNonce(userAddress).call();
 
                 let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
+                let multiplyingFactor = 1.1;
+                let newTokenGasPrice = ethers.BigNumber.from(tokenGasPrice).mul(ethers.BigNumber.from(multiplyingFactor.toString())).toString();
                 console.log("type of:  " + typeof(tokenGasPrice));
+                console.log("type of:  " + typeof(newTokenGasPrice));
 
                 console.log(usdcDomainData);
 
@@ -249,14 +231,14 @@ function App() {
                 const usdcPermitOptions = {
                   domainData: usdcDomainData,
                   spender: config.contract.address,
-                  value: "10000000000000000000000",
+                  value: "10000000000000000000000",  // kovan USDC has 18 decimals so this would change accordingly for mainnet
                   userAddress: userAddress,
                   deadline: Number(Math.floor(Date.now() / 1000 + 3600)),
                 };
 
                 console.log(usdcPermitOptions);
 
-                const usdcNonce = await usdcToken.nonces(userAddress);
+                const usdcNonce = await usdcToken.methods.nonces(userAddress).call();
                 console.log(`nonce is : ${usdcNonce}`);
 
                 const permitDataToSign = {
@@ -275,20 +257,10 @@ function App() {
                   },
                 };
 
-                let result = await walletProvider.send("eth_signTypedData_v3", [
-                  userAddress,
-                  JSON.stringify(permitDataToSign),
-                ]);
-
-                console.log(result);
+                const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: permitDataToSign }, 'V4'); //v3 or v4
+                let { r, s, v } = getSignatureParameters(signature);
 
                 let permitOptions = {};
-
-                const signature = result.substring(2);
-                const r = "0x" + signature.substring(0, 64);
-                const s = "0x" + signature.substring(64, 128);
-                const v = parseInt(signature.substring(128, 130), 16);
-
                 permitOptions.holder = userAddress;
                 permitOptions.spender = usdcPermitOptions.spender;
                 permitOptions.value = usdcPermitOptions.value;
@@ -299,12 +271,9 @@ function App() {
                 permitOptions.r = r;
                 permitOptions.s = s;
 
-                debugger;
-
-
+               
                 //let functionSignature = contractInterface.encodeFunctionData("transfer", [Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000"]);
-
-                let functionSignature = contractInterface.encodeFunctionData("permitEIP2612AndTransfer", [Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000000",permitOptions]);
+                let functionSignature = contractInterface.methods.permitEIP2612AndTransfer(Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000000",permitOptions).encodeABI();
                 let message = {};
                 message.nonce = parseInt(nonce);
                 message.from = userAddress;
@@ -322,12 +291,13 @@ function App() {
 
                 // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
                 // instead of chainId
-                let signatureNew = await walletProvider.send("eth_signTypedData_v3", [userAddress, dataToSign])
+
+                const signatureNew = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V4'); //v3 or v4
                 let { rR, sS, vV } = getSignatureParameters(signatureNew);
 
-                //sendSignedTransactionPermit(userAddress, functionSignature, rR, sS, vV);
+                //sendSignedTransactionTransfer(userAddress, functionSignature, rR, sS, vV);
 
-                sendSignedTransaction(userAddress, permitOptions, tokenGasPrice);
+                sendSignedTransactionWithPermit(userAddress, permitOptions, tokenGasPrice);
             } else {
                 console.log("Sending normal transaction");
                 let tx = await contract.setQuote(newQuote);
@@ -345,87 +315,99 @@ function App() {
         }
     };
 
-    const onSubmitWithPrivateKey = async (event) => {
-      if (newQuote != "" && contract) {
+    const onTransferWithPrivateKey = async event => {
+    if (newQuote != "" && contract) {
         setTransactionHash("");
-
-        try {
-          if (metaTxEnabled) {
+        if (metaTxEnabled) {
             showInfoMessage(`Getting user signature`);
-            let privateKey = 
-              "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
-            let wallet = new ethers.Wallet(privateKey);
-            let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-            let nonce = await contract.getNonce(userAddress);
-            let functionSignature = contractInterface.encodeFunctionData(
-              "setQuote",
-              [newQuote]
-            );
+
+            let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
+            let userAddressCustom = "0xE1E763551A85F04B4687f0035885E7F710A46aA6"; // update your user address per private key and replace userAddress
+
+            let userAddress = selectedAddress;
+            let nonce = await contract.methods.getNonce(userAddress).call();
+
+            let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
+            let multiplyingFactor = 1.1;
+            let newTokenGasPrice = ethers.BigNumber.from(tokenGasPrice).mul(ethers.BigNumber.from(multiplyingFactor.toString())).toString();
+            console.log("type of:  " + typeof(tokenGasPrice));
+            console.log("type of:  " + typeof(newTokenGasPrice));
+
+            console.log(usdcDomainData);
+
+            //If your provider is not a signer with accounts then you must pass userAddress in the permit options
+
+            const usdcPermitOptions = {
+              domainData: usdcDomainData,
+              spender: config.contract.address,
+              value: "10000000000000000000000",  // kovan USDC has 18 decimals so this would change accordingly for mainnet
+              userAddress: userAddress,
+              deadline: Number(Math.floor(Date.now() / 1000 + 3600)),
+            };
+
+            console.log(usdcPermitOptions);
+
+            const usdcNonce = await usdcToken.methods.nonces(userAddress).call();
+            console.log(`nonce is : ${usdcNonce}`);
+
+            const permitDataToSign = {
+              types: {
+                EIP712Domain: usdcDomainType,
+                Permit: eip2612PermitType,
+              },
+              domain: usdcDomainData,
+              primaryType: "Permit",
+              message: {
+                owner: userAddress,
+                spender: usdcPermitOptions.spender,
+                nonce: parseInt(usdcNonce),
+                value: usdcPermitOptions.value,
+                deadline: parseInt(usdcPermitOptions.deadline),
+              },
+            };
+
+            const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: permitDataToSign }, 'V4'); //v3 or v4
+            let { r, s, v } = getSignatureParameters(signature);
+
+            let permitOptions = {};
+            permitOptions.holder = userAddress;
+            permitOptions.spender = usdcPermitOptions.spender;
+            permitOptions.value = usdcPermitOptions.value;
+            permitOptions.nonce = parseInt(usdcNonce.toString());
+            permitOptions.expiry = parseInt(usdcPermitOptions.deadline);
+            permitOptions.allowed = true;
+            permitOptions.v = v;
+            permitOptions.r = r;
+            permitOptions.s = s;
+
+           
+            //let functionSignature = contractInterface.encodeFunctionData("transfer", [Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000"]);
+            let functionSignature = contractInterface.methods.permitEIP2612AndTransfer(Number(tokenGasPrice),config.usdc.address,"0x90d25917D46b5b6c92c0f213A4BA83698d36A97C","10000000000000000",permitOptions).encodeABI();
             let message = {};
             message.nonce = parseInt(nonce);
             message.from = userAddress;
             message.functionSignature = functionSignature;
 
-            // NOTE: DO NOT use JSON.stringify on dataToSign object
-            const dataToSign = {
-              types: {
-                EIP712Domain: domainType,
-                MetaTransaction: metaTransactionType,
-              },
-              domain: domainData,
-              primaryType: "MetaTransaction",
-              message: message,
-            };
+            const dataToSign = JSON.stringify({
+                types: {
+                    EIP712Domain: domainType,
+                    MetaTransaction: metaTransactionType
+                },
+                domain: domainData,
+                primaryType: "MetaTransaction",
+                message: message
+            });
 
             // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
             // instead of chainId
-            const signature = sigUtil.signTypedMessage(
-              new Buffer.from(privateKey, "hex"),
-              { data: dataToSign },
-              "V3"
-            );
-            let { r, s, v } = getSignatureParameters(signature);
-            let rawTx, tx;
-            rawTx = {
-              to: config.contract.address,
-              data: contractInterface.encodeFunctionData(
-                "executeMetaTransaction",
-                [userAddress, functionSignature, r, s, v]
-              ),
-              from: userAddress,
-            };
-            tx = await wallet.signTransaction(rawTx);
 
-            let transactionHash;
-            try {
-              let receipt = await ethersProvider.sendTransaction(tx);
-              console.log(receipt);
-            } catch (error) {
-              // Ethers check the hash from user's signed tx and hash returned from Biconomy
-              // Both hash are expected to be different as biconomy send the transaction from its relayers
-              if (error.returnedHash && error.expectedHash) {
-                console.log("Transaction hash : ", error.returnedHash);
-                transactionHash = error.returnedHash;
-              } else {
-                console.log(error);
-                showErrorMessage("Error while sending transaction");
-              }
-            }
+            const signatureNew = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V4'); //v3 or v4
+            let { rR, sS, vV } = getSignatureParameters(signatureNew);
 
-            if (transactionHash) {
-              showInfoMessage(
-                `Transaction sent by relayer with hash ${transactionHash}`
-              );
-              let receipt = await ethersProvider.waitForTransaction(
-                transactionHash
-              );
-              console.log(receipt);
-              showSuccessMessage("Transaction confirmed on chain");
-              //getQuoteFromNetwork();
-            } else {
-              showErrorMessage("Could not get transaction hash");
-            }
-          } else {
+            //sendSignedTransactionTransfer(userAddress, functionSignature, rR, sS, vV);
+
+            sendSignedTransactionWithPermit(userAddress, permitOptions, tokenGasPrice);
+        } else {
             console.log("Sending normal transaction");
             let tx = await contract.setQuote(newQuote);
             console.log("Transaction hash : ", tx.hash);
@@ -436,18 +418,14 @@ function App() {
 
             showSuccessMessage("Transaction confirmed on chain");
             //getQuoteFromNetwork();
-          }
-        } catch (error) {
-          console.log(error);
-          handleClose();
         }
-      } else {
+    } else {
         showErrorMessage("Please enter the quote");
-      }
-    };
+    }
+};
 
     const getSignatureParameters = signature => {
-        if (!ethers.utils.isHexString(signature)) {
+        if (!web3.utils.isHexStrict(signature)) {
             throw new Error(
                 'Given value "'.concat(signature, '" is not a valid hex string.')
             );
@@ -455,33 +433,13 @@ function App() {
         var r = signature.slice(0, 66);
         var s = "0x".concat(signature.slice(66, 130));
         var v = "0x".concat(signature.slice(130, 132));
-        v = ethers.BigNumber.from(v).toNumber();
+        v = web3.utils.hexToNumber(v);
         if (![27, 28].includes(v)) v += 27;
         return {
-            rR: r,
-            sS: s,
-            vV: v
+            r: r,
+            s: s,
+            v: v
         };
-    };
-
-    const getQuoteFromNetwork = async () => {
-        setLoadingMessage("Getting Quote from contact ...");
-        let result = await contract.getQuote();
-        if (
-            result &&
-            result.currentQuote != undefined &&
-            result.currentOwner != undefined
-        ) {
-            if (result.currentQuote == "") {
-                showErrorMessage("No quotes set on blockchain yet");
-            } else {
-                setQuote(result.currentQuote);
-                setOwner(result.currentOwner);
-            }
-        } else {
-            showErrorMessage("Not able to get quote information from Network");
-        }
-        handleClose();
     };
 
     const showErrorMessage = message => {
@@ -496,7 +454,7 @@ function App() {
         NotificationManager.info(message, "Info", 3000);
     };
 
-    const sendSignedTransaction = async (userAddress, permitOptions, tokenGasPrice) => {
+    const sendSignedTransactionWithPermit = async (userAddress, permitOptions, tokenGasPrice) => {
         try {
             showInfoMessage(`Sending transaction via Biconomy`);
             debugger;
@@ -517,7 +475,7 @@ function App() {
         }
     };
 
-    const sendSignedTransactionPermit = async (userAddress, functionData, r, s, v) => {
+    const sendSignedTransactionTransfer = async (userAddress, functionData, r, s, v) => {
         try {
             showInfoMessage(`Sending transaction via Biconomy`);
             debugger;
@@ -591,12 +549,12 @@ function App() {
                             onChange={onQuoteChange}
                             value={newQuote}
                         />
-                        <Button variant="contained" color="primary" onClick={onSubmitWithEIP712SignForERC20Transfer} style={{ marginLeft: "10px" }}>
-                            Submit
+                        <Button variant="contained" color="primary" onClick={onPermitAndTransferWithPrivateKey} style={{ marginLeft: "10px" }}>
+                            Permit And Transfer
             </Button>
 
-                        <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
-                            Submit (Private Key)
+                        <Button variant="contained" color="secondary" onClick={onTransferWithPrivateKey} style={{ marginLeft: "10px" }}>
+                            Transfer
             </Button>
                     </div>
                 </div>

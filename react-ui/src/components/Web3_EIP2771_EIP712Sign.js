@@ -17,7 +17,7 @@ import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 let config = {
   contract: {
-    address: "0xdfcC78640BCb8420208886ACD025Aacc619EC23e",
+    address: "0x8b4153891213cba823F2D2c64395c5FaFe091B52",
     abi: [
       {
         inputs: [

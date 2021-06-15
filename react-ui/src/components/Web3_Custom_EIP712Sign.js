@@ -20,6 +20,7 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
+        // Transfer handler contract Kovan
         address: "0x05BB8A21b7fEdFA7eB648ecCD59Ee939196B2c95",
         abi: [{"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"newBaseGas","type":"uint128"},{"indexed":true,"internalType":"address","name":"actor","type":"address"}],"name":"BaseGasChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"uint256","name":"charge","type":"uint256"},{"indexed":true,"internalType":"address","name":"token","type":"address"}],"name":"FeeCharged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"newFeeReceiver","type":"address"},{"indexed":true,"internalType":"address","name":"actor","type":"address"}],"name":"FeeReceiverChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"addresspayable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"tokenAddress","type":"address"},{"indexed":true,"internalType":"address","name":"actor","type":"address"},{"indexed":true,"internalType":"uint256","name":"newGas","type":"uint256"}],"name":"TransferHandlerGasChanged","type":"event"},{"inputs":[],"name":"baseGas","outputs":[{"internalType":"uint128","name":"","type":"uint128"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"feeMultiplier","outputs":[{"internalType":"uint16","name":"","type":"uint16"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"feeReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"isOwner","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maximumMarkup","outputs":[{"internalType":"uint16","name":"","type":"uint16"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"components":[{"internalType":"address","name":"holder","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"uint256","name":"expiry","type":"uint256"},{"internalType":"bool","name":"allowed","type":"bool"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"internalType":"structEmberTransferHandlerCustom.PermitRequest","name":"permitOptions","type":"tuple"}],"name":"permitEIP2612AndTransfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"components":[{"internalType":"address","name":"holder","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"uint256","name":"expiry","type":"uint256"},{"internalType":"bool","name":"allowed","type":"bool"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"internalType":"structEmberTransferHandlerCustom.PermitRequest","name":"permitOptions","type":"tuple"}],"name":"permitEIP2612UnlimitedAndTransfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"gas","type":"uint128"}],"name":"setBaseGas","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint16","name":"_bp","type":"uint16"}],"name":"setDefaultFeeMultiplier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_feeReceiver","type":"address"}],"name":"setFeeReceiver","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"_transferHandlerGas","type":"uint256"}],"name":"setTransferHandlerGas","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"transferHandlerGas","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"}]
     },
@@ -81,9 +82,9 @@ let domainData = {
     salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(42)).toHexString(), 32) //NOTE: replace chainId from 42 to 1 for mainnet
 };
 
-let ethersProvider,walletProvider, walletSigner;
+let walletProvider, walletSigner;
 let web3, walletWeb3;
-let contract, contractInterface;
+let contract;
 let usdcToken;
 
 const useStyles = makeStyles((theme) => ({
@@ -141,11 +142,10 @@ function App() {
                 biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/190611c4be284c0193d645d80947a851"),
                     { apiKey: config.apiKey.prod, debug: true });
 
-                ethersProvider = new ethers.providers.Web3Provider(biconomy);
-
                  // This web3 instance is used to read normally and write to contract via meta transactions.
                  web3 = new Web3(biconomy);
 
+                // below code L149 - 160 is in the context of front end interaction from metamask and wont be needed when using private key // 
                  // This web3 instance is used to get user signature from connected wallet
                 walletWeb3 = new Web3(window.ethereum);
 
@@ -174,8 +174,6 @@ function App() {
                     ercForwarderClient = biconomy.erc20ForwarderClient;
                     permitClient = biconomy.permitClient;
 
-                    //not needed
-                    contractInterface = new ethers.utils.Interface(config.contract.abi);
                 }).onEvent(biconomy.ERROR, (error, message) => {
                     // Handle error while initializing mexa
                     console.log(message);
@@ -192,21 +190,21 @@ function App() {
         setNewQuote(event.target.value);
     };
 
-
+    // use this method for permit and transfer
+    // method to register on the dashboard is permitEIP2612AndTransfer (use identity verification is done from permit signature hence method can be called directly)
     const onPermitAndTransferWithPrivateKey = async event => {
         if (newQuote != "" && contract) {
             setTransactionHash("");
             if (metaTxEnabled) {
                 showInfoMessage(`Getting user signature`);
-                debugger;
                 let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
-                let userAddressCustom = "0xFAd8e64BF2d15B28a87Fcdf441AD9f8f38757a02"; // update your user address per private key and replace userAddress
+                let userAddressCustom = "0xFAd8e64BF2d15B28a87Fcdf441AD9f8f38757a02"; // update your user(sender) address per private key and replace userAddress
                 let receiver = "0x90d25917D46b5b6c92c0f213A4BA83698d36A97C";
                 let userAddress = userAddressCustom;
                 let nonce = await contract.methods.getNonce(userAddress).call();
 
                 let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
-                let multiplyingFactor = 1.1;
+                let multiplyingFactor = 1.1; // fee multiplier that you want 
                 let newTokenGasPrice = (parseFloat(tokenGasPrice) * parseFloat(multiplyingFactor.toString())).toString();
                 tokenGasPrice = parseInt(newTokenGasPrice).toString();
                 console.log("type of:  " + typeof(tokenGasPrice));
@@ -244,7 +242,6 @@ function App() {
                   },
                 };
 
-                debugger; 
                 const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: permitDataToSign }, 'V3'); //v3 or v4
                 let { r, s, v } = getSignatureParameters(signature);
 
@@ -278,6 +275,8 @@ function App() {
         }
     };
 
+    // use this transfer if there is enough allowance to pay fees and make transfer 
+    // method to register on the dashboard is executeMetaTransaction (this method is from the Base contract for signature verification)
     const onTransferWithPrivateKey = async event => {
         if (newQuote != "" && contract) {
             setTransactionHash("");
@@ -315,8 +314,8 @@ function App() {
                     message: message
                 };
 
-                // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
-                // instead of chainId
+                /* If you're using metamask,  Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
+                 instead of chainId */
 
                 const signatureNew = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V3'); //v3 or v4
                 let { r, s, v } = getSignatureParameters(signatureNew);
@@ -375,11 +374,12 @@ function App() {
             let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
             // paste your private key here for the user address being passsed
             
+             // one more parameter metaInfo to be added to support checks on tokenGasPrice...
             let txParams = {
                 "from": userAddress,
                 "to": config.contract.address,
                 "value": "0x0",
-                "gas": "500000",
+                "gas": "500000", // can be omitted
                 "data": functionSignature
             };
             const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
@@ -408,11 +408,12 @@ function App() {
             
             let executeMetaTransactionData = contract.methods.executeMetaTransaction(userAddress, functionSignature, r, s, v).encodeABI();
 
+            // one more parameter metaInfo to be added to support checks on tokenGasPrice...
             let txParams = {
                 "from": userAddress,
                 "to": config.contract.address,
                 "value": "0x0",
-                "gas": "500000",
+                "gas": "500000", // can be omitted
                 "data": executeMetaTransactionData
             };
             const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);

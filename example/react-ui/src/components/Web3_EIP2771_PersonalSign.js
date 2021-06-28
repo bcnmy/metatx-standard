@@ -162,6 +162,7 @@ function App() {
         if (newQuote != "" && contract) {
             setTransactionHash("");
             if (metaTxEnabled) {
+             try{
                 let tx = contract.methods.setQuote(newQuote).send({
                     from: selectedAddress,
                     signatureType: biconomy.PERSONAL_SIGN
@@ -175,7 +176,13 @@ function App() {
                     setTransactionHash(receipt.transactionHash);
                     showSuccessMessage("Transaction confirmed on chain");
                     getQuoteFromNetwork();
+                }).on('error', function(error,receipt) {
+                    console.log(error);
                 });
+            } catch (err) {
+                console.log("handle errors like signature denied here");
+                console.log(err);
+            }
             } else {
                 console.log("Sending normal transaction");
                 contract.methods

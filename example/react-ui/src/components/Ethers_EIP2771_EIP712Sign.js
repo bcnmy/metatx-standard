@@ -259,7 +259,14 @@ function App() {
                     gasLimit: gasLimit,
                     signatureType: "EIP712_SIGN"
                 };
-                let tx = await provider.send("eth_sendTransaction", [txParams])
+                let tx;
+                try {
+                    tx = await provider.send("eth_sendTransaction", [txParams])
+                }
+                catch (err) {
+                    console.log("handle errors like signature denied here");
+                    console.log(err);
+                }
 
                 console.log("Transaction hash : ", tx);
                 showInfoMessage(`Transaction sent. Waiting for confirmation ..`)

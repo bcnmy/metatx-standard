@@ -161,20 +161,29 @@ function App() {
         if (newQuote != "" && contract) {
             setTransactionHash("");
             if (metaTxEnabled) {
-                let tx = contract.methods.setQuote(newQuote).send({
-                    from: selectedAddress,
-                    signatureType: biconomy.EIP712_SIGN
-                });
+                try {
+                    let tx = contract.methods.setQuote(newQuote).send({
+                        from: selectedAddress,
+                        signatureType: biconomy.EIP712_SIGN
+                    });
 
-                tx.on("transactionHash", function (hash) {
-                    console.log(`Transaction hash is ${hash}`);
-                    showInfoMessage(`Transaction sent. Waiting for confirmation ..`);
-                }).once("confirmation", function (confirmationNumber, receipt) {
-                    console.log(receipt);
-                    setTransactionHash(receipt.transactionHash);
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                });
+                    tx.on("transactionHash", function (hash) {
+                        console.log(`Transaction hash is ${hash}`);
+                        showInfoMessage(`Transaction sent. Waiting for confirmation ..`);
+                    }).once("confirmation", function (confirmationNumber, receipt) {
+                        console.log(receipt);
+                        setTransactionHash(receipt.transactionHash);
+                        showSuccessMessage("Transaction confirmed on chain");
+                        getQuoteFromNetwork();
+                    }).on('error', function (error, receipt) {
+                        console.log(error);
+                    });
+                } catch (err) {
+                    console.log("handle errors like signature denied here");
+                    console.log(err);
+                }
+
+
             } else {
                 console.log("Sending normal transaction");
                 contract.methods

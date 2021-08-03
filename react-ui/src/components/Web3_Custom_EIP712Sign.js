@@ -21,8 +21,8 @@ let sigUtil = require("eth-sig-util");
 let config = {
     contract: {
         // Transfer handler contract Kovan
-        address: "0x05BB8A21b7fEdFA7eB648ecCD59Ee939196B2c95",
-        abi: [{"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"newBaseGas","type":"uint128"},{"indexed":true,"internalType":"address","name":"actor","type":"address"}],"name":"BaseGasChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"uint256","name":"charge","type":"uint256"},{"indexed":true,"internalType":"address","name":"token","type":"address"}],"name":"FeeCharged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"newFeeReceiver","type":"address"},{"indexed":true,"internalType":"address","name":"actor","type":"address"}],"name":"FeeReceiverChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"addresspayable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"tokenAddress","type":"address"},{"indexed":true,"internalType":"address","name":"actor","type":"address"},{"indexed":true,"internalType":"uint256","name":"newGas","type":"uint256"}],"name":"TransferHandlerGasChanged","type":"event"},{"inputs":[],"name":"baseGas","outputs":[{"internalType":"uint128","name":"","type":"uint128"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"feeMultiplier","outputs":[{"internalType":"uint16","name":"","type":"uint16"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"feeReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"isOwner","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maximumMarkup","outputs":[{"internalType":"uint16","name":"","type":"uint16"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"components":[{"internalType":"address","name":"holder","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"uint256","name":"expiry","type":"uint256"},{"internalType":"bool","name":"allowed","type":"bool"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"internalType":"structEmberTransferHandlerCustom.PermitRequest","name":"permitOptions","type":"tuple"}],"name":"permitEIP2612AndTransfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"components":[{"internalType":"address","name":"holder","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"uint256","name":"expiry","type":"uint256"},{"internalType":"bool","name":"allowed","type":"bool"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"internalType":"structEmberTransferHandlerCustom.PermitRequest","name":"permitOptions","type":"tuple"}],"name":"permitEIP2612UnlimitedAndTransfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"gas","type":"uint128"}],"name":"setBaseGas","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint16","name":"_bp","type":"uint16"}],"name":"setDefaultFeeMultiplier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_feeReceiver","type":"address"}],"name":"setFeeReceiver","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"_transferHandlerGas","type":"uint256"}],"name":"setTransferHandlerGas","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"transferHandlerGas","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"}]
+        address: "0x355b9377a52fab2D906B5aB3d11665eb3a8dA292",
+        abi: [{"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"newBaseGas","type":"uint128"},{"indexed":true,"internalType":"address","name":"actor","type":"address"}],"name":"BaseGasChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"uint256","name":"charge","type":"uint256"},{"indexed":true,"internalType":"address","name":"token","type":"address"}],"name":"FeeCharged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"newFeeReceiver","type":"address"},{"indexed":true,"internalType":"address","name":"actor","type":"address"}],"name":"FeeReceiverChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"addresspayable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"tokenAddress","type":"address"},{"indexed":true,"internalType":"address","name":"actor","type":"address"},{"indexed":true,"internalType":"uint256","name":"newGas","type":"uint256"}],"name":"TransferHandlerGasChanged","type":"event"},{"inputs":[],"name":"REQUEST_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"baseGas","outputs":[{"internalType":"uint128","name":"","type":"uint128"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"feeMultiplier","outputs":[{"internalType":"uint16","name":"","type":"uint16"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"feeReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getTransferNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"isOwner","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maximumMarkup","outputs":[{"internalType":"uint16","name":"","type":"uint16"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"components":[{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"from","type":"address"},{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"internalType":"structTransferHandlerCustom.TokenTransferRequest","name":"req","type":"tuple"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"},{"components":[{"internalType":"address","name":"holder","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"uint256","name":"expiry","type":"uint256"},{"internalType":"bool","name":"allowed","type":"bool"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"internalType":"structTransferHandlerCustom.PermitRequest","name":"permitOptions","type":"tuple"}],"name":"permitEIP2612AndTransfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"gas","type":"uint128"}],"name":"setBaseGas","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint16","name":"_bp","type":"uint16"}],"name":"setDefaultFeeMultiplier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_feeReceiver","type":"address"}],"name":"setFeeReceiver","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"_transferHandlerGas","type":"uint256"}],"name":"setTransferHandlerGas","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenGasPrice","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"transferHandlerGas","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"}]
     },
     apiKey: {
         test: "du75BkKO6.941bfec1-660f-4894-9743-5cdfe93c6209",
@@ -74,6 +74,15 @@ let eip2612PermitType = [
   { name: "nonce", type: "uint256" },
   { name: "deadline", type: "uint256" },
 ];
+
+let tokenTransferRequestType = [
+    { name: "nonce", type: "uint256" },
+    { name: "from", type: "address" },
+    { name: "tokenGasPrice", type: "uint256" },
+    { name: "token", type: "address" },
+    { name: "to", type: "address" },
+    { name: "value", type: "uint256" },
+  ];
 
 let domainData = {
     name: "ERC20Transfer",
@@ -198,10 +207,12 @@ function App() {
             if (metaTxEnabled) {
                 showInfoMessage(`Getting user signature`);
                 let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
-                let userAddressCustom = "0xFAd8e64BF2d15B28a87Fcdf441AD9f8f38757a02"; // update your user(sender) address per private key and replace userAddress
-                let receiver = "0x90d25917D46b5b6c92c0f213A4BA83698d36A97C";
+                let userAddressCustom = "0x90d25917D46b5b6c92c0f213A4BA83698d36A97C"; // update your user(sender) address per private key and replace userAddress
+                let receiver = "0xFAd8e64BF2d15B28a87Fcdf441AD9f8f38757a02";
                 let userAddress = userAddressCustom;
+                debugger;
                 let nonce = await contract.methods.getNonce(userAddress).call();
+                let transferNonce = await contract.methods.getTransferNonce(userAddress).call();
 
                 let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
                 let multiplyingFactor = 1.1; // fee multiplier that you want 
@@ -211,6 +222,27 @@ function App() {
                 console.log("type of:  " + typeof(newTokenGasPrice));
 
                 console.log(usdcDomainData);
+
+                let req = {};
+                req.nonce = Number(transferNonce);
+                req.from = userAddress;
+                req.tokenGasPrice = Number(tokenGasPrice);
+                req.token = config.usdc.address;
+                req.to = receiver;
+                req.value = "10000000000000000";
+
+                const requestToSign = {
+                    types: {
+                        EIP712Domain: domainType,
+                        TokenTransferRequest: tokenTransferRequestType
+                    },
+                    domain: domainData,
+                    primaryType: "TokenTransferRequest",
+                    message: req
+                };
+
+                const signatureNew = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: requestToSign }, 'V3'); //v3 or v4
+                let signatureBreakdown = getSignatureParameters(signatureNew);
 
             
                 const usdcPermitOptions = {
@@ -256,7 +288,7 @@ function App() {
                 permitOptions.r = r;
                 permitOptions.s = s;
 
-                let functionSignature = contract.methods.permitEIP2612AndTransfer(Number(tokenGasPrice),config.usdc.address,receiver,"10000000000000000",permitOptions).encodeABI();
+                let functionSignature = contract.methods.permitEIP2612AndTransfer(req, signatureBreakdown.r, signatureBreakdown.s, signatureBreakdown.v, permitOptions).encodeABI();
                 sendSignedTransactionWithPermit(userAddress, functionSignature);
             } else {
                 console.log("Sending normal transaction");
@@ -284,8 +316,8 @@ function App() {
                 debugger;
                 showInfoMessage(`Getting user signature`);
                 let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
-                let userAddressCustom = "0xFAd8e64BF2d15B28a87Fcdf441AD9f8f38757a02"; // update your user (sender) address per private key and replace userAddress
-                let receiver = "0x90d25917D46b5b6c92c0f213A4BA83698d36A97C";
+                let userAddressCustom = "0x90d25917D46b5b6c92c0f213A4BA83698d36A97C"; // update your user (sender) address per private key and replace userAddressCustom
+                let receiver = "0xFAd8e64BF2d15B28a87Fcdf441AD9f8f38757a02";
                 let userAddress = userAddressCustom;
                 let nonce = await contract.methods.getNonce(userAddress).call();
                 console.log(`nonce is : ${nonce}`);

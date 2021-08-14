@@ -298,6 +298,14 @@ function App() {
                 console.log("GAS LIMIT");
                 console.log(Number(gasLimit));
 
+
+                let cost = ethers.BigNumber.from(gasLimit.toString())
+                       .mul(ethers.BigNumber.from(req.tokenGasPrice));
+
+                let spendValue = parseFloat(cost).toString();
+                console.log(spendValue);
+                //make sure user has enough balance!
+
                 sendSignedTransactionWithPermit(userAddress, functionSignature);
             } else {
                 console.log("Sending normal transaction");
@@ -361,7 +369,7 @@ function App() {
                 const signatureNew = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V3'); //v3 or v4
                 let { r, s, v } = getSignatureParameters(signatureNew);
 
-                sendSignedTransactionTransfer(userAddress, functionSignature, r, s, v);
+                sendSignedTransactionTransfer(newTokenGasPrice,userAddress, functionSignature, r, s, v);
             } else {
                 console.log("Sending normal transaction");
                 let tx = await contract.setQuote(newQuote);
@@ -439,7 +447,7 @@ function App() {
         }
     };
 
-    const sendSignedTransactionTransfer = async (userAddress, functionSignature, r, s, v) => {
+    const sendSignedTransactionTransfer = async (tokenGasPrice, userAddress, functionSignature, r, s, v) => {
         try {
             showInfoMessage(`Sending transaction via Biconomy`);
             debugger;
@@ -450,6 +458,13 @@ function App() {
 
             console.log("GAS LIMIT");
             console.log(Number(gasLimit));
+
+            let cost = ethers.BigNumber.from(gasLimit.toString())
+                       .mul(ethers.BigNumber.from(tokenGasPrice));
+
+            let spendValue = parseFloat(cost).toString();
+            console.log(spendValue);
+            //make sure user has enough balance!
  
             let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
             // paste your private key here for the user address being passsed

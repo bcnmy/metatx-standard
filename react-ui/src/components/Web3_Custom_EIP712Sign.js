@@ -216,7 +216,7 @@ function App() {
                 let transferNonce = await contract.methods.getTransferNonce(userAddress,batchId).call();
 
                 let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
-                let multiplyingFactor = 1.1; // fee multiplier that you want 
+                let multiplyingFactor = 1; // fee multiplier that you want 
                 let newTokenGasPrice = (parseFloat(tokenGasPrice) * parseFloat(multiplyingFactor.toString())).toString();
                 tokenGasPrice = parseInt(newTokenGasPrice).toString();
                 console.log("type of:  " + typeof(tokenGasPrice));
@@ -291,6 +291,13 @@ function App() {
                 permitOptions.s = s;
 
                 let functionSignature = contract.methods.permitEIP2612AndTransfer(req, signatureBreakdown.r, signatureBreakdown.s, signatureBreakdown.v, permitOptions).encodeABI();
+                let gasLimit = await contract.methods
+                    .permitEIP2612AndTransfer(req, signatureBreakdown.r, signatureBreakdown.s, signatureBreakdown.v, permitOptions)
+                    .estimateGas({ from: userAddress });
+                
+                console.log("GAS LIMIT");
+                console.log(Number(gasLimit));
+
                 sendSignedTransactionWithPermit(userAddress, functionSignature);
             } else {
                 console.log("Sending normal transaction");
@@ -324,13 +331,13 @@ function App() {
                 let nonce = await contract.methods.getNonce(userAddress).call();
                 console.log(`nonce is : ${nonce}`);
                 let tokenGasPrice = await ercForwarderClient.getTokenGasPrice(config.usdc.address);
-                let multiplyingFactor = 1.1;
+                let multiplyingFactor = 1;
                 let newTokenGasPrice = (parseFloat(tokenGasPrice) * parseFloat(multiplyingFactor.toString())).toString();
                 tokenGasPrice = parseInt(newTokenGasPrice).toString();
                 console.log("type of:  " + typeof(tokenGasPrice));
                 console.log("type of:  " + typeof(newTokenGasPrice));
 
-                let functionSignature = contract.methods.transfer(Number(tokenGasPrice),config.usdc.address,receiver,"10000000000000").encodeABI();
+                let functionSignature = contract.methods.transfer(Number(tokenGasPrice),config.usdc.address,receiver,"10000000000000").encodeABI();     
                 let message = {};
                 message.nonce = parseInt(nonce);
                 message.from = userAddress;
@@ -436,6 +443,13 @@ function App() {
         try {
             showInfoMessage(`Sending transaction via Biconomy`);
             debugger;
+
+            let gasLimit = await contract.methods
+            .executeMetaTransaction(userAddress, functionSignature, r, s, v)
+            .estimateGas({ from: userAddress });
+
+            console.log("GAS LIMIT");
+            console.log(Number(gasLimit));
  
             let privateKey = "f78b11516983e1450ac8e4dc636a737cd24574d77cefb7def83f15eef0c8216c";
             // paste your private key here for the user address being passsed

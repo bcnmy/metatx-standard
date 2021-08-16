@@ -60,6 +60,8 @@ let usdcDomainData = {
   verifyingContract: config.usdc.address,
 };
 
+const tokenDecimals = 18;
+
 let usdcDomainType = [
   { name: "name", type: "string" },
   { name: "version", type: "string" },
@@ -302,6 +304,11 @@ function App() {
                 let cost = ethers.BigNumber.from(gasLimit.toString())
                        .mul(ethers.BigNumber.from(req.tokenGasPrice));
 
+                cost = (
+                        parseFloat(cost) /
+                        parseFloat(ethers.BigNumber.from(10).pow(tokenDecimals))
+                        ).toFixed(3);    
+
                 let spendValue = parseFloat(cost).toString();
                 console.log(spendValue);
                 //make sure user has enough balance!
@@ -461,6 +468,11 @@ function App() {
 
             let cost = ethers.BigNumber.from(gasLimit.toString())
                        .mul(ethers.BigNumber.from(tokenGasPrice));
+            
+            cost = (
+                    parseFloat(cost) /
+                    parseFloat(ethers.BigNumber.from(10).pow(tokenDecimals))
+                    ).toFixed(3);           
 
             let spendValue = parseFloat(cost).toString();
             console.log(spendValue);

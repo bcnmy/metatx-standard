@@ -1,11 +1,11 @@
 # Generalized Meta Transaction
 
-Repository containing a gas cost effective standard for meta transaction to be used by any contract to enable native meta transaction feature on any function.
-The approach support signed typed messages so that while signing the data on client side user see a human readable message instead of scary hex string.
+Repository containing a gas cost-effective standard for meta transaction to be used by any contract to enable native meta transaction feature on any function.
+The approach support signed typed messages so that while signing the data on client-side, user sees a human readable message instead of scary hex string.
 
 You can see the LIVE DEMO <a href="https://dapp.biconomy.io/" target="_blank" >Here</a>(works on Kovan)
 
-The standard is the result of initiative by metamask here https://medium.com/metamask/announcing-a-generalized-metatransaction-contest-abd4f321470b
+The standard is the result of an initiative by Metamask here https://medium.com/metamask/announcing-a-generalized-metatransaction-contest-abd4f321470b
 
 Biconomy was selected as one of the finalist in the hackathon. Read <a href="https://medium.com/metamask/our-metatransaction-hackathon-winner-a620551ccb9b" target="_blank">here</a>
 
@@ -42,15 +42,15 @@ Rename .secret.example to .secret and add 12 word mnemonic string in the first l
 
 NOTE: Make sure you have nodejs version > 12.0.0 <br/>
 1. Hardcode the `chainId()` at line 28 in EIP712Base.sol to the specific network Id e.g 42 for Kovan etc.
-2. Similarly change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.
+2. Similarly, change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.
 3. Run `npm install` command to install all the dependencies
 4. Run `ganache-cli` in separate cmd/terminal to run ganache client
 5. At last, Run `npm run test` to run all the test cases.
 
 <h3>How to get test coverage</h3>
 
-1. Hardcode the `chainId()` at line 28 in EIP712Base.sol to the specific network Id e.g 42 for Kovan etc.
-2. Similarly change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.
+1. Hardcode the `chainId()` at line 28 in EIP712Base.sol to the specific network Id e.g. 42 for Kovan etc.
+2. Similarly, change the same networkId as above in `EIP712MetaTransaction.test.js` at line 146.
 3. Run `npm install` command to install all the dependencies
 4. Run `ganache-cli` in separate cmd/terminal to run ganache client
 5. At last, Run `npm run coverage` to get test coverage report

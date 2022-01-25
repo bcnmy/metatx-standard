@@ -63,7 +63,7 @@ contract EIP712MetaTransaction is EIP712Base {
     }
 
     function getNonce(address user) external view returns(uint256 nonce) {
-        nonce = nonces[user];
+       return nonce = nonces[user];
     }
 
     function verify(address user, MetaTransaction memory metaTx, bytes32 sigR, bytes32 sigS, uint8 sigV) internal view returns (bool) {

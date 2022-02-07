@@ -8,6 +8,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "@venly/web3-provider": "^0.27.0",
     "@walletconnect/web3-provider": "^1.7.1",
     "bitski": "^0.11.0",
     "eth-sig-util": "^2.5.2",

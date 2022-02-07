@@ -172,7 +172,6 @@ const BiconomyProvider = (props) => {
       return newBiconomy;
     } // else setup without network agnostic features
     else {
-
       newBiconomy = new Biconomy(rawEthereumProvider, {
         apiKey: config.apiKey.prod,
         debug: true,

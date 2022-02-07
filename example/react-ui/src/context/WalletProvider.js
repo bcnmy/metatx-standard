@@ -9,6 +9,7 @@ import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { Bitski } from "bitski";
+import { Venly } from "@venly/web3-provider";
 
 let config = {
   contract: {
@@ -153,6 +154,14 @@ const WalletProviderProvider = (props) => {
               callbackUrl: "http://localhost:3000/bitskicallback", // required
             },
           },
+          venly: {
+            package: Venly, // required
+            options: {
+              clientId: "Testaccount", // required
+              environment: "staging",
+              // windowMode: "popup",
+            },
+          },
         },
       })
     );
@@ -162,6 +171,7 @@ const WalletProviderProvider = (props) => {
   // subsequent changes to these values however do fire events, and we can just use those event handlers
   useEffect(() => {
     if (!walletProvider) return;
+    // console.log(walletProvider);
     (async () => {
       let { chainId } = await walletProvider.getNetwork();
       let accounts = await walletProvider.listAccounts();

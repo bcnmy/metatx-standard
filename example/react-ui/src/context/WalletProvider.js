@@ -95,7 +95,7 @@ let config = {
   },
   apiKey: {
     test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-    prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9",
+    prod: "sSRveUeuU.7b3b6b8d-8ab8-4201-9577-df422d3a60e2",
   },
 };
 
@@ -137,7 +137,7 @@ const WalletProviderProvider = (props) => {
   useEffect(() => {
     setWeb3Modal(
       new Web3Modal({
-        // network: "mumbai", // optional
+        network: "mumbai", // optional
         cacheProvider: true, // optional
         providerOptions: {
           walletconnect: {
@@ -159,6 +159,7 @@ const WalletProviderProvider = (props) => {
             options: {
               clientId: "Testaccount", // required
               environment: "staging",
+              secretType: "MATIC",
               // windowMode: "popup",
             },
           },

@@ -30,7 +30,7 @@ function App() {
         const provider = window["ethereum"];
         await provider.enable();
 
-        biconomy = new Biconomy(provider, {apiKey: "HG302ERn6.e700689f-0fd3-4b34-868e-2efb28b9dac6", debug: true});
+        biconomy = new Biconomy(provider, {apiKey: "HWo3roGltr.104faa4d-fe32-44e5-b800-d84bf5605aee", debug: true});
 
         networkWeb3 = new Web3(biconomy);
         
@@ -40,7 +40,6 @@ function App() {
             config.contract.address
           );
           setSelectedAddress(provider.selectedAddress);
-          getQuoteFromNetwork();
           provider.on("accountsChanged", function(accounts) {
           setSelectedAddress(accounts[0]);
         });
@@ -60,24 +59,25 @@ function App() {
   };
 
   const onSubmit = async event => {
-    if (newQuote != "" && contract) {
+    if (contract) {
 
         console.log("Sending normal transaction");
+        console.log(selectedAddress);
         contract.methods
-          .setQuote(newQuote)
+          .stake(selectedAddress,"100000000000000000000")
           .send({
-            from: selectedAddress
+            from: selectedAddress,
+            signatureType: biconomy.EIP712_SIGN
           })
           .on("transactionHash", function (hash) {
             showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
           })
           .once("confirmation", function (confirmationNumber, receipt) {
             showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
           });
       
     } else {
-      showErrorMessage("Please enter the quote");
+      showErrorMessage("Contract not found");
     }
   };
 
@@ -146,7 +146,6 @@ function App() {
             <input
               type="text"
               placeholder="Enter your quote"
-              onChange={onQuoteChange}
               value={newQuote}
             />
             <Button variant="contained" color="primary" onClick={onSubmit}>

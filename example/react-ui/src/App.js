@@ -1,190 +1,103 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
+import React, { useEffect, useState, useCallback } from 'react';
+import './App.css';
+import { ethers } from 'ethers';
+import contract from './contracts/SampleNFT.json';
 import Button from "@material-ui/core/Button";
 import {
   NotificationContainer,
   NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
+import web3 from "web3";
 
-import Web3 from "web3";
-let sigUtil = require("eth-sig-util");
-const { config } = require("./config");
-
-const domainType = [
-  { name: "name", type: "string" },
-  { name: "version", type: "string" },
-  { name: "chainId", type: "uint256" },
-  { name: "verifyingContract", type: "address" }
-];
-
-const metaTransactionType = [
-  { name: "nonce", type: "uint256" },
-  { name: "from", type: "address" },
-  { name: "functionSignature", type: "bytes" }
-];
-
-let domainData = {
-  name: "TestContract",
-  version: "1",
-  verifyingContract: config.contract.address
-};
-
-let web3;
-let contract;
+const { config } = require("./config")
+const contractAddress = config.contract.address;
+const abi = contract.abi;
 
 function App() {
-  const [quote, setQuote] = useState("This is a default quote");
-  const [owner, setOwner] = useState("Default Owner Address");
-  const [newQuote, setNewQuote] = useState("");
-  const [selectedAddress, setSelectedAddress] = useState("");
-  const [metaTxEnabled, setMetaTxEnabled] = useState(true);
-  useEffect(() => {
-    async function init() {
-      if (
-        typeof window.ethereum !== "undefined" &&
-        window.ethereum.isMetaMask
-      ) {
-        // Ethereum user detected. You can now use the provider.
-        const provider = window["ethereum"];
-        await provider.enable();
-        if (provider.networkVersion === "3") {
-          domainData.chainId = 3;
-          web3 = new Web3(provider);
+  const [currentAccount, setCurrentAccount] = useState(null);
+  const [newTokenURI, setNewTokenURI] = useState("")
 
-          contract = new web3.eth.Contract(
-            config.contract.abi,
-            config.contract.address
-          );
-          setSelectedAddress(provider.selectedAddress);
-          getQuoteFromNetwork();
-          provider.on("accountsChanged", function(accounts) {
-            setSelectedAddress(accounts[0]);
-          });
-        } else {
-          showErrorMessage("Please change the network in metamask to Ropsten");
-        }
-      } else {
-        showErrorMessage("Metamask not installed");
-      }
+  const submit = (e) => {
+    e.preventDefault();
+    if(newTokenURI !== ""){
+      showSuccessMessage("URI link available, ready to mint.");
+      console.log(newTokenURI);
+    } else {
+        showErrorMessage("Please insert URI link!")
     }
-    init();
-  }, []);
-
-  const onQuoteChange = event => {
-    setNewQuote(event.target.value);
   };
 
-  const onSubmit = async event => {
-    if (newQuote != "" && contract) {
-      if (metaTxEnabled) {
-        console.log("Sending meta transaction");
-        let userAddress = selectedAddress;
-        let nonce = await contract.methods.getNonce(userAddress).call();
-        let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-        let message = {};
-        message.nonce = parseInt(nonce);
-        message.from = userAddress;
-        message.functionSignature = functionSignature;
+  const checkWalletIsConnected = useCallback(async () => {
+    const { ethereum } = window;
 
-        const dataToSign = JSON.stringify({
-          types: {
-            EIP712Domain: domainType,
-            MetaTransaction: metaTransactionType
-          },
-          domain: domainData,
-          primaryType: "MetaTransaction",
-          message: message
-        });
-        console.log(domainData);
-        console.log();
-        web3.currentProvider.send(
-          {
-            jsonrpc: "2.0",
-            id: 999999999999,
-            method: "eth_signTypedData_v4",
-            params: [userAddress, dataToSign]
-          },
-          function(error, response) {
-            console.info(`User signature is ${response.result}`);
-            if (error || (response && response.error)) {
-              showErrorMessage("Could not get user signature");
-            } else if (response && response.result) {
-              let { r, s, v } = getSignatureParameters(response.result);
-              console.log(userAddress);
-              console.log(JSON.stringify(message));
-              console.log(message);
-              console.log(getSignatureParameters(response.result));
+    if (!ethereum) {
+      console.log("Make sure you have Metamask installed!");
+      return;
+    } else {
+      console.log("Wallet exists! We're ready to go!")
+    }
 
-              const recovered = sigUtil.recoverTypedSignature_v4({
-                data: JSON.parse(dataToSign),
-                sig: response.result
-              });
-              console.log(`Recovered ${recovered}`);
-              sendTransaction(userAddress, functionSignature, r, s, v);
-            }
-          }
-        );
-      } else {
-        console.log("Sending normal transaction");
-        contract.methods
-          .setQuote(newQuote)
-          .send({ from: selectedAddress })
-          .on("transactionHash", function(hash) {
-            showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-          })
-          .once("confirmation", function(confirmationNumber, receipt) {
-            showSuccessMessage("Transaction confirmed");
-            getQuoteFromNetwork();
-          });
+    const accounts = await ethereum.request({ method: 'eth_accounts' });
+
+    if (accounts.length !== 0) {
+      const account = accounts[0];
+      console.log("Found an authorized account: ", account);
+      setCurrentAccount(account);
+    } else {
+      console.log("No authorized account found");
+    }
+  },[])
+
+  const connectWalletHandler = async () => {
+    const { ethereum } = window;
+
+    if (!ethereum) {
+      alert("Please install Metamask!");
+    }
+    try {
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      console.log("Found an account! Address: ", accounts[0]);
+      setCurrentAccount(accounts[0]);
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const mintNftHandler = async () => {
+    console.log(newTokenURI);
+    if (newTokenURI !== "" && contract) {
+      try {
+        const { ethereum } = window;
+
+        if (ethereum) {
+          const provider = new ethers.providers.Web3Provider(ethereum);
+          const signer = provider.getSigner();
+          const nftContract = new ethers.Contract(contractAddress, abi, signer);
+
+          console.log("Initialize payment");
+          let nftTxn = await nftContract.mint(newTokenURI);
+
+          console.log("Mining... please wait");
+          await nftTxn.wait();
+
+          console.log(`Mined, see transaction: https://mumbai.polygonscan.com/tx/${nftTxn.hash}`);
+          showSuccessMessage("Congrats, your NFT has been minted successfully!")
+          refreshPage()
+        } else {
+          console.log("Ethereum object does not exist");
+        }
+      } catch (err) {
+        console.log(err);
       }
     } else {
-      showErrorMessage("Please enter the quote");
+      showErrorMessage("Please enter the URI link for your NFT media.")
     }
-  };
+  }
 
-  const getSignatureParameters = signature => {
-    if (!web3.utils.isHexStrict(signature)) {
-      throw new Error(
-        'Given value "'.concat(signature, '" is not a valid hex string.')
-      );
-    }
-    var r = signature.slice(0, 66);
-    var s = "0x".concat(signature.slice(66, 130));
-    var v = "0x".concat(signature.slice(130, 132));
-    v = web3.utils.hexToNumber(v);
-    if (![27, 28].includes(v)) v += 27;
-    return {
-      r: r,
-      s: s,
-      v: v
-    };
-  };
-
-  const getQuoteFromNetwork = () => {
-    if (web3 && contract) {
-      contract.methods
-        .getQuote()
-        .call()
-        .then(function(result) {
-          console.log(result);
-          if (
-            result &&
-            result.currentQuote != undefined &&
-            result.currentOwner != undefined
-          ) {
-            if (result.currentQuote == "") {
-              showErrorMessage("No quotes set on blockchain yet");
-            } else {
-              setQuote(result.currentQuote);
-              setOwner(result.currentOwner);
-            }
-          } else {
-            showErrorMessage("Not able to get quote information from Network");
-          }
-        });
-    }
-  };
+  function refreshPage() {
+    window.location.reload(false);
+  }
 
   const showErrorMessage = message => {
     NotificationManager.error(message, "Error", 5000);
@@ -194,78 +107,89 @@ function App() {
     NotificationManager.success(message, "Message", 3000);
   };
 
-  const showInfoMessage = message => {
-    NotificationManager.info(message, "Info", 3000);
-  };
+  const connectWalletButton = () => {
+    return (
+      <>
+      <button onClick={connectWalletHandler} className='cta-button connect-wallet-button'>
+        Connect Wallet
+      </button>
+      </>
+    )
+  }
 
-  const sendTransaction = async (userAddress, functionData, r, s, v) => {
+  // Update to retrieve the total number of NFTs minted
+  const getMintCount = async() => {
     if (web3 && contract) {
-      try {
-        let gasLimit = await contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .estimateGas({ from: userAddress });
-        let gasPrice = await web3.eth.getGasPrice();
-        console.log(gasLimit);
-        console.log(gasPrice);
-        let tx = contract.methods
-          .executeMetaTransaction(userAddress, functionData, r, s, v)
-          .send({
-            from: userAddress,
-            gasPrice: web3.utils.toHex(gasPrice),
-            gasLimit: web3.utils.toHex(gasLimit)
-          });
-
-        tx.on("transactionHash", function(hash) {
-          console.log(`Transaction hash is ${hash}`);
-          showInfoMessage(`Transaction sent by relayer with hash ${hash}`);
-        }).once("confirmation", function(confirmationNumber, receipt) {
-          console.log(receipt);
-          showSuccessMessage("Transaction confirmed on chain");
-          getQuoteFromNetwork();
-        });
-      } catch (error) {
-        console.log(error);
-      }
+      const tokenCount = await contract.tokenCounter;
+      console.log(tokenCount);
+      return tokenCount
     }
   };
+
+  const mintNftButton = () => {
+    console.log(newTokenURI);
+    if (newTokenURI !== ""){
+      return (
+        <>
+        <div>
+          <div>
+            <h1>Ready to mint NFT with URI: {newTokenURI}</h1>
+          </div>
+          <div>
+            <button variant="contained" color="primary" onClick={mintNftHandler}>
+              Mint NFT
+            </button>
+          </div>
+        </div>
+        </>
+      )
+    } else {
+      return (
+        <>
+        <p>Paste the URI link for your NFT media data in the input above to continue.</p>
+        </>
+      )
+    }
+  }
+
+  useEffect(() => {
+    checkWalletIsConnected();
+  }, [checkWalletIsConnected])
 
   return (
     <div className="App">
       <section className="main">
-        <div className="mb-wrap mb-style-2">
-          <blockquote cite="http://www.gutenberg.org/ebboks/11">
-            <p>{quote}</p>
-          </blockquote>
-        </div>
-
-        <div className="mb-attribution">
-          <p className="mb-author">{owner}</p>
-          {selectedAddress.toLowerCase() === owner.toLowerCase() && (
-            <cite className="owner">You are the owner of the quote</cite>
-          )}
-          {selectedAddress.toLowerCase() !== owner.toLowerCase() && (
-            <cite>You are not the owner of the quote</cite>
-          )}
+        <div className="header-container">
+          <p className="header">🍃 <strong>Mint any NFT with media URI</strong> 🍃</p>
+          <p className="sub-text">Upload your files to Arweave or any other web3 file storage system, type in the URI link to your media metadata below and mint your NFT.</p>
+          {currentAccount ? `Connected with wallet ${currentAccount}` : `Please connect your wallet below to proceed`}
         </div>
       </section>
       <section>
         <div className="submit-container">
           <div className="submit-row">
             <input
-              type="text"
-              placeholder="Enter your quote"
-              onChange={onQuoteChange}
-              value={newQuote}
+              name="TokenURI"
+              placeholder="Enter uri link for your NFT media"
+              onChange={(e)=>{setNewTokenURI(e.target.value)}}
+              value={newTokenURI}
             />
-            <Button variant="contained" color="primary" onClick={onSubmit}>
-              Submit
+            <Button variant="contained" color="primary" onClick={(e)=>submit(e)}>
+              🢀Link Goes Here
             </Button>
+          </div>
+        </div>
+      </section>
+      <section>
+        <div className='submit-container'>
+          <div>
+            {currentAccount ? mintNftButton() : connectWalletButton()}
           </div>
         </div>
       </section>
       <NotificationContainer />
     </div>
-  );
+  )
 }
 
 export default App;

@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.6.6;
+pragma solidity 0.8.10;
 
 import "./lib/EIP712Base.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract EIP712MetaTransaction is EIP712Base {
     using SafeMath for uint256;
@@ -49,7 +49,7 @@ contract EIP712MetaTransaction is EIP712Base {
         (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress));
 
         require(success, "Function call not successful");
-        emit MetaTransactionExecuted(userAddress, msg.sender, functionSignature);
+        emit MetaTransactionExecuted(userAddress, payable(msg.sender), functionSignature);
         return returnData;
     }
 

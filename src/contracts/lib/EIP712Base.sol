@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.6.6;
+pragma solidity 0.8.10;
 
 contract EIP712Base {
 
@@ -24,7 +24,7 @@ contract EIP712Base {
         ));
     }
 
-    function getChainID() internal pure returns (uint256 id) {
+    function getChainID() internal view returns (uint256 id) {
         assembly {
             id := chainid()
         }

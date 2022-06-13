@@ -5,10 +5,14 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 // import { Provider } from 'react-redux'
 // import store from './redux/store'
+import { Web3Provider } from "./context/Web3Context";
 
 ReactDOM.render(
     // <Provider store={store}>
-        <App />,
+    <Web3Provider>
+        <App />
+    </Web3Provider>,
+
     // </Provider>, 
     document.getElementById('root'));
 

@@ -24,7 +24,7 @@ import Ethers_EIP2771_API from './components/Ethers_EIP2771_API';
 import Ethers_Forward_PersonalSign from './components/Ethers_Forward_PersonalSign';
 import Ethers_Forward_AllTokens from './components/Ethers_Forward_AllTokens';
 import Gas_Estimation_Exercise from './components/Gas_Estimation_Exercise';
-import Ethers_SCW_PersonalSign from './components/Ethers_SCW_EIP712Sign';
+import Ethers_SCW_EIP712Sign from './components/Ethers_SCW_EIP712Sign';
 
 import "./App.css";
 import Button from "@material-ui/core/Button";
@@ -118,7 +118,7 @@ function App() {
           <Tab label="Ethers + Forward + Personal Sign" {...a11yProps(15)} />
           <Tab label="Ethers + Forward + All Tokens" {...a11yProps(16)} />
           <Tab label="Gas + Estimation + Mainnet + Exercise" {...a11yProps(17)} />
-          <Tab label="Ethers + SCW + Personal Sign" {...a11yProps(18)}/>
+          <Tab label="Ethers + SCW + EIP712 Sign" {...a11yProps(18)}/>
 
           {/*To Be Added
              Ethers + Forward + Personal Sign
@@ -183,7 +183,7 @@ function App() {
           <Gas_Estimation_Exercise />
         </TabPanel>
         <TabPanel value={value} index={18}>
-          <Ethers_SCW_PersonalSign />
+          <Ethers_SCW_EIP712Sign />
         </TabPanel>
 
       </div>

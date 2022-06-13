@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useWeb3Context } from "../context/Web3Context";
 import "../App.css";
 import Button from "@material-ui/core/Button";
 import {
@@ -38,28 +39,7 @@ let config = {
     
 }
 
-
-const domainType = [
-    { name: "name", type: "string" },
-    { name: "version", type: "string" },
-    { name: "verifyingContract", type: "address" },
-    { name: "salt", type: "bytes32" },
-];
-
-const metaTransactionType = [
-    { name: "nonce", type: "uint256" },
-    { name: "from", type: "address" },
-    { name: "functionSignature", type: "bytes" }
-];
-
-let domainData = {
-    name: "TestContract",
-    version: "1",
-    verifyingContract: config.contract.address,
-    salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(42)).toHexString(), 32)
-};
-
-let ethersProvider,walletProvider, walletSigner;
+let ethersProvider, walletProvider, walletSigner;
 let contract, contractInterface;
 let walletContract;
 let biconomyWalletClient;
@@ -92,8 +72,9 @@ function App() {
     const [owner, setOwner] = useState("Default Owner Address");
     const [newQuote, setNewQuote] = useState("");
     const [selectedAddress, setSelectedAddress] = useState("");
-    const [metaTxEnabled, setMetaTxEnabled] = useState(true);
     const [transactionHash, setTransactionHash] = useState("");
+
+    const { connectWeb3, disconnect, account } = useWeb3Context();
 
     const handleClose = () => {
         setBackdropOpen(false);
@@ -116,7 +97,7 @@ function App() {
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
                 biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77"),
-                    { apiKey: config.apiKey.prod, debug: true });
+                    { apiKey: 'EafQYL7lt.2e94b782-9d7d-4bf2-98d5-b5dd52d7f5e9', debug: true });
 
                 /*
                   This provider is linked to your wallet.
@@ -163,23 +144,6 @@ function App() {
         setNewQuote(event.target.value);
     };
 
-    const getSignatureParameters = signature => {
-        if (!ethers.utils.isHexString(signature)) {
-            throw new Error(
-                'Given value "'.concat(signature, '" is not a valid hex string.')
-            );
-        }
-        var r = signature.slice(0, 66);
-        var s = "0x".concat(signature.slice(66, 130));
-        var v = "0x".concat(signature.slice(130, 132));
-        v = ethers.BigNumber.from(v).toNumber();
-        if (![27, 28].includes(v)) v += 27;
-        return {
-            r: r,
-            s: s,
-            v: v
-        };
-    };
 
     const getQuoteFromNetwork = async () => {
         setLoadingMessage("Getting Quote from contact ...");
@@ -213,143 +177,48 @@ function App() {
         NotificationManager.info(message, "Info", 3000);
     };
 
-    const sendTransaction = async (userAddress, functionData, r, s, v) => {
-        if (ethersProvider && contract) {
-            try {
-                fetch(`${config.api.prod}/api/v2/meta-tx/native`, {
-                    method: "POST",
-                    headers: {
-                      "x-api-key" : config.apiKey.prod,
-                      'Content-Type': 'application/json;charset=utf-8'
-                    },
-                    body: JSON.stringify({
-                      "to": config.contract.address,
-                      "apiId": "ab6a62bf-c58f-4040-9084-0fad85f3345a",
-                    //"apiId": "f93b5089-574e-47b7-92a1-2a9fff66215a",
-                      "params": [userAddress, functionData, r, s, v],
-                      "from": userAddress
-                    })
-                  })
-                  .then(response=>response.json())
-                  .then(async function(result) {
-                    console.log(result);
-                    showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
-                    let receipt = await ethersProvider.waitForTransaction(
-                        result.txHash
-                      );
-                      console.log(receipt);
-                    setTransactionHash(receipt.transactionHash);
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                  }).catch(function(error) {
-                      console.log(error)
-                    });
-            } catch (error) {
-                console.log(error);
-            }
-        }
-    };
 
     const onSubmitSCWTx = async event => {
         if (newQuote != "" && contract) {
             setTransactionHash("");
-            console.log('Sending tx');
             const { data } = await contract.populateTransaction.setQuote(newQuote);
             console.log("data", data);
+
+            console.log('Building tx');
+            const safeTxBody = biconomyWalletClient.buildExecTransaction(data, config.contract.address, 0);
+            console.log('safeTxBody', safeTxBody);
+
             const nonce = await walletContract.getNonce(0);
             console.log("nonce", nonce);
-            const EIP712_SAFE_TX_TYPE = {
-                // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
-                SafeTx: [
-                  { type: "address", name: "to" },
-                  { type: "uint256", name: "value" },
-                  { type: "bytes", name: "data" },
-                  { type: "uint8", name: "operation" },
-                  { type: "uint256", name: "safeTxGas" },
-                  { type: "uint256", name: "baseGas" },
-                  { type: "uint256", name: "gasPrice" },
-                  { type: "address", name: "gasToken" },
-                  { type: "address", name: "refundReceiver" },
-                  { type: "uint256", name: "nonce" },
-                ],
-              };
-            const biconomyWalletMetaTransactionSignatureBody = {
-                to: config.contract.address,
-                value: 0,
-                data: data || "0x",
-                operation: 0,
-                safeTxGas: 0, // review
-                baseGas: 66909, // review
-                gasPrice: 0,
-                gasToken: "0x0000000000000000000000000000000000000000",
-                refundReceiver: "0x0000000000000000000000000000000000000000",
-                nonce,
-              };
 
-            const signature = await walletSigner._signTypedData(
-                  { verifyingContract: '0x08e4ad0ce62fd435827557825349dcc2b752c8e7', chainId: 42 },
-                  EIP712_SAFE_TX_TYPE,
-                  biconomyWalletMetaTransactionSignatureBody
-                )
-            
-            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(data, signature, '0x040a9cbC4453B0eeaE12f3210117B422B890C1ED', '0x08e4ad0ce62fd435827557825349dcc2b752c8e7');
+            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(safeTxBody, selectedAddress, );
             console.log(result);
-            // const operation = 0; // CALL
-            // const gasPrice = 0; // If 0, then no refund to relayer
-            // const gasToken = '0x0000000000000000000000000000000000000000'; // ETH
-            // const executor = '0x0000000000000000000000000000000000000000';
-            // const to = config.contract.address;
-            // const valueWei = 0;
-            // const { data } = await contract.populateTransaction.setQuote(newQuote);
-            // let txGasEstimate = 0;
-            // let baseGasEstimate = 0;
-            // const nonce = await walletContract.nonce();
-            // console.log(`nonce`, nonce);  
-            // const transactionHash = await walletContract.getTransactionHash(
-            //     to, valueWei, data, operation, txGasEstimate, baseGasEstimate, gasPrice, gasToken, executor, nonce);
-            // console.log(transactionHash)
-            // console.log(selectedAddress);
-            // const signature = await walletProvider.send("personal_sign", [selectedAddress, transactionHash]);
-            // const { r, s, v } = getSignatureParameters(signature);
-            // const newSignature = `${r}${s.substring(2)}${Number(v + 4).toString(16)}`;
-            // debugger;
 
-            // let trasnaction = await walletContract.execTransaction(to, valueWei, data, operation, txGasEstimate,
-            //   baseGasEstimate, gasPrice, gasToken, executor, newSignature, {gasLimit: 1000000});
-
-            // console.log("here");
-            // console.log(trasnaction);
-          
-            /*let dataNew = await walletContract.populateTransaction.execTransaction(to, valueWei, data, operation, txGasEstimate,
-              baseGasEstimate, gasPrice, gasToken, executor, newSignature);
-            let provider = biconomy.getEthersProvider();
-            let gasLimit = await provider.estimateGas({
-                    to: config.proxyContract.address,
-                    from: selectedAddress,
-                    data: dataNew.data
-                });
-            console.log("Gas limit : ", gasLimit);
-            let txParams = {
-                    data: data,
-                    to: config.proxyContract.address,
-                    from: selectedAddress,
-                    gasLimit: gasLimit,
-                };
-                let tx;
-                try {
-                    tx = await provider.send("eth_sendTransaction", [txParams])
-                }
-                catch (err) {
-                    console.log("handle errors like signature denied here");
-                    console.log(err);
-                }*/
-            //let receipt = await trasnaction.wait(1);
-            
-            
         } else {
             showErrorMessage("Please enter the quote");
         }
     };
+
+    const onLoginWeb3 = async event => {
+        try {
+            console.log('Connecting to web3 wallet...');
+            await connectWeb3();
+            console.log('Wallet web3 connected...');
+            console.log(`Checking if SCW exists for address: ${selectedAddress}`);
+            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists(selectedAddress, 0);
+            if(!doesWalletExist) {
+                console.log('Wallet does not exist');
+                console.log('Deploying wallet');
+                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy(selectedAddress, 0);
+                console.log('Wallet deployed at address', walletAddress);
+            } else {
+                console.log(`Wallet already exists for: ${selectedAddress}`);
+                console.log(`Wallet address: ${walletAddress}`);
+            }
+        } catch (error) {
+            console.log('onLogin error', error);
+        }
+    }
     return (
         <div className="App">
             <section className="top-row">
@@ -373,6 +242,10 @@ function App() {
                     </blockquote>
                 </div>
 
+                <button onClick={onLoginWeb3} >
+                    <div>{account ? account.slice(0, 6) + "..." + account.slice(-4) : "Connect Eth"}</div>
+                </button>
+
                 <div className="mb-attribution">
                     <p className="mb-author">{owner}</p>
                     {selectedAddress.toLowerCase() === owner.toLowerCase() && (
@@ -387,10 +260,10 @@ function App() {
                 {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
                     <Typography>
                         Check your transaction hash
-            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
+                        <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
                             className={classes.link}>
                             here
-            </Link>
+                        </Link>
                     </Typography>
                 </Box>}
             </section>
@@ -403,9 +276,9 @@ function App() {
                             onChange={onQuoteChange}
                             value={newQuote}
                         />
-            <Button variant="contained" color="primary" onClick={onSubmitSCWTx} style={{ marginLeft: "10px" }}>
+                        <Button variant="contained" color="primary" onClick={onSubmitSCWTx} style={{ marginLeft: "10px" }}>
                             Submit SCW
-            </Button>
+                        </Button>
                     </div>
                 </div>
             </section>

@@ -104,8 +104,14 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77"),
-                    { apiKey: config.apiKey.prod, debug: true });
+                // biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77"),
+                //     { apiKey: config.apiKey.prod, debug: true });
+                biconomy = new Biconomy(window.ethereum, {
+                    apiKey: config.apiKey.prod,
+                    debug: true,
+                })
+
+                await biconomy.init();
 
                 /*
                   This provider is linked to your wallet.
@@ -118,22 +124,16 @@ function App() {
                 let userAddress = await walletSigner.getAddress()
                 setSelectedAddress(userAddress);
 
-                biconomy.onEvent(biconomy.READY, async () => {
+                // Initialize your dapp here like getting user accounts etc
+                contract = new ethers.Contract(
+                    config.contract.address,
+                    config.contract.abi,
+                    biconomy.getSignerByAddress(userAddress)
+                );
 
-                    // Initialize your dapp here like getting user accounts etc
-                    contract = new ethers.Contract(
-                        config.contract.address,
-                        config.contract.abi,
-                        biconomy.getSignerByAddress(userAddress)
-                    );
+                contractInterface = new ethers.utils.Interface(config.contract.abi);
+                getQuoteFromNetwork();
 
-                    contractInterface = new ethers.utils.Interface(config.contract.abi);
-                    getQuoteFromNetwork();
-                }).onEvent(biconomy.ERROR, (error, message) => {
-                    // Handle error while initializing mexa
-                    console.log(message);
-                    console.log(error);
-                });
             } else {
                 showErrorMessage("Metamask not installed");
             }

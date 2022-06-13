@@ -108,17 +108,6 @@ function App() {
           <Tab label="Ethers + Custom + Personal Sign" {...a11yProps(5)} />
           <Tab label="Ethers + EIP2771 + EIP712 Sign" {...a11yProps(6)} />
           <Tab label="Ethers + EIP2771 + Personal Sign" {...a11yProps(7)} />
-          <Tab label="Ethers + Forward + EIP712 Sign" {...a11yProps(8)} /> 
-          <Tab label="Web3 + Custom + EIP712 Sign + API" {...a11yProps(9)} />
-          <Tab label="Ethers + Custom + EIP712 Sign + API" {...a11yProps(10)} />
-          <Tab label="Web3 + Custom + Personal Sign + API" {...a11yProps(11)} />
-          <Tab label="Ethers + Custom + Personal Sign + API" {...a11yProps(12)} />
-          <Tab label="Web3 + EIP2771 + API" {...a11yProps(13)} />
-          <Tab label="Ethers + EIP2771 + API" {...a11yProps(14)} />
-          <Tab label="Ethers + Forward + Personal Sign" {...a11yProps(15)} />
-          <Tab label="Ethers + Forward + All Tokens" {...a11yProps(16)} />
-          <Tab label="Gas + Estimation + Mainnet + Exercise" {...a11yProps(17)} />
-          <Tab label="Ethers + SCW + Personal Sign" {...a11yProps(18)}/>
 
           {/*To Be Added
              Ethers + Forward + Personal Sign
@@ -151,39 +140,6 @@ function App() {
         </TabPanel>
         <TabPanel value={value} index={7}>
           <Ethers_EIP2771_PersonalSign />
-        </TabPanel>
-        <TabPanel value={value} index={8}>
-          <Ethers_Forward_EIP712Sign />
-        </TabPanel>
-        <TabPanel value={value} index={9}>
-          <Web3_Custom_EIP712Sign_API />
-        </TabPanel>
-        <TabPanel value={value} index={10}>
-          <Ethers_Custom_EIP712Sign_API />
-        </TabPanel>
-        <TabPanel value={value} index={11}>
-          <Web3_Custom_PersonalSign_API />
-        </TabPanel>
-        <TabPanel value={value} index={12}>
-          <Ethers_Custom_PersonalSign_API />
-        </TabPanel>
-        <TabPanel value={value} index={13}>
-          <Web3_EIP2771_API />
-        </TabPanel>
-        <TabPanel value={value} index={14}>
-          <Ethers_EIP2771_API />
-        </TabPanel>
-        <TabPanel value={value} index={15}>
-          <Ethers_Forward_PersonalSign />
-        </TabPanel>
-        <TabPanel value={value} index={16}>
-          <Ethers_Forward_AllTokens />
-        </TabPanel>
-        <TabPanel value={value} index={17}>
-          <Gas_Estimation_Exercise />
-        </TabPanel>
-        <TabPanel value={value} index={18}>
-          <Ethers_SCW_PersonalSign />
         </TabPanel>
 
       </div>

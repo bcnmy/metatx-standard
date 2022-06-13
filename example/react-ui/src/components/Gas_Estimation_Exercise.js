@@ -11,7 +11,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { ethers } from "ethers";
 import Web3 from "web3";
-import { Biconomy } from "@biconomy/mexa";
+import { Biconomy } from "mexa-sdk-v2";
 
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';

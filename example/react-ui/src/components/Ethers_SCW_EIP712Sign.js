@@ -97,7 +97,7 @@ function App() {
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
                 biconomy = new Biconomy(window.ethereum,
-                    { apiKey: 'EafQYL7lt.2e94b782-9d7d-4bf2-98d5-b5dd52d7f5e9', debug: true });
+                    { apiKey: '97fS2u88b.67ec7f20-543c-45c6-87ef-552046f74f58', debug: true });
 
                 /*
                   This provider is linked to your wallet.
@@ -185,13 +185,10 @@ function App() {
             console.log("data", data);
 
             console.log('Building tx');
-            const safeTxBody = await biconomyWalletClient.buildExecTransaction(data, config.contract.address, '0x08e4ad0ce62fd435827557825349dcc2b752c8e7', 0);
+            const safeTxBody = await biconomyWalletClient.buildExecTransaction(data, config.contract.address, '0xaB53caA61E7197aE4dE03ab35A17914fcD645C7a', 0);
             console.log('safeTxBody', safeTxBody);
 
-            const nonce = await walletContract.getNonce(0);
-            console.log("nonce", nonce);
-
-            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(safeTxBody, selectedAddress, '0x08e4ad0ce62fd435827557825349dcc2b752c8e7');
+            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(safeTxBody, selectedAddress, '0xaB53caA61E7197aE4dE03ab35A17914fcD645C7a');
             console.log(result);
 
         } else {

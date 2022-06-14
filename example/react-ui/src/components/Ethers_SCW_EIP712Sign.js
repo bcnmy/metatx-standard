@@ -185,13 +185,13 @@ function App() {
             console.log("data", data);
 
             console.log('Building tx');
-            const safeTxBody = biconomyWalletClient.buildExecTransaction(data, config.contract.address, 0);
+            const safeTxBody = await biconomyWalletClient.buildExecTransaction(data, config.contract.address, '0x08e4ad0ce62fd435827557825349dcc2b752c8e7', 0);
             console.log('safeTxBody', safeTxBody);
 
             const nonce = await walletContract.getNonce(0);
             console.log("nonce", nonce);
 
-            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(safeTxBody, selectedAddress, );
+            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(safeTxBody, selectedAddress, '0x08e4ad0ce62fd435827557825349dcc2b752c8e7');
             console.log(result);
 
         } else {
@@ -205,8 +205,12 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
+            debugger;
             const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists(selectedAddress, 0);
+            console.log('doesWalletExist', doesWalletExist);
+            console.log('walletAddress:', walletAddress);
             if(!doesWalletExist) {
+                debugger;
                 console.log('Wallet does not exist');
                 console.log('Deploying wallet');
                 const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy(selectedAddress, 0);

@@ -72,6 +72,7 @@ function App() {
     const [owner, setOwner] = useState("Default Owner Address");
     const [newQuote, setNewQuote] = useState("");
     const [selectedAddress, setSelectedAddress] = useState("");
+    const [ scwAddress, setSCWAddress ] = useState("");
     const [transactionHash, setTransactionHash] = useState("");
 
     const { connectWeb3, disconnect, account } = useWeb3Context();
@@ -185,10 +186,10 @@ function App() {
             console.log("data", data);
 
             console.log('Building tx');
-            const safeTxBody = await biconomyWalletClient.buildExecTransaction(data, config.contract.address, '0xaB53caA61E7197aE4dE03ab35A17914fcD645C7a', 0);
+            const safeTxBody = await biconomyWalletClient.buildExecTransaction(data, config.contract.address, scwAddress, 0);
             console.log('safeTxBody', safeTxBody);
 
-            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(safeTxBody, selectedAddress, '0xaB53caA61E7197aE4dE03ab35A17914fcD645C7a');
+            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(safeTxBody, selectedAddress, scwAddress, 'PERSONAL_SIGN');
             console.log(result);
 
         } else {
@@ -202,20 +203,19 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
-            debugger;
-            console.log(await walletContract.isWalletExist['0x5D9FC18735091d5251442557189c1B631f52bd77']);
             const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists(selectedAddress, 0);
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);
             if(!doesWalletExist) {
-                debugger;
                 console.log('Wallet does not exist');
                 console.log('Deploying wallet');
                 const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy(selectedAddress, 0);
                 console.log('Wallet deployed at address', walletAddress);
+                setSCWAddress(walletAddress);
             } else {
                 console.log(`Wallet already exists for: ${selectedAddress}`);
                 console.log(`Wallet address: ${walletAddress}`);
+                setSCWAddress(walletAddress);
             }
         } catch (error) {
             console.log('onLogin error', error);
@@ -247,6 +247,13 @@ function App() {
                 <button onClick={onLoginWeb3} >
                     <div>{account ? account.slice(0, 6) + "..." + account.slice(-4) : "Connect Eth"}</div>
                 </button>
+
+                <div>
+                <div className="submit-row">
+                <p className="mb-author">Your SCW</p>
+                </div>
+                <p className="mb-author">{scwAddress ? scwAddress.slice(0,6)+"..."+scwAddress.slice(-4) : "Not detected"}</p>
+                </div>
 
                 <div className="mb-attribution">
                     <p className="mb-author">{owner}</p>

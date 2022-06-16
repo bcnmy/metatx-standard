@@ -39,6 +39,30 @@ let config = {
     
 }
 
+const EIP712_SAFE_TX_TYPE = {
+    // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
+    SafeTx: [
+        { type: "address", name: "to" },
+        { type: "uint256", name: "value" },
+        { type: "bytes", name: "data" },
+        { type: "uint8", name: "operation" },
+        { type: "uint256", name: "safeTxGas" },
+        { type: "uint256", name: "baseGas" },
+        { type: "uint256", name: "gasPrice" },
+        { type: "address", name: "gasToken" },
+        { type: "address", name: "refundReceiver" },
+        { type: "uint256", name: "nonce" },
+    ]
+}
+
+const domainType = [
+    { name: "name", type: "string" },
+    { name: "version", type: "string" },
+    { name: "verifyingContract", type: "address" },
+    { name: "salt", type: "bytes32" },
+];
+
+
 let ethersProvider, walletProvider, walletSigner;
 let contract, contractInterface;
 let walletContract;
@@ -97,8 +121,13 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
+                
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
+                // notice: uncomment signature piece L222 if you use jsonRpcProvider as first argument
                 biconomy = new Biconomy(window.ethereum,
-                    { apiKey: '97fS2u88b.67ec7f20-543c-45c6-87ef-552046f74f58', debug: true });
+                    { apiKey: '97fS2u88b.67ec7f20-543c-45c6-87ef-552046f74f58',
+                    walletProvider: window.ethereum, 
+                    debug: true });
 
                 /*
                   This provider is linked to your wallet.
@@ -184,12 +213,21 @@ function App() {
             setTransactionHash("");
             const { data } = await contract.populateTransaction.setQuote(newQuote);
             console.log("data", data);
-
             console.log('Building tx');
-            const safeTxBody = await biconomyWalletClient.buildExecTransaction(data, config.contract.address, scwAddress, 0);
+            const safeTxBody = await biconomyWalletClient.buildExecTransaction({data, to:config.contract.address, walletAddress:scwAddress});
             console.log('safeTxBody', safeTxBody);
 
-            const result = await biconomyWalletClient.sendBiconomyWalletTransaction(safeTxBody, selectedAddress, scwAddress, 'PERSONAL_SIGN');
+
+            //If json rpc provider is passed getting signature and sending below is must
+            // get the signature from EOA
+            // EIP712 sign
+            //const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("42") }, EIP712_SAFE_TX_TYPE, safeTxBody)
+            //let newSignature = "0x";
+            //newSignature += signature.slice(2);
+
+            //contact us for personal sign code snippet
+
+            const result = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, /*signature:newSignature*/}); // signature 
             console.log(result);
 
         } else {
@@ -203,6 +241,7 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
+            setSCWAddress("0x4f220de1cD36c8AA41CaAB01CF0D6a3b13567EA6");
             const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists(selectedAddress, 0);
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);

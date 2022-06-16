@@ -242,13 +242,13 @@ function App() {
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
             setSCWAddress("0x4f220de1cD36c8AA41CaAB01CF0D6a3b13567EA6");
-            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists(selectedAddress, 0);
+            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress}); // default index(salt) 0
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);
             if(!doesWalletExist) {
                 console.log('Wallet does not exist');
                 console.log('Deploying wallet');
-                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy(selectedAddress, 0);
+                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({eoa:selectedAddress}); // default index(salt) 0
                 console.log('Wallet deployed at address', walletAddress);
                 setSCWAddress(walletAddress);
             } else {

@@ -30,7 +30,7 @@ let config = {
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-        prod: "zIH7h7lcK.e5a9aa8f-0acb-4ce9-ba1d-5097073c4ab4"
+        prod: "gHdBEA_o5.f015dd5c-26f9-44b2-b2be-ea427b49bfd9"
     },
     api: {
         test: "https://test-api.biconomy.io",
@@ -124,9 +124,9 @@ function App() {
                 
                 let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
                 // notice: uncomment signature piece L222 if you use jsonRpcProvider as first argument
-                biconomy = new Biconomy(window.ethereum,
-                    { apiKey: '97fS2u88b.67ec7f20-543c-45c6-87ef-552046f74f58',
-                    walletProvider: window.ethereum, 
+                biconomy = new Biconomy(jsonRpcProvider,
+                    { apiKey: config.apiKey.prod, // get api key from dashboard
+                    // walletProvider: window.ethereum, 
                     debug: true });
 
                 /*
@@ -221,13 +221,14 @@ function App() {
             //If json rpc provider is passed getting signature and sending below is must
             // get the signature from EOA
             // EIP712 sign
-            //const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("42") }, EIP712_SAFE_TX_TYPE, safeTxBody)
-            //let newSignature = "0x";
-            //newSignature += signature.slice(2);
+            // signing the transaction request
+            const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("42") }, EIP712_SAFE_TX_TYPE, safeTxBody)
+            let newSignature = "0x";
+            newSignature += signature.slice(2);
 
             //contact us for personal sign code snippet
 
-            const result = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, /*signature:newSignature*/}); // signature 
+            const result = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature:newSignature}); // signature appended
             console.log(result);
 
         } else {
@@ -241,7 +242,6 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
-            setSCWAddress("0x4f220de1cD36c8AA41CaAB01CF0D6a3b13567EA6");
             const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress}); // default index(salt) 0
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);

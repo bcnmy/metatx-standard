@@ -228,7 +228,12 @@ function App() {
 
             //contact us for personal sign code snippet
 
-            const result = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature:newSignature}); // signature appended
+            let webHookAttributes = {
+                "transaction": {"v": 2, "r": "2", "s": "4", "transactionHash": "address7"},
+                "data" : { "oauthToken": "username6", "provider" : "github" } 
+            };
+
+            const result = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature:newSignature, webHookAttributes}); // signature appended
             console.log(result);
 
         } else {
@@ -242,13 +247,17 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
-            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress}); // default index(salt) 0
+            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress, index:4}); // default index(salt) 0
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);
             if(!doesWalletExist) {
                 console.log('Wallet does not exist');
                 console.log('Deploying wallet');
-                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({eoa:selectedAddress}); // default index(salt) 0
+                let webHookAttributes = {
+                    "transaction": {"v": 2, "r": "2", "s": "4", "transactionHash": "address7"},
+                    "data" : { "oauthToken": "username6", "provider" : "github" } 
+                };
+                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({eoa:selectedAddress, index:4, webHookAttributes}); // default index(salt) 0
                 console.log('Wallet deployed at address', walletAddress);
                 setSCWAddress(walletAddress);
             } else {

@@ -228,10 +228,28 @@ function App() {
 
             //contact us for personal sign code snippet
 
-            let webHookAttributes = {
-                "transaction": {"v": 2, "r": "2", "s": "4", "transactionHash": "address7"},
-                "data" : { "oauthToken": "username6", "provider" : "github" } 
-            };
+            // New webHookAttributes
+            // let webHookAttributes = {
+            //     "webHookId": "fb491616-8040-48b1-9ee1-ebc7170d50c9",
+            //     "webHookData": {
+            //         "signedNonce": {
+            //             "v": 2, 
+            //             "r": "2", 
+            //             "s": "4", 
+            //             "transactionHash": "sfdasda"
+            //         },
+            //         "nonce": "fdsa",
+            //         "webwallet_address": scwAddress
+            //     },
+            // };
+            
+            const webHookAttributes = {
+               "webHookId": "fb491616-8040-48b1-9ee1-ebc7170d50c9", // use webHookId you generate
+               "webHookData": { // 
+                    "transaction": {"v": 2, "r": "2", "s": "4", "transactionHash": "address6"},
+                    "data" : { "oauthToken": "username6", "provider" : "github" } 
+                }
+            }
 
             const result = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature:newSignature, webHookAttributes}); // signature appended
             console.log(result);

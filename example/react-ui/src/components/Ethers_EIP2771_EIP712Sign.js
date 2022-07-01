@@ -25,7 +25,7 @@ let config = {
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-        prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
+        prod: "sCd7Ht3sK.e21885c4-5f31-469a-8e15-969e47ec7842"
     }
 }
 
@@ -256,7 +256,7 @@ function App() {
                     data: data,
                     to: config.contract.address,
                     from: userAddress,
-                    gasLimit: gasLimit,
+                    // gasLimit: gasLimit,
                     signatureType: "EIP712_SIGN"
                 };
                 let tx;

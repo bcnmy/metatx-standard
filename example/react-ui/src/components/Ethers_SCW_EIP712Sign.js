@@ -21,8 +21,8 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0xB32992b4110257a451Af3c2ED6AC78776DD8C26b",
-        abi: [ { "inputs": [ { "internalType": "string", "name": "newQuote", "type": "string" } ], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [ { "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" } ]
+        address: "0x465F55aEaFB5291757c3E422663A206D13c1f2DF",
+        abi: [ { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "admin", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [ { "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "string", "name": "newQuote", "type": "string" } ], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_trustedForwarder", "type": "address" } ], "name": "setTrustedForwarder", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" } ]
     },
     walletFactory: {
         address: '0xB6D514655c1ed4A7ceeA2D717A3F37D7D8aEE90b',
@@ -30,7 +30,7 @@ let config = {
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-        prod: "gHdBEA_o5.f015dd5c-26f9-44b2-b2be-ea427b49bfd9"
+        prod: "3SF7w1haC.a531e7d8-65e5-4873-af57-38ad9409b6a4"
     },
     api: {
         test: "https://test-api.biconomy.io",
@@ -39,14 +39,14 @@ let config = {
     
 }
 
-const EIP712_SAFE_TX_TYPE = {
-    // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
-    SafeTx: [
+const EIP712_WALLET_TX_TYPE = {
+    // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 targetTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
+    WalletTx: [
         { type: "address", name: "to" },
         { type: "uint256", name: "value" },
         { type: "bytes", name: "data" },
         { type: "uint8", name: "operation" },
-        { type: "uint256", name: "safeTxGas" },
+        { type: "uint256", name: "targetTxGas" },
         { type: "uint256", name: "baseGas" },
         { type: "uint256", name: "gasPrice" },
         { type: "address", name: "gasToken" },
@@ -122,11 +122,11 @@ function App() {
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
                 
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-mumbai.g.alchemy.com/v2/kvzXRzX2Ofr6PMqNot-QvPGRpimO7Cp_");
                 // notice: uncomment signature piece L222 if you use jsonRpcProvider as first argument
                 biconomy = new Biconomy(jsonRpcProvider,
                     { apiKey: config.apiKey.prod, // get api key from dashboard
-                    // walletProvider: window.ethereum, 
+                    walletProvider: window.ethereum, 
                     debug: true });
 
                 /*
@@ -156,6 +156,7 @@ function App() {
                     );
 
                     biconomyWalletClient = biconomy.biconomyWalletClient;
+                    console.log('biconomyWalletClient is ready', biconomyWalletClient);
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();
                 }).onEvent(biconomy.ERROR, (error, message) => {
@@ -222,34 +223,21 @@ function App() {
             // get the signature from EOA
             // EIP712 sign
             // signing the transaction request
-            const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("42") }, EIP712_SAFE_TX_TYPE, safeTxBody)
+            const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("80001") }, EIP712_WALLET_TX_TYPE, safeTxBody)
             let newSignature = "0x";
             newSignature += signature.slice(2);
 
             //contact us for personal sign code snippet
 
             // New webHookAttributes
-            // let webHookAttributes = {
-            //     "webHookId": "fb491616-8040-48b1-9ee1-ebc7170d50c9",
-            //     "webHookData": {
-            //         "signedNonce": {
-            //             "v": 2, 
-            //             "r": "2", 
-            //             "s": "4", 
-            //             "transactionHash": "sfdasda"
-            //         },
-            //         "nonce": "fdsa",
-            //         "webwallet_address": scwAddress
-            //     },
-            // };
+            let webHookAttributes = {
+                "webHookId": "114c76ee-bcdf-4456-9840-45d85ecfdb9f",
+                "webHookData": {
+                    "signedNonce": {"v": 2, "r": "2", "s": "4", "transactionHash": "0x116"},
+                    "nonce": "1113",
+                },
+            };
             
-            const webHookAttributes = {
-               "webHookId": "fb491616-8040-48b1-9ee1-ebc7170d50c9", // use webHookId you generate
-               "webHookData": { // 
-                    "transaction": {"v": 2, "r": "2", "s": "4", "transactionHash": "address6"},
-                    "data" : { "oauthToken": "username6", "provider" : "github" } 
-                }
-            }
 
             const result = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature:newSignature, webHookAttributes}); // signature appended
             console.log(result);
@@ -265,6 +253,7 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
+            console.log('biconomyWalletClient', biconomyWalletClient)
             const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress, index:4}); // default index(salt) 0
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);

@@ -156,7 +156,6 @@ function App() {
                     );
 
                     biconomyWalletClient = biconomy.biconomyWalletClient;
-                    console.log('biconomyWalletClient is ready', biconomyWalletClient);
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();
                 }).onEvent(biconomy.ERROR, (error, message) => {
@@ -233,7 +232,7 @@ function App() {
             let webHookAttributes = {
                 "webHookId": "114c76ee-bcdf-4456-9840-45d85ecfdb9f",
                 "webHookData": {
-                    "signedNonce": {"v": 2, "r": "2", "s": "4", "transactionHash": "0x116"},
+                    "signedNonce": {"v": 2, "r": "2", "s": "4", "transactionHash": "0x111"},
                     "nonce": "1113",
                 },
             };
@@ -253,18 +252,13 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
-            console.log('biconomyWalletClient', biconomyWalletClient)
             const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress, index:4}); // default index(salt) 0
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);
             if(!doesWalletExist) {
                 console.log('Wallet does not exist');
                 console.log('Deploying wallet');
-                let webHookAttributes = {
-                    "transaction": {"v": 2, "r": "2", "s": "4", "transactionHash": "address7"},
-                    "data" : { "oauthToken": "username6", "provider" : "github" } 
-                };
-                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({eoa:selectedAddress, index:4, webHookAttributes}); // default index(salt) 0
+                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({eoa:selectedAddress, index:4}); // default index(salt) 0
                 console.log('Wallet deployed at address', walletAddress);
                 setSCWAddress(walletAddress);
             } else {

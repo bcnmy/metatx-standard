@@ -246,17 +246,10 @@ function App() {
             try {
                 let { data } = await contract.populateTransaction.setQuote(arg);
                 let provider = biconomy.getEthersProvider();
-                let gasLimit = await provider.estimateGas({
-                    to: config.contract.address,
-                    from: userAddress,
-                    data: data
-                });
-                console.log("Gas limit : ", gasLimit);
                 let txParams = {
                     data: data,
                     to: config.contract.address,
                     from: userAddress,
-                    // gasLimit: gasLimit,
                     signatureType: "EIP712_SIGN"
                 };
                 let tx;

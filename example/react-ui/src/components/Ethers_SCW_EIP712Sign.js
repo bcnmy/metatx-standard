@@ -30,7 +30,7 @@ let config = {
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-        prod: "3SF7w1haC.a531e7d8-65e5-4873-af57-38ad9409b6a4"
+        prod: "OYbsENIqY.6ea6408b-8ac3-4149-80ad-9b1301accda3"
     },
     api: {
         test: "https://test-api.biconomy.io",
@@ -126,7 +126,7 @@ function App() {
                 // notice: uncomment signature piece L222 if you use jsonRpcProvider as first argument
                 biconomy = new Biconomy(jsonRpcProvider,
                     { apiKey: config.apiKey.prod, // get api key from dashboard
-                    walletProvider: window.ethereum, 
+                    // walletProvider: window.ethereum, 
                     debug: true });
 
                 /*
@@ -230,7 +230,7 @@ function App() {
 
             // New webHookAttributes
             let webHookAttributes = {
-                "webHookId": "114c76ee-bcdf-4456-9840-45d85ecfdb9f",
+                "webHookId": "c838bd63-d219-40c4-a29d-44c223e31fe9", // replace webHookId that one gets from register webhookId
                 "webHookData": {
                     "signedNonce": {"v": 2, "r": "2", "s": "4", "transactionHash": "0x111"},
                     "nonce": "1113",
@@ -238,8 +238,14 @@ function App() {
             };
             
 
-            const result = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature:newSignature, webHookAttributes}); // signature appended
-            console.log(result);
+            const txHash = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature: newSignature, webHookAttributes}); // signature appended
+            biconomy.getEthersProvider().once(txHash, (transaction) => {
+                    // Emitted when the transaction has been mined
+                    showSuccessMessage("Transaction confirmed on chain");
+                    console.log(txHash);
+                    setTransactionHash(txHash);
+                    getQuoteFromNetwork();
+                })
 
         } else {
             showErrorMessage("Please enter the quote");
@@ -252,13 +258,13 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
-            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress, index:4}); // default index(salt) 0
+            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress, index:6}); // default index(salt) 0
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);
             if(!doesWalletExist) {
                 console.log('Wallet does not exist');
                 console.log('Deploying wallet');
-                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({eoa:selectedAddress, index:4}); // default index(salt) 0
+                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({eoa:selectedAddress, index:6}); // default index(salt) 0
                 console.log('Wallet deployed at address', walletAddress);
                 setSCWAddress(walletAddress);
             } else {

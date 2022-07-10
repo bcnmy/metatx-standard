@@ -48,7 +48,7 @@ let domainData = {
     salt: '0x' + (42).toString(16).padStart(64, '0')
 };
 let web3, walletWeb3;
-let contract;
+let contract, biconomy;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -88,9 +88,13 @@ function App() {
                 // Ethereum user detected. You can now use the provider.
                 const provider = window["ethereum"];
                 await provider.enable();
-                let kovanProvider = new Web3.providers.HttpProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
-                setLoadingMessage("Initializing Biconomy ...");
-                const biconomy = new Biconomy(kovanProvider, { apiKey: config.apiKey.prod, debug: true });
+                biconomy = new Biconomy(window.ethereum, {
+                    apiKey: config.apiKey.prod,
+                    debug: true,
+                    contractAddresses: [config.contract.address]
+                })
+
+                await biconomy.init();
 
                 // This web3 instance is used to read normally and write to contract via meta transactions.
                 web3 = new Web3(biconomy);
@@ -98,7 +102,6 @@ function App() {
                 // This web3 instance is used to get user signature from connected wallet
                 walletWeb3 = new Web3(window.ethereum);
 
-                biconomy.onEvent(biconomy.READY, () => {
                     // Initialize your dapp here like getting user accounts etc
                     contract = new web3.eth.Contract(
                         config.contract.abi,
@@ -109,9 +112,6 @@ function App() {
                     provider.on("accountsChanged", function (accounts) {
                         setSelectedAddress(accounts[0]);
                     });
-                }).onEvent(biconomy.ERROR, (error, message) => {
-                    // Handle error while initializing mexa
-                });
             } else {
                 showErrorMessage("Metamask not installed");
             }
@@ -130,70 +130,6 @@ function App() {
     const onQuoteChange = event => {
         setNewQuote(event.target.value);
     };
-
-    const onSubmitWithPrivateKey = async () => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            if (metaTxEnabled) {
-                console.log("Sending meta transaction");
-                let privateKey = "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
-                let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-                let nonce = await contract.methods.getNonce(userAddress).call();
-                let functionSignature = contract.methods.setQuote(newQuote).encodeABI();
-                let message = {};
-                message.nonce = parseInt(nonce);
-                message.from = userAddress;
-                message.functionSignature = functionSignature;
-
-                const dataToSign = {
-                    types: {
-                        EIP712Domain: domainType,
-                        MetaTransaction: metaTransactionType
-                    },
-                    domain: domainData,
-                    primaryType: "MetaTransaction",
-                    message: message
-                };
-
-                const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: dataToSign }, 'V4');
-                let { r, s, v } = getSignatureParameters(signature);
-                let executeMetaTransactionData = contract.methods.executeMetaTransaction(userAddress, functionSignature, r, s, v).encodeABI();
-                let txParams = {
-                    "from": userAddress,
-                    "to": config.contract.address,
-                    "value": "0x0",
-                    "gas": "500000",
-                    "data": executeMetaTransactionData
-                };
-                const signedTx = await web3.eth.accounts.signTransaction(txParams, `0x${privateKey}`);
-                let receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction, (error, txHash) => {
-                    if (error) {
-                        return console.error(error);
-                    }
-                    console.log("Transaction hash is ", txHash);
-                    showInfoMessage(`Transaction sent to blockchain with hash ${txHash}`);
-                });
-                setTransactionHash(receipt.transactionHash);
-                showSuccessMessage("Transaction confirmed");
-                getQuoteFromNetwork();
-            } else {
-                console.log("Sending normal transaction");
-                contract.methods
-                    .setQuote(newQuote)
-                    .send({ from: selectedAddress })
-                    .on("transactionHash", function (hash) {
-                        showInfoMessage(`Transaction sent to blockchain with hash ${hash}`);
-                    })
-                    .once("confirmation", function (confirmationNumber, receipt) {
-                        setTransactionHash(receipt.transactionHash);
-                        showSuccessMessage("Transaction confirmed");
-                        getQuoteFromNetwork();
-                    });
-            }
-        } else {
-            showErrorMessage("Please enter the quote");
-        }
-    }
 
     const onSubmit = async event => {
         if (newQuote != "" && contract) {
@@ -403,9 +339,7 @@ function App() {
                         <Button variant="contained" color="primary" onClick={onSubmit}>
                             Submit
             </Button>
-                        <Button variant="contained" color="primary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
-                            Submit (using private key)
-            </Button>
+
                     </div>
                 </div>
             </section>

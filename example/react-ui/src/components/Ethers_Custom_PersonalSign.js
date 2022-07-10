@@ -86,12 +86,13 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
-                biconomy = new Biconomy(jsonRpcProvider, {
-                    walletProvider: window.ethereum,
+                biconomy = new Biconomy(window.ethereum, {
                     apiKey: config.apiKey.prod,
-                    debug: true 
-                });
+                    debug: true,
+                    contractAddresses: [config.contract.address]
+                })
+
+                await biconomy.init();
 
                 /*
                   This provider is linked to your wallet.
@@ -104,22 +105,16 @@ function App() {
                 let userAddress = await walletSigner.getAddress()
                 setSelectedAddress(userAddress);
 
-                biconomy.onEvent(biconomy.READY, async () => {
+                // Initialize your dapp here like getting user accounts etc
+                contract = new ethers.Contract(
+                    config.contract.address,
+                    config.contract.abi,
+                    biconomy.getSignerByAddress(userAddress)
+                );
 
-                    // Initialize your dapp here like getting user accounts etc
-                    contract = new ethers.Contract(
-                        config.contract.address,
-                        config.contract.abi,
-                        biconomy.getSignerByAddress(userAddress)
-                    );
+                contractInterface = new ethers.utils.Interface(config.contract.abi);
+                getQuoteFromNetwork();
 
-                    contractInterface = new ethers.utils.Interface(config.contract.abi);
-                    getQuoteFromNetwork();
-                }).onEvent(biconomy.ERROR, (error, message) => {
-                    // Handle error while initializing mexa
-                    console.log(message);
-                    console.log(error);
-                });
             } else {
                 showErrorMessage("Metamask not installed");
             }
@@ -168,92 +163,6 @@ function App() {
             [nonce, contractAddress, salt, toBuffer(functionSignature)]
         );
       }
-
-    const onSubmitWithPrivateKey = async (event) => {
-      if (newQuote != "" && contract) {
-        setTransactionHash("");
-
-        try {
-          if (metaTxEnabled) {
-            showInfoMessage(`Getting user signature`);
-            let wallet = new ethers.Wallet(
-              "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910"
-            );
-            let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-            let nonce = await contract.getNonce(userAddress);
-            let functionSignature = contractInterface.encodeFunctionData(
-              "setQuote",
-              [newQuote]
-            );
-            let messageToSign = constructMetaTransactionMessage(
-              nonce.toNumber(),
-              salt,
-              functionSignature,
-              config.contract.address
-            );
-            const signature = await wallet.signMessage(messageToSign);
-
-            console.info(`User signature is ${signature}`);
-            let { r, s, v } = getSignatureParameters(signature);
-            let rawTx, tx;
-            rawTx = {
-              to: config.contract.address,
-              data: contractInterface.encodeFunctionData(
-                "executeMetaTransaction",
-                [userAddress, functionSignature, r, s, v]
-              ),
-              from: userAddress,
-            };
-            tx = await wallet.signTransaction(rawTx);
-            let transactionHash;
-            try {
-              let receipt = await ethersProvider.sendTransaction(tx);
-              console.log(receipt);
-            } catch (error) {
-              // Ethers check the hash from user's signed tx and hash returned from Biconomy
-              // Both hash are expected to be different as biconomy send the transaction from its relayers
-              if (error.returnedHash && error.expectedHash) {
-                console.log("Transaction hash : ", error.returnedHash);
-                transactionHash = error.returnedHash;
-              } else {
-                console.log(error);
-                showErrorMessage("Error while sending transaction");
-              }
-            }
-
-            if (transactionHash) {
-              showInfoMessage(
-                `Transaction sent by relayer with hash ${transactionHash}`
-              );
-              let receipt = await ethersProvider.waitForTransaction(
-                transactionHash
-              );
-              console.log(receipt);
-              showSuccessMessage("Transaction confirmed on chain");
-              getQuoteFromNetwork();
-            } else {
-              showErrorMessage("Could not get transaction hash");
-            }
-          } else {
-            console.log("Sending normal transaction");
-            let tx = await contract.setQuote(newQuote);
-            console.log("Transaction hash : ", tx.hash);
-            showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-            let confirmation = await tx.wait();
-            console.log(confirmation);
-            setTransactionHash(tx.hash);
-
-            showSuccessMessage("Transaction confirmed on chain");
-            getQuoteFromNetwork();
-          }
-        } catch (error) {
-          console.log(error);
-          handleClose();
-        }
-      } else {
-        showErrorMessage("Please enter the quote");
-      }
-    };
 
     const getSignatureParameters = signature => {
         if (!ethers.utils.isHexString(signature)) {
@@ -382,9 +291,6 @@ function App() {
                             Submit
             </Button>
 
-                        <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
-                            Submit (Private Key)
-            </Button>
                     </div>
                 </div>
             </section>

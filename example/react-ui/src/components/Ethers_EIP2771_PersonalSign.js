@@ -79,12 +79,13 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
-                biconomy = new Biconomy(jsonRpcProvider, {
-                    walletProvider: window.ethereum,
+                biconomy = new Biconomy(window.ethereum, {
                     apiKey: config.apiKey.prod,
-                    debug: true
-                });
+                    debug: true,
+                    contractAddresses: [config.contract.address]
+                })
+
+                await biconomy.init();
 
                 /*
                   This provider is linked to your wallet.
@@ -96,7 +97,7 @@ function App() {
                 userAddress = await walletSigner.getAddress()
                 setSelectedAddress(userAddress);
 
-                biconomy.onEvent(biconomy.READY, async () => {
+
 
                     // Initialize your dapp here like getting user accounts etc
                     contract = new ethers.Contract(
@@ -107,11 +108,7 @@ function App() {
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();
-                }).onEvent(biconomy.ERROR, (error, message) => {
-                    // Handle error while initializing mexa
-                    console.log(message);
-                    console.log(error);
-                });
+
             } else {
                 showErrorMessage("Metamask not installed");
             }
@@ -146,66 +143,6 @@ function App() {
         }
     };
 
-    const onSubmitWithPrivateKey = async () => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            try {
-                if (metaTxEnabled) {
-                    showInfoMessage(`Getting user signature`);
-                    let privateKey = "bf096e6fb9754860c4c99eb336c0579db994a3ef7fb3f7db869ad2f1972fc755";
-                    let userAddress = "0xf7AB2d00f379167c339691c23B23111eB598B3fb";
-                    let userSigner = new ethers.Wallet(privateKey);
-                    let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
-
-                    let rawTx = {
-                        to: config.contract.address,
-                        data: functionSignature,
-                        from: userAddress
-                    };
-
-                    let signedTx = await userSigner.signTransaction(rawTx);
-                    // should get user message to sign for EIP712 or personal signature types
-                    const forwardData = await biconomy.getForwardRequestAndMessageToSign(signedTx);
-                    // optionally one can sign using sigUtil
-                    const signature = await userSigner.signMessage(forwardData.personalSignatureFormat);
-
-                    let data = {
-                        signature: signature,
-                        forwardRequest: forwardData.request,
-                        rawTransaction: signedTx,
-                        signatureType: biconomy.PERSONAL_SIGN,
-                    };
-
-                    let provider = biconomy.getEthersProvider();
-                    // send signed transaction with ethers
-                    // promise resolves to transaction hash                  
-                    let txHash = await provider.send("eth_sendRawTransaction", [data]);
-                    showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
-                    let receipt = await provider.waitForTransaction(txHash);
-                    setTransactionHash(txHash);
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                    console.log(receipt);
-                } else {
-                    console.log("Sending normal transaction");
-                    let tx = await contract.setQuote(newQuote);
-                    console.log("Transaction hash : ", tx.hash);
-                    showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-                    let confirmation = await tx.wait();
-                    console.log(confirmation);
-                    setTransactionHash(tx.hash);
-
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                }
-            } catch (error) {
-                console.log(error);
-                handleClose();
-            }
-        } else {
-            showErrorMessage("Please enter the quote");
-        }
-    }
 
     const getQuoteFromNetwork = async () => {
         setLoadingMessage("Getting Quote from contact ...");
@@ -335,9 +272,6 @@ function App() {
                             Submit
             </Button>
 
-                        <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
-                            Submit (Private Key)
-            </Button>
                     </div>
                 </div>
             </section>

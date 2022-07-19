@@ -21,7 +21,7 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0x465F55aEaFB5291757c3E422663A206D13c1f2DF",
+        address: "0x72356a884728ee5c3506aebdb54009b55ecd42b5",
         abi: [ { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "admin", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [ { "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "string", "name": "newQuote", "type": "string" } ], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_trustedForwarder", "type": "address" } ], "name": "setTrustedForwarder", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" } ]
     },
     walletFactory: {
@@ -30,7 +30,7 @@ let config = {
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-        prod: "OYbsENIqY.6ea6408b-8ac3-4149-80ad-9b1301accda3"
+        prod: "ZGgrGthzP.2fe13278-15ce-437e-9d41-96114f2b518c"
     },
     api: {
         test: "https://test-api.biconomy.io",
@@ -122,47 +122,52 @@ function App() {
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
                 
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-mumbai.g.alchemy.com/v2/kvzXRzX2Ofr6PMqNot-QvPGRpimO7Cp_");
+                // let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://eth-goerli.alchemyapi.io/v2/8vLFyF65nIpyd1CrfhqHd7kYtetw3Y7y");
                 // notice: uncomment signature piece L222 if you use jsonRpcProvider as first argument
-                biconomy = new Biconomy(jsonRpcProvider,
-                    { apiKey: config.apiKey.prod, // get api key from dashboard
-                    // walletProvider: window.ethereum, 
-                    debug: true });
 
+                    try {
+                        biconomy = new Biconomy(window.ethereum,
+                            { 
+                                apiKey: config.apiKey.prod, // get api key from dashboard
+                                contractAddresses: [config.contract.address]
+                            });
+                        await biconomy.init();
+                    } catch (error) {
+                        console.log(error);
+                    }
                 /*
                   This provider is linked to your wallet.
                   If needed, substitute your wallet solution in place of window.ethereum 
                 */
-                ethersProvider = new ethers.providers.Web3Provider(biconomy);
                 walletProvider = new ethers.providers.Web3Provider(window.ethereum);
                 walletSigner = walletProvider.getSigner();
 
                 let userAddress = await walletSigner.getAddress()
                 setSelectedAddress(userAddress);
 
-                biconomy.onEvent(biconomy.READY, async () => {
+                // biconomy.onEvent(biconomy.READY, async () => {
                     console.log('Inside biconomy ready event');
                     // Initialize your dapp here like getting user accounts etc
                     contract = new ethers.Contract(
                         config.contract.address,
                         config.contract.abi,
-                        biconomy.getSignerByAddress(userAddress)
+                        biconomy.ethersProvider
                     );
 
                     walletContract = new ethers.Contract(
                         config.walletFactory.address,
                         config.walletFactory.abi,
-                        biconomy.getSignerByAddress(userAddress)
+                        biconomy.ethersProvider
                     );
 
                     biconomyWalletClient = biconomy.biconomyWalletClient;
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();
-                }).onEvent(biconomy.ERROR, (error, message) => {
+                // }).onEvent(biconomy.ERROR, (error, message) => {
                     // Handle error while initializing mexa
-                    console.log(message);
-                    console.log(error);
-                });
+                    // console.log(message);
+                    // console.log(error);
+                // });
             } else {
                 showErrorMessage("Metamask not installed");
             }
@@ -208,12 +213,13 @@ function App() {
     };
 
 
-    const onSubmitSCWTx = async event => {
+    const onSubmitBiconomySCWTx = async event => {
         if (newQuote != "" && contract) {
             setTransactionHash("");
             const { data } = await contract.populateTransaction.setQuote(newQuote);
             console.log("data", data);
             console.log('Building tx');
+            console.log('scwAddress', scwAddress);
             const safeTxBody = await biconomyWalletClient.buildExecTransaction({data, to:config.contract.address, walletAddress:scwAddress});
             console.log('safeTxBody', safeTxBody);
 
@@ -222,23 +228,22 @@ function App() {
             // get the signature from EOA
             // EIP712 sign
             // signing the transaction request
-            const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("80001") }, EIP712_WALLET_TX_TYPE, safeTxBody)
+            const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("5") }, EIP712_WALLET_TX_TYPE, safeTxBody)
             let newSignature = "0x";
             newSignature += signature.slice(2);
 
             //contact us for personal sign code snippet
-
             // New webHookAttributes
-            let webHookAttributes = {
-                "webHookId": "c838bd63-d219-40c4-a29d-44c223e31fe9", // replace webHookId that one gets from register webhookId
-                "webHookData": {
-                    "signedNonce": {"v": 2, "r": "2", "s": "4", "transactionHash": "0x111"},
-                    "nonce": "1113",
-                },
-            };
+            // let webHookAttributes = {
+            //     "webHookId": "c838bd63-d219-40c4-a29d-44c223e31fe9", // replace webHookId that one gets from register webhookId
+            //     "webHookData": {
+            //         "signedNonce": {"v": 2, "r": "2", "s": "4", "transactionHash": "0x111"},
+            //         "nonce": "1113",
+            //     },
+            // };
             
 
-            const txHash = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature: newSignature, webHookAttributes}); // signature appended
+            const txHash = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature: newSignature}); // signature appended
             biconomy.getEthersProvider().once(txHash, (transaction) => {
                     // Emitted when the transaction has been mined
                     showSuccessMessage("Transaction confirmed on chain");
@@ -252,7 +257,7 @@ function App() {
         }
     };
 
-    const onLoginWeb3 = async event => {
+    const onLoginBiconomyWeb3 = async event => {
         try {
             console.log('Connecting to web3 wallet...');
             await connectWeb3();
@@ -276,6 +281,15 @@ function App() {
             console.log('onLogin error', error);
         }
     }
+
+    const onSubmitGnosisScwTx = async event => {
+        try {
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     return (
         <div className="App">
             <section className="top-row">
@@ -299,7 +313,7 @@ function App() {
                     </blockquote>
                 </div>
 
-                <button onClick={onLoginWeb3} >
+                <button onClick={onLoginBiconomyWeb3} >
                     <div>{account ? account.slice(0, 6) + "..." + account.slice(-4) : "Connect Eth"}</div>
                 </button>
 
@@ -340,8 +354,11 @@ function App() {
                             onChange={onQuoteChange}
                             value={newQuote}
                         />
-                        <Button variant="contained" color="primary" onClick={onSubmitSCWTx} style={{ marginLeft: "10px" }}>
-                            Submit SCW
+                        <Button variant="contained" color="primary" onClick={onSubmitBiconomySCWTx} style={{ marginLeft: "10px" }}>
+                            Submit Biconomy SCW
+                        </Button>
+                        <Button variant="contained" color="primary" onClick={onSubmitGnosisScwTx} style={{ marginLeft: "10px" }}>
+                            Submit Gnosis SCW
                         </Button>
                     </div>
                 </div>
@@ -356,3 +373,4 @@ function App() {
 }
 
 export default App;
+

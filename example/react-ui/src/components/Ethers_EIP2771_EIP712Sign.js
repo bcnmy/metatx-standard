@@ -10,7 +10,7 @@ import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { ethers } from "ethers";
-import { Biconomy } from "@biconomy/mexa";
+import { Biconomy } from "mexa-sdk-v2";
 
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
@@ -20,12 +20,12 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0x880176EDA9f1608A2Bf182385379bDcC1a65Dfcf",
-        abi: [{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_forwarder","type":"address"}],"name":"setTrustedForwarder","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"name":"isTrustedForwarder","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"trustedForwarder","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"versionRecipient","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}]
+        address: "0x465F55aEaFB5291757c3E422663A206D13c1f2DF",
+        abi: [ { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "admin", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [ { "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "string", "name": "newQuote", "type": "string" } ], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_trustedForwarder", "type": "address" } ], "name": "setTrustedForwarder", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" } ]
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-        prod: "sCd7Ht3sK.e21885c4-5f31-469a-8e15-969e47ec7842"
+        prod: "ugubRq_Wd.9aa03884-0db6-4dee-be76-ce64d22f05ed"
     }
 }
 
@@ -79,13 +79,26 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
-                biconomy = new Biconomy(jsonRpcProvider, {
-                    walletProvider: window.ethereum,
-                    apiKey: config.apiKey.prod,
-                    debug: true
-                });
+                // let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-mainnet.g.alchemy.com/v2/mYDhGMQRepSXgWE1PSN1TW3P-vcsqQqe");
+                // biconomy = new Biconomy(jsonRpcProvider, {
+                //     walletProvider: window.ethereum,
+                //     apiKey: config.apiKey.prod,
+                //     debug: true
+                // });
 
+                biconomy = new Biconomy(window.ethereum,
+                    { apiKey: config.apiKey.prod, debug: true, contractAddresses: [config.contract.address] });
+                debugger;
+                try{
+                await biconomy.init();
+                console.log("Biconomy initialised");
+                } catch (error) {
+                    console.log(error);
+                }
+                console.log('externalProvider');
+                console.log(biconomy.externalProvider);
+                console.log('ethers provider in biconomy');
+                console.log(biconomy.ethersProvider);
                 /*
                   This provider is linked to your wallet.
                   If needed, substitute your wallet solution in place of window.ethereum 
@@ -96,22 +109,22 @@ function App() {
                 userAddress = await walletSigner.getAddress()
                 setSelectedAddress(userAddress);
 
-                biconomy.onEvent(biconomy.READY, async () => {
+                // biconomy.onEvent(biconomy.READY, async () => {
 
                     // Initialize your dapp here like getting user accounts etc
                     contract = new ethers.Contract(
                         config.contract.address,
                         config.contract.abi,
-                        biconomy.getSignerByAddress(userAddress)
+                        biconomy.ethersProvider
                     );
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();
-                }).onEvent(biconomy.ERROR, (error, message) => {
-                    // Handle error while initializing mexa
-                    console.log(message);
-                    console.log(error);
-                });
+                // }).onEvent(biconomy.ERROR, (error, message) => {
+                //     // Handle error while initializing mexa
+                //     console.log(message);
+                //     console.log(error);
+                // });
             } else {
                 showErrorMessage("Metamask not installed");
             }
@@ -178,7 +191,7 @@ function App() {
                         signatureType: biconomy.EIP712_SIGN,
                     };
 
-                    let provider = biconomy.getEthersProvider();
+                    let provider = biconomy.provider;
                     // send signed transaction with ethers
                     // promise resolves to transaction hash                  
                     let txHash = await provider.send("eth_sendRawTransaction", [data]);
@@ -245,7 +258,7 @@ function App() {
         if (contract) {
             try {
                 let { data } = await contract.populateTransaction.setQuote(arg);
-                let provider = biconomy.getEthersProvider();
+                let provider = biconomy.provider;
                 let txParams = {
                     data: data,
                     to: config.contract.address,
@@ -254,7 +267,9 @@ function App() {
                 };
                 let tx;
                 try {
-                    tx = await provider.send("eth_sendTransaction", [txParams])
+                    await provider.send("eth_sendTransaction", [txParams]);
+                    biconomy.on('test', (data) => console.log('test received', data));
+                    biconomy.on('txMined', (data) => console.log('data', data));
                 }
                 catch (err) {
                     console.log("handle errors like signature denied here");

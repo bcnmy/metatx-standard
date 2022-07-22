@@ -11,7 +11,9 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { ethers } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
-
+import SmartAccount from '@biconomy-sdk/smart-account';
+import { LocalRelayer } from '@biconomy-sdk/relayer';
+import { Sdk, MetaMaskWalletProvider } from 'etherspot';
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
@@ -51,6 +53,15 @@ const useStyles = makeStyles((theme) => ({
 
 let biconomy, userAddress;
 
+const ChainId = {
+    // Ethereum
+    MAINNET: 1,
+    ROPSTEN: 3,
+    RINKEBY: 4,
+    GOERLI: 5,
+    KOVAN: 42
+}
+
 function App() {
     const classes = useStyles();
     const [backdropOpen, setBackdropOpen] = React.useState(true);
@@ -86,24 +97,118 @@ function App() {
                     debug: true
                 });
 
-                /*
-                  This provider is linked to your wallet.
-                  If needed, substitute your wallet solution in place of window.ethereum 
-                */
+                debugger;
+
+                //const metaWalletProvider = await MetaMaskWalletProvider.connect();
+                //const sdk = new Sdk(metaWalletProvider);
+                //console.log("sdk created");
+
+                //const output = await sdk.computeContractAccount();
+
+                //console.log('contract account', output);
+
+
+                debugger;
+
                 walletProvider = new ethers.providers.Web3Provider(window.ethereum);
                 walletSigner = walletProvider.getSigner();
 
                 userAddress = await walletSigner.getAddress()
+
+                const wallet = new SmartAccount({
+                    // owner: userAddress,
+                    activeNetworkId: ChainId.RINKEBY,
+                    // single object networks {chainId: , provider: }
+                    supportedNetworksIds: [ChainId.RINKEBY], // has to be consisttent providers and network names
+                    providers: [walletProvider],
+                    backend_url: "http://localhost:3000/v1"
+                });
+
+                let smartAccount = await wallet.init();
+
+                // These methods are logging at the end
+                smartAccount.ethersAdapter(ChainId.RINKEBY).getTransaction('0x3dbc9da5b081a93658d4bf2f85bce2e74332b1806b287248b318c6da13c27994')
+                    .then(res => {
+                        console.log('Tx Details are ', res);
+                    })
+
+                smartAccount.ethersAdapter().getBalance('0x7306aC7A32eb690232De81a9FFB44Bb346026faB')
+                    .then(res => {
+                        console.log('Balance is ', res);
+                    })
+
+
+                console.log("here...")
+                console.log(smartAccount.smartAccount(ChainId.RINKEBY).contract.address);
+                console.log(smartAccount.factory());
+
+                const signer = await smartAccount.ethersAdapter().getSignerAddress();
+
+                const address = await smartAccount.getAddress();
+                console.log('counter factual wallet address: ', address);
+
+                console.log(smartAccount.smartAccount(ChainId.RINKEBY).contract.address);
+
+                // coming wrong
+                const isDeployed = await smartAccount.isDeployed();
+
+                const relayer = new LocalRelayer(walletSigner);
+                const context = await smartAccount.getSmartAccountContext();
+                const deployment = await relayer.deployWallet(smartAccount.factory(),context,userAddress,2);
+                console.log(await deployment.wait(1));
+
+                /*smartAccount.factory(ChainId.RINKEBY).getAddressForCounterfactualWallet("0x7306aC7A32eb690232De81a9FFB44Bb346026faB", 0)
+                .then(res => {
+                    console.log('Result is ', res);
+                })*/
+
+                /*const pksigner = new ethers.Wallet(
+                    "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910"
+                );
+                pksigner.connect(walletProvider);*/
+                const relayer2 = new LocalRelayer(walletSigner);
+                smartAccount = await smartAccount.setRelayer(relayer2);        
+                
+
+                contract = new ethers.Contract(
+                    config.contract.address,
+                    config.contract.abi,
+                    walletProvider
+                );
+
+                let { data } = await contract.populateTransaction.setQuote("Hello there");
+
+                const tx = {
+                    to: config.contract.address,
+                    data: data
+                 }
+                 
+                debugger;
+                const transaction = await smartAccount.createSmartAccountTransaction(tx);
+
+                const sendTx = await smartAccount.sendTransaction(transaction);
+                console.log(await sendTx.wait(1));
+
+                smartAccount.smartAccount(ChainId.RINKEBY).getOwner()
+                    .then(res => {
+                        console.log('Owner of smart wallet is ', res);
+                 })
+
+
+
+                 
+                /*
+                  This provider is linked to your wallet.
+                  If needed, substitute your wallet solution in place of window.ethereum 
+                */
+                
                 setSelectedAddress(userAddress);
 
                 biconomy.onEvent(biconomy.READY, async () => {
 
                     // Initialize your dapp here like getting user accounts etc
-                    contract = new ethers.Contract(
-                        config.contract.address,
-                        config.contract.abi,
-                        biconomy.getSignerByAddress(userAddress)
-                    );
+                    
+    
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();

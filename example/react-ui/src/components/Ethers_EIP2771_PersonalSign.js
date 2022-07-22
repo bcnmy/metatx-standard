@@ -11,6 +11,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { ethers } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
+import { sequence } from "0xsequence";
 
 import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
@@ -79,12 +80,49 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-mainnet.g.alchemy.com/v2/s6bOKN9QDGXpVbsqzJMl_AHeZHNOCTcM");
                 biconomy = new Biconomy(jsonRpcProvider, {
                     walletProvider: window.ethereum,
                     apiKey: config.apiKey.prod,
                     debug: true
                 });
+
+                debugger;
+                const wallet = await sequence.initWallet('polygon');
+                const wallet1 = sequence.getWallet();
+
+                const connectDetails = await wallet1.connect({
+                    app: 'Your Dapp name',
+                    authorize: true,
+                    // And pass settings if you would like to customize further
+                    settings: {
+                      theme: "light",
+                      bannerUrl: "https://yoursite.com/banner-image.png",  // 3:1 aspect ratio, 1200x400 works best
+                      includedPaymentProviders: ["moonpay", "ramp"],
+                      defaultFundingCurrency: "matic",
+                      lockFundingCurrencyToDefault: false,
+                    }
+                  })
+
+                debugger;
+
+                const providerCheck = wallet1.getProvider()
+                  
+                const walletAddress = await wallet1.getAddress()
+                const chainId = await wallet1.getChainId()
+
+
+                const signer = await wallet1.getSigner()
+                const signature = await signer.signMessage("heyy")
+                console.log(signature)
+                  
+                console.log('user accepted connect?', connectDetails.connected)
+                console.log('users signed connect proof to valid their account address:', connectDetails.proof)
+
+
+                wallet1.openWallet();
+
+                
 
                 /*
                   This provider is linked to your wallet.

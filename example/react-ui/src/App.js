@@ -6,6 +6,7 @@ import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 
+import Ethers_Gnosis_SCW from './components/Ethers_Gnosis_SCW'
 import Ethers_Custom_EIP712Sign from './components/Ethers_Custom_EIP712Sign';
 import Ethers_Custom_PersonalSign from './components/Ethers_Custom_PersonalSign';
 import Ethers_EIP2771_EIP712Sign from './components/Ethers_EIP2771_EIP712Sign';
@@ -100,7 +101,7 @@ function App() {
           aria-label="Vertical tabs example"
           className={classes.tabs}
         > 
-          <Tab label="Web3 + Custom + EIP712 Sign" {...a11yProps(0)} />
+          {/* <Tab label="Web3 + Custom + EIP712 Sign" {...a11yProps(0)} />
           <Tab label="Web3 + Custom + Personal Sign" {...a11yProps(1)} />
           <Tab label="Web3 + EIP2771 + EIP712 Sign" {...a11yProps(2)} />
           <Tab label="Web3 + EIP2771 + Personal Sign" {...a11yProps(3)} />
@@ -118,8 +119,8 @@ function App() {
           <Tab label="Ethers + Forward + Personal Sign" {...a11yProps(15)} />
           <Tab label="Ethers + Forward + All Tokens" {...a11yProps(16)} />
           <Tab label="Gas + Estimation + Mainnet + Exercise" {...a11yProps(17)} />
-          <Tab label="Ethers + SCW + EIP712 Sign" {...a11yProps(18)}/>
-
+          <Tab label="Ethers + SCW + EIP712 Sign" {...a11yProps(18)}/> */}
+          <Tab labale="Ethers + Gnosis + SCW" {...a11yProps(0)}/>
           {/*To Be Added
              Ethers + Forward + Personal Sign
              Web3 + Forward + EIP712 Sign
@@ -128,7 +129,7 @@ function App() {
           */}
         </Tabs>
 
-        <TabPanel value={value} index={0}>
+        {/* <TabPanel value={value} index={0}>
           <Web3_Custom_EIP712Sign />
         </TabPanel>
         <TabPanel value={value} index={1}>
@@ -184,6 +185,9 @@ function App() {
         </TabPanel>
         <TabPanel value={value} index={18}>
           <Ethers_SCW_EIP712Sign />
+        </TabPanel> */}
+        <TabPanel value={value} index={0}>
+          <Ethers_Gnosis_SCW />
         </TabPanel>
 
       </div>

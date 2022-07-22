@@ -9,7 +9,12 @@ import "react-notifications/lib/notifications.css";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
+// Gnosis imports
 import { ethers } from "ethers";
+import EthersAdapter from '@gnosis.pm/safe-ethers-lib'
+import Safe, { SafeFactory, SafeAccountConfig } from '@gnosis.pm/safe-core-sdk'
+import SafeServiceClient from "@gnosis.pm/safe-service-client"; // v1.0.1
+
 import { Biconomy } from "@biconomy/mexa";
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -18,14 +23,15 @@ import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 
+let ethAdapter;
 let config = {
     contract: {
-        address: "0x465F55aEaFB5291757c3E422663A206D13c1f2DF",
+        address: "0x84d32E5921BA27A685BE39c5D29De833225700be",
         abi: [ { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "admin", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [ { "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "string", "name": "newQuote", "type": "string" } ], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_trustedForwarder", "type": "address" } ], "name": "setTrustedForwarder", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" } ]
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-        prod: "ugubRq_Wd.9aa03884-0db6-4dee-be76-ce64d22f05ed"
+        prod: "69fyMOQpv.27a2028e-f706-4c63-9532-839980dcbf10"
     }
 }
 
@@ -49,7 +55,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-let biconomy, userAddress;
+let biconomy, userAddress, safeService;
 
 function App() {
     const classes = useStyles();
@@ -79,26 +85,12 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                // let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-mainnet.g.alchemy.com/v2/mYDhGMQRepSXgWE1PSN1TW3P-vcsqQqe");
-                // biconomy = new Biconomy(jsonRpcProvider, {
-                //     walletProvider: window.ethereum,
-                //     apiKey: config.apiKey.prod,
-                //     debug: true
-                // });
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://eth-rinkeby.alchemyapi.io/v2/bm4jnWov7s3JQsotY9JUHIjWAFyVRXFh");
+                biconomy = new Biconomy(window.ethereum, {
+                    apiKey: config.apiKey.prod,
+                    debug: true
+                });
 
-                biconomy = new Biconomy(window.ethereum,
-                    { apiKey: config.apiKey.prod, debug: true, contractAddresses: [config.contract.address] });
-                debugger;
-                try{
-                await biconomy.init();
-                console.log("Biconomy initialised");
-                } catch (error) {
-                    console.log(error);
-                }
-                console.log('externalProvider');
-                console.log(biconomy.externalProvider);
-                console.log('ethers provider in biconomy');
-                console.log(biconomy.ethersProvider);
                 /*
                   This provider is linked to your wallet.
                   If needed, substitute your wallet solution in place of window.ethereum 
@@ -109,22 +101,30 @@ function App() {
                 userAddress = await walletSigner.getAddress()
                 setSelectedAddress(userAddress);
 
-                // biconomy.onEvent(biconomy.READY, async () => {
+                biconomy.onEvent(biconomy.READY, async () => {
 
                     // Initialize your dapp here like getting user accounts etc
                     contract = new ethers.Contract(
                         config.contract.address,
                         config.contract.abi,
-                        biconomy.ethersProvider
+                        biconomy.getSignerByAddress(userAddress.toString().toLowerCase())
                     );
+
+                    ethAdapter = new EthersAdapter({
+                        ethers,
+                        signer: biconomy.getSignerByAddress(userAddress.toString().toLowerCase())
+                    });
+
+                    const txServiceUrl = 'https://safe-transaction.rinkeby.gnosis.io';
+                    safeService = new SafeServiceClient({ txServiceUrl, ethAdapter });
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();
-                // }).onEvent(biconomy.ERROR, (error, message) => {
-                //     // Handle error while initializing mexa
-                //     console.log(message);
-                //     console.log(error);
-                // });
+                }).onEvent(biconomy.ERROR, (error, message) => {
+                    // Handle error while initializing mexa
+                    console.log(message);
+                    console.log(error);
+                });
             } else {
                 showErrorMessage("Metamask not installed");
             }
@@ -136,91 +136,6 @@ function App() {
         setNewQuote(event.target.value);
     };
 
-    const onSubmitWithEIP712Sign = async () => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            if (metaTxEnabled) {
-                showInfoMessage(`Getting user signature`);
-                sendTransaction(userAddress, newQuote);
-            } else {
-                console.log("Sending normal transaction");
-                let tx = await contract.setQuote(newQuote);
-                console.log("Transaction hash : ", tx.hash);
-                showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-                let confirmation = await tx.wait();
-                console.log(confirmation);
-                setTransactionHash(tx.hash);
-
-                showSuccessMessage("Transaction confirmed on chain");
-                getQuoteFromNetwork();
-            }
-        } else {
-            showErrorMessage("Please enter the quote");
-        }
-    };
-
-    const onSubmitWithPrivateKey = async () => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            try {
-                if (metaTxEnabled) {
-                    showInfoMessage(`Getting user signature`);
-                    let privateKey = "bf096e6fb9754860c4c99eb336c0579db994a3ef7fb3f7db869ad2f1972fc755";
-                    let userAddress = "0xf7AB2d00f379167c339691c23B23111eB598B3fb";
-                    let userSigner = new ethers.Wallet(privateKey);
-                    let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
-
-                    let rawTx = {
-                        to: config.contract.address,
-                        data: functionSignature,
-                        from: userAddress
-                    };
-
-                    let signedTx = await userSigner.signTransaction(rawTx);
-                    // should get user message to sign for EIP712 or personal signature types
-                    const forwardData = await biconomy.getForwardRequestAndMessageToSign(signedTx);
-                    console.log(forwardData);
-
-                    // optionally one can sign using sigUtil
-                    const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: forwardData.eip712Format }, 'V3');
-
-                    let data = {
-                        signature: signature,
-                        forwardRequest: forwardData.request,
-                        rawTransaction: signedTx,
-                        signatureType: biconomy.EIP712_SIGN,
-                    };
-
-                    let provider = biconomy.provider;
-                    // send signed transaction with ethers
-                    // promise resolves to transaction hash                  
-                    let txHash = await provider.send("eth_sendRawTransaction", [data]);
-                    showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
-                    let receipt = await provider.waitForTransaction(txHash);
-                    setTransactionHash(txHash);
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                    console.log(receipt);
-                } else {
-                    console.log("Sending normal transaction");
-                    let tx = await contract.setQuote(newQuote);
-                    console.log("Transaction hash : ", tx.hash);
-                    showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-                    let confirmation = await tx.wait();
-                    console.log(confirmation);
-                    setTransactionHash(tx.hash);
-
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                }
-            } catch (error) {
-                console.log(error);
-                handleClose();
-            }
-        } else {
-            showErrorMessage("Please enter the quote");
-        }
-    }
 
     const getQuoteFromNetwork = async () => {
         setLoadingMessage("Getting Quote from contact ...");
@@ -254,45 +169,72 @@ function App() {
         NotificationManager.info(message, "Info", 3000);
     };
 
-    const sendTransaction = async (userAddress, arg) => {
-        if (contract) {
-            try {
-                let { data } = await contract.populateTransaction.setQuote(arg);
-                let provider = biconomy.provider;
-                let txParams = {
-                    data: data,
-                    to: config.contract.address,
-                    from: userAddress,
-                    signatureType: "EIP712_SIGN"
-                };
-                let tx;
-                try {
-                    await provider.send("eth_sendTransaction", [txParams]);
-                    biconomy.on('test', (data) => console.log('test received', data));
-                    biconomy.on('txMined', (data) => console.log('data', data));
-                }
-                catch (err) {
-                    console.log("handle errors like signature denied here");
-                    console.log(err);
-                }
-
-                console.log("Transaction hash : ", tx);
-                showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
-
-                //event emitter methods
-                provider.once(tx, (transaction) => {
-                    // Emitted when the transaction has been mined
-                    showSuccessMessage("Transaction confirmed on chain");
-                    console.log(transaction);
-                    setTransactionHash(tx);
-                    getQuoteFromNetwork();
-                })
-
-            } catch (error) {
-                console.log(error);
+    const onSubitWithGnosisSCW =  async () => {
+        try {
+            /**If new safe */
+            // create safeFactory instance. await SafeFactory.create({ ethAdapter })
+            const safeFactory = await SafeFactory.create({ ethAdapter })
+            const owners = [userAddress]
+            const threshold = 2;
+            const safeAccountConfig = {
+                owners,
+                threshold,
             }
+            // console.log('Deploying safe...');
+            // deploy safe (gasless). await safeFactory.deploySafe({ safeAccountConfig })
+            // const safeSdk = await safeFactory.deploySafe({ safeAccountConfig })
+            // console.log('Safe deployed...');
+            // to get address. const address = safeSdk.getAddress()
+            // const newSafeAddress = safeSdk.getAddress();
+            // console.log('new safe address', newSafeAddress);
+            const safeSdk = await Safe.create({ethAdapter, safeAddress: '0xaF1CDF95f76aF50D78a6378fA072FcD6dA2648b4'})
+            // create transaction. const safeTransaction = await safeSdk.createTransaction(transaction)
+            const { data } = await contract.populateTransaction.setQuote(newQuote);
+
+            const transaction = {
+                to: config.contract.address,
+                value: 0,
+                data: data,
+                nonce: await safeSdk.getNonce()
+            }
+
+            const safeTransaction = await safeSdk.createTransaction(transaction);
+            console.log('safeTransaction: ', safeTransaction);
+
+            const txGasEstimate = await safeService.estimateSafeTransaction(
+                '0xaF1CDF95f76aF50D78a6378fA072FcD6dA2648b4',
+                {
+                    to: safeTransaction.data.to,
+                    value: safeTransaction.data.value,
+                    data: safeTransaction.data.data,
+                    operation: safeTransaction.data.operation
+                }
+            );
+            console.log('txGasEstimate', txGasEstimate);
+
+            const txHash = await safeSdk.getTransactionHash(safeTransaction);
+            const signature = await safeSdk.signTransactionHash(txHash);
+            console.log('signature', signature);
+            safeTransaction.addSignature(signature);
+            const gasPrice = 0; 
+            const gasToken = '0x0000000000000000000000000000000000000000'; 
+            const executor = '0x0000000000000000000000000000000000000000';
+
+            safeTransaction.data.baseGas = 0; 
+            safeTransaction.data.safeTxGas = 0;
+            safeTransaction.data.gasPrice = gasPrice;
+            safeTransaction.data.gasToken = gasToken;
+            safeTransaction.data.refundReceiver = executor;
+            const executeTxResponse = await safeSdk.executeTransaction(safeTransaction, {gasLimit: 500000});
+            console.log('executeTxResponse', executeTxResponse);
+
+            /**If safe already exists */
+            // connect to a safe. await Safe.create({ ethAdapter, safeAddress }), await safeSdk.connect({ ethAdapter, safeAddress })
+
+        } catch (error) {
+            console.log(error)
         }
-    };
+    }
 
     return (
         <div className="App">
@@ -347,13 +289,10 @@ function App() {
                             onChange={onQuoteChange}
                             value={newQuote}
                         />
-                        <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
-                            Submit
+                        <Button variant="contained" color="primary" onClick={onSubitWithGnosisSCW} style={{ marginLeft: "10px" }}>
+                            Submit With Gnosis SCW
             </Button>
 
-                        <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
-                            Submit (Private Key)
-            </Button>
                     </div>
                 </div>
             </section>

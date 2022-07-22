@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@biconomy/mexa": "file:../../../mexa-sdk",
+    "@biconomy/mexa": "/Users/yashasvichaudhary/Documents/Biconomy/mexa-sdk",
+    "@gnosis.pm/safe-core-sdk": "^2.2.1",
+    "@gnosis.pm/safe-ethers-lib": "^1.2.1",
+    "@gnosis.pm/safe-service-client": "^1.2.0",
     "@material-ui/core": "^4.9.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",

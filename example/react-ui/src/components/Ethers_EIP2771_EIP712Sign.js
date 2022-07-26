@@ -8,6 +8,8 @@ import {
 import "react-notifications/lib/notifications.css";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { Wallet as EOAWallet } from 'ethers';
+import { JsonRpcProvider } from '@ethersproject/providers'
 
 import { ethers } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
@@ -22,8 +24,66 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0x880176EDA9f1608A2Bf182385379bDcC1a65Dfcf",
-        abi: [{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_forwarder","type":"address"}],"name":"setTrustedForwarder","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"name":"isTrustedForwarder","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"trustedForwarder","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"versionRecipient","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}]
+        address: "0xbD1E8F64A50765C1e477492c72Cd2d0280171722",
+        abi: [
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "newQuote",
+                        "type": "string"
+                    }
+                ],
+                "name": "setQuote",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getQuote",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "currentQuote",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "currentOwner",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "quote",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ]
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
@@ -97,79 +157,66 @@ function App() {
                     debug: true
                 });
 
-                debugger;
+                // SDK playground
 
                 //const metaWalletProvider = await MetaMaskWalletProvider.connect();
                 //const sdk = new Sdk(metaWalletProvider);
                 //console.log("sdk created");
-
                 //const output = await sdk.computeContractAccount();
-
                 //console.log('contract account', output);
-
-
-                debugger;
 
                 walletProvider = new ethers.providers.Web3Provider(window.ethereum);
                 walletSigner = walletProvider.getSigner();
 
                 userAddress = await walletSigner.getAddress()
 
-                const wallet = new SmartAccount({
-                    // owner: userAddress,
+                debugger;
+
+                // New instance 
+                const wallet = new SmartAccount(walletProvider,{
+                    // these are all optional
                     activeNetworkId: ChainId.RINKEBY,
                     // single object networks {chainId: , provider: }
-                    supportedNetworksIds: [ChainId.RINKEBY], // has to be consisttent providers and network names
-                    providers: [walletProvider],
-                    backend_url: "http://localhost:3000/v1"
+                    supportedNetworksIds: [ChainId.RINKEBY, ChainId.GOERLI], // has to be consisttent providers and network names
+                    // backend_url: "http://localhost:3000/v1"
                 });
 
+                // Initalising
                 let smartAccount = await wallet.init();
 
-                // These methods are logging at the end
-                smartAccount.ethersAdapter(ChainId.RINKEBY).getTransaction('0x3dbc9da5b081a93658d4bf2f85bce2e74332b1806b287248b318c6da13c27994')
-                    .then(res => {
-                        console.log('Tx Details are ', res);
-                    })
-
-                smartAccount.ethersAdapter().getBalance('0x7306aC7A32eb690232De81a9FFB44Bb346026faB')
+                // ethAdapter could be used like this
+                /*smartAccount.ethersAdapter().getBalance('0x7306aC7A32eb690232De81a9FFB44Bb346026faB')
                     .then(res => {
                         console.log('Balance is ', res);
-                    })
+                    })*/
 
 
-                console.log("here...")
                 console.log(smartAccount.smartAccount(ChainId.RINKEBY).contract.address);
-                console.log(smartAccount.factory());
+                console.log(smartAccount.factory(ChainId.RINKEBY).contract.address);
 
                 const signer = await smartAccount.ethersAdapter().getSignerAddress();
 
                 const address = await smartAccount.getAddress();
                 console.log('counter factual wallet address: ', address);
 
-                console.log(smartAccount.smartAccount(ChainId.RINKEBY).contract.address);
 
-                // coming wrong
-                const isDeployed = await smartAccount.isDeployed();
+                const isDeployed = await smartAccount.isDeployed(); /// can pass chainId here
+                // Check if the smart wallet is deployed or not
 
-                const relayer = new LocalRelayer(walletSigner);
-                const context = await smartAccount.getSmartAccountContext();
-                const deployment = await relayer.deployWallet(smartAccount.factory(),context,userAddress,2);
-                console.log(await deployment.wait(1));
+                // you can create instance of local relayer with current signer or any other private key signer
+                //const relayer = new LocalRelayer(getEOAWallet("PRIVATE_KEY"));
 
-                /*smartAccount.factory(ChainId.RINKEBY).getAddressForCounterfactualWallet("0x7306aC7A32eb690232De81a9FFB44Bb346026faB", 0)
-                .then(res => {
-                    console.log('Result is ', res);
-                })*/
+                //Deploying wallet
+                //const context = await smartAccount.getSmartAccountContext();
+                //const deployment = await relayer.deployWallet(smartAccount.factory(),context,userAddress);
+                //console.log(await deployment.wait(1));
 
-                /*const pksigner = new ethers.Wallet(
-                    "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910"
-                );
-                pksigner.connect(walletProvider);*/
+                // Example of regular signer and LocalRelayer
                 const relayer2 = new LocalRelayer(walletSigner);
+                // to do transaction on smart account we need to set relayer
                 smartAccount = await smartAccount.setRelayer(relayer2);        
                 
-
+                // building external txn
                 contract = new ethers.Contract(
                     config.contract.address,
                     config.contract.abi,
@@ -184,18 +231,18 @@ function App() {
                  }
                  
                 debugger;
+                // currently step 1 building wallet transaction
                 const transaction = await smartAccount.createSmartAccountTransaction(tx);
 
+                // send transaction internally calls signTransaction and sends it to connected relayer
                 const sendTx = await smartAccount.sendTransaction(transaction);
                 console.log(await sendTx.wait(1));
 
-                smartAccount.smartAccount(ChainId.RINKEBY).getOwner()
-                    .then(res => {
-                        console.log('Owner of smart wallet is ', res);
-                 })
+                console.log('Owner of smart wallet is ', smartAccount.owner);
 
 
-
+                debugger;
+                // End
                  
                 /*
                   This provider is linked to your wallet.
@@ -223,6 +270,21 @@ function App() {
         }
         init();
     }, []);
+
+    const getEOAWallet = (privateKey, provider) => {
+        // defaults
+        if (!provider) {
+          provider = 'https://rinkeby.infura.io/v3/d126f392798444609246423b06116c77'
+        }
+      
+        const wallet = new EOAWallet(privateKey)
+      
+        if (typeof provider === 'string') {
+          return wallet.connect(new JsonRpcProvider(provider))
+        } else {
+          return wallet.connect(provider)
+        }
+      }
 
     const onQuoteChange = event => {
         setNewQuote(event.target.value);

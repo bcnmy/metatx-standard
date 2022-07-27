@@ -203,12 +203,14 @@ function App() {
                 const isDeployed = await smartAccount.isDeployed(); /// can pass chainId here
                 // Check if the smart wallet is deployed or not
 
+                const state = await smartAccount.getSmartAccountState();
+
                 // you can create instance of local relayer with current signer or any other private key signer
                 //const relayer = new LocalRelayer(getEOAWallet("PRIVATE_KEY"));
 
                 //Deploying wallet
-                //const context = await smartAccount.getSmartAccountContext();
-                //const deployment = await relayer.deployWallet(smartAccount.factory(),context,userAddress);
+                //const context = smartAccount.getSmartAccountContext();
+                //const deployment = await relayer.deployWallet(state,context); // index 0
                 //console.log(await deployment.wait(1));
 
                 // Example of regular signer and LocalRelayer

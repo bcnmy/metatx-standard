@@ -23,7 +23,6 @@ import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
 let sigUtil = require("eth-sig-util");
 
-let ethAdapter;
 let config = {
     contract: {
         address: "0x84d32E5921BA27A685BE39c5D29De833225700be",
@@ -37,6 +36,11 @@ let config = {
 
 let walletProvider, walletSigner;
 let contract, contractInterface;
+let userAddress, safeService;
+let ethAdapter;
+
+let biconomy;
+let gnosisWalletClient;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -54,8 +58,6 @@ const useStyles = makeStyles((theme) => ({
         background: '#000'
     },
 }));
-
-let biconomy, userAddress, safeService;
 
 function App() {
     const classes = useStyles();
@@ -85,11 +87,22 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://eth-rinkeby.alchemyapi.io/v2/bm4jnWov7s3JQsotY9JUHIjWAFyVRXFh");
-                biconomy = new Biconomy(window.ethereum, {
-                    apiKey: config.apiKey.prod,
-                    debug: true
-                });
+                // let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://eth-rinkeby.alchemyapi.io/v2/bm4jnWov7s3JQsotY9JUHIjWAFyVRXFh");
+                // biconomy = new Biconomy(window.ethereum, {
+                //     apiKey: config.apiKey.prod,
+                //     debug: true
+                // });
+
+                try {
+                    biconomy = new Biconomy(window.ethereum,
+                        { 
+                            apiKey: config.apiKey.prod, // get api key from dashboard
+                            contractAddresses: [config.contract.address]
+                        });
+                    await biconomy.init();
+                } catch (error) {
+                    console.log(error);
+                }
 
                 /*
                   This provider is linked to your wallet.
@@ -101,7 +114,7 @@ function App() {
                 userAddress = await walletSigner.getAddress()
                 setSelectedAddress(userAddress);
 
-                biconomy.onEvent(biconomy.READY, async () => {
+                // biconomy.onEvent(biconomy.READY, async () => {
 
                     // Initialize your dapp here like getting user accounts etc
                     contract = new ethers.Contract(
@@ -110,21 +123,21 @@ function App() {
                         biconomy.getSignerByAddress(userAddress.toString().toLowerCase())
                     );
 
-                    ethAdapter = new EthersAdapter({
-                        ethers,
-                        signer: biconomy.getSignerByAddress(userAddress.toString().toLowerCase())
-                    });
+                    gnosisWalletClient = biconomy.gnosisWalletClient;
+                    const isEthersAdapterSet = await gnosisWalletClient.setEthersAdapter(userAddress);
+                    console.log('isEthersAdapterSet', isEthersAdapterSet);
+                    
 
                     const txServiceUrl = 'https://safe-transaction.rinkeby.gnosis.io';
                     safeService = new SafeServiceClient({ txServiceUrl, ethAdapter });
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     getQuoteFromNetwork();
-                }).onEvent(biconomy.ERROR, (error, message) => {
-                    // Handle error while initializing mexa
-                    console.log(message);
-                    console.log(error);
-                });
+                // }).onEvent(biconomy.ERROR, (error, message) => {
+                //     // Handle error while initializing mexa
+                //     console.log(message);
+                //     console.log(error);
+                // });
             } else {
                 showErrorMessage("Metamask not installed");
             }
@@ -180,6 +193,9 @@ function App() {
                 owners,
                 threshold,
             }
+
+            const safeSdk = await gnosisWalletClient.createNewGnosisSafe(safeAccountConfig);
+            console.log('safeSdk', safeSdk);
             // console.log('Deploying safe...');
             // deploy safe (gasless). await safeFactory.deploySafe({ safeAccountConfig })
             // const safeSdk = await safeFactory.deploySafe({ safeAccountConfig })
@@ -187,46 +203,46 @@ function App() {
             // to get address. const address = safeSdk.getAddress()
             // const newSafeAddress = safeSdk.getAddress();
             // console.log('new safe address', newSafeAddress);
-            const safeSdk = await Safe.create({ethAdapter, safeAddress: '0xaF1CDF95f76aF50D78a6378fA072FcD6dA2648b4'})
+            // const safeSdk = await Safe.create({ethAdapter, safeAddress: '0xaF1CDF95f76aF50D78a6378fA072FcD6dA2648b4'})
             // create transaction. const safeTransaction = await safeSdk.createTransaction(transaction)
-            const { data } = await contract.populateTransaction.setQuote(newQuote);
+            // const { data } = await contract.populateTransaction.setQuote(newQuote);
 
-            const transaction = {
-                to: config.contract.address,
-                value: 0,
-                data: data,
-                nonce: await safeSdk.getNonce()
-            }
+            // const transaction = {
+            //     to: config.contract.address,
+            //     value: 0,
+            //     data: data,
+            //     nonce: await safeSdk.getNonce()
+            // }
 
-            const safeTransaction = await safeSdk.createTransaction(transaction);
-            console.log('safeTransaction: ', safeTransaction);
+            // const safeTransaction = await safeSdk.createTransaction(transaction);
+            // console.log('safeTransaction: ', safeTransaction);
 
-            const txGasEstimate = await safeService.estimateSafeTransaction(
-                '0xaF1CDF95f76aF50D78a6378fA072FcD6dA2648b4',
-                {
-                    to: safeTransaction.data.to,
-                    value: safeTransaction.data.value,
-                    data: safeTransaction.data.data,
-                    operation: safeTransaction.data.operation
-                }
-            );
-            console.log('txGasEstimate', txGasEstimate);
+            // const txGasEstimate = await safeService.estimateSafeTransaction(
+            //     '0xaF1CDF95f76aF50D78a6378fA072FcD6dA2648b4',
+            //     {
+            //         to: safeTransaction.data.to,
+            //         value: safeTransaction.data.value,
+            //         data: safeTransaction.data.data,
+            //         operation: safeTransaction.data.operation
+            //     }
+            // );
+            // console.log('txGasEstimate', txGasEstimate);
 
-            const txHash = await safeSdk.getTransactionHash(safeTransaction);
-            const signature = await safeSdk.signTransactionHash(txHash);
-            console.log('signature', signature);
-            safeTransaction.addSignature(signature);
-            const gasPrice = 0; 
-            const gasToken = '0x0000000000000000000000000000000000000000'; 
-            const executor = '0x0000000000000000000000000000000000000000';
+            // const txHash = await safeSdk.getTransactionHash(safeTransaction);
+            // const signature = await safeSdk.signTransactionHash(txHash);
+            // console.log('signature', signature);
+            // safeTransaction.addSignature(signature);
+            // const gasPrice = 0; 
+            // const gasToken = '0x0000000000000000000000000000000000000000'; 
+            // const executor = '0x0000000000000000000000000000000000000000';
 
-            safeTransaction.data.baseGas = 0; 
-            safeTransaction.data.safeTxGas = 0;
-            safeTransaction.data.gasPrice = gasPrice;
-            safeTransaction.data.gasToken = gasToken;
-            safeTransaction.data.refundReceiver = executor;
-            const executeTxResponse = await safeSdk.executeTransaction(safeTransaction, {gasLimit: 500000});
-            console.log('executeTxResponse', executeTxResponse);
+            // safeTransaction.data.baseGas = 0; 
+            // safeTransaction.data.safeTxGas = 0;
+            // safeTransaction.data.gasPrice = gasPrice;
+            // safeTransaction.data.gasToken = gasToken;
+            // safeTransaction.data.refundReceiver = executor;
+            // const executeTxResponse = await safeSdk.executeTransaction(safeTransaction, {gasLimit: 500000});
+            // console.log('executeTxResponse', executeTxResponse);
 
             /**If safe already exists */
             // connect to a safe. await Safe.create({ ethAdapter, safeAddress }), await safeSdk.connect({ ethAdapter, safeAddress })

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@biconomy/mexa": "/Users/yashasvichaudhary/Documents/Biconomy/mexa-sdk",
+    "@biconomy/mexa": "file:../../../mexa-sdk",
     "@gnosis.pm/safe-core-sdk": "^2.2.1",
     "@gnosis.pm/safe-ethers-lib": "^1.2.1",
     "@gnosis.pm/safe-service-client": "^1.2.0",

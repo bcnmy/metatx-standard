@@ -228,9 +228,9 @@ function App() {
             // get the signature from EOA
             // EIP712 sign
             // signing the transaction request
-            const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("5") }, EIP712_WALLET_TX_TYPE, safeTxBody)
-            let newSignature = "0x";
-            newSignature += signature.slice(2);
+            // const signature = await walletSigner._signTypedData({ verifyingContract: scwAddress, chainId: ethers.BigNumber.from("5") }, EIP712_WALLET_TX_TYPE, safeTxBody)
+            // let newSignature = "0x";
+            // newSignature += signature.slice(2);
 
             //contact us for personal sign code snippet
             // New webHookAttributes
@@ -243,7 +243,7 @@ function App() {
             // };
             
 
-            const txHash = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature: newSignature}); // signature appended
+            const txHash = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signatureType: 'PERSONAL_SIGN'}); // signature appended
             biconomy.getEthersProvider().once(txHash, (transaction) => {
                     // Emitted when the transaction has been mined
                     showSuccessMessage("Transaction confirmed on chain");

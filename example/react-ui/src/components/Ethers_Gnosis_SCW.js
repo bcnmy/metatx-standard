@@ -196,6 +196,12 @@ function App() {
 
             const safeSdk = await gnosisWalletClient.createNewGnosisSafe(safeAccountConfig);
             console.log('safeSdk', safeSdk);
+
+            // Functions in gnosisWalletClient:
+            // createNewGnosisSafe(safeAccountConfig: SafeAccountConfig) 
+            // connectToGnosisSafe(safeAddress: string)
+            // executeSafeTransaction(safeTransaction: SafeTransaction, gasLimit: number)
+
             // console.log('Deploying safe...');
             // deploy safe (gasless). await safeFactory.deploySafe({ safeAccountConfig })
             // const safeSdk = await safeFactory.deploySafe({ safeAccountConfig })

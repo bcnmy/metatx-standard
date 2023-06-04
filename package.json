@@ -1,0 +1,48 @@
+{
+  "name": "meta-transaction",
+  "description": "Repository containing a gas cost effective standard for meta transaction to be used by any contract to enable native meta transaction feature on any function. The approach support signed typed messages so that while signing the data on client side user see a human readable message instead of scary hex string.",
+  "version": "0.1.0",
+  "directories": {
+    "contracts": "contracts",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npx hardhat test",
+    "test:coverage": "npx hardhat coverage",
+    "compile": "npx hardhat compile",
+    "lint:js": "npx eslint \"**/*.js\"",
+    "lint:js-fix": "npx eslint \"**/*.js\" --fix",
+    "lint:sol": "npx prettier \"**/*.{json,sol,md}\" --check && npx solhint \"contracts/**/*.sol\"",
+    "lint:sol-fix": "npx prettier \"**/*.{json,sol,md}\" --write && npx solhint \"contracts/**/*.sol\" --fix",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:fix": "npm run lint:js-fix && npm run lint:sol-fix"
+  },
+  "author": "Mohamad Hammoud",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.32.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "husky": "^8.0.3",
+    "prettier": "^2.8.3",
+    "prettier-plugin-solidity": "^1.1.1",
+    "solhint": "^3.3.8",
+    "solhint-plugin-prettier": "^0.0.5"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.7",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.1",
+    "@openzeppelin/contracts": "^4.8.1",
+    "chai": "^4.3.7",
+    "dotenv": "^16.0.3",
+    "eth-sig-util": "^3.0.1",
+    "ethers": "^5.7.0",
+    "hardhat": "^2.12.6",
+    "hardhat-contract-sizer": "^2.8.0",
+    "web3-eth-abi": "^1.10.0"
+  }
+}

@@ -46,8 +46,10 @@ abstract contract EIP712Base {
             );
     }
 
-    function getChainID() internal pure returns (uint256 id) {
-        id = 31337; // local network
+    function getChainID() internal view returns (uint256 id) {
+        assembly {
+            id := chainid()
+        }
     }
 
     function getDomainSeparator() private view returns (bytes32) {

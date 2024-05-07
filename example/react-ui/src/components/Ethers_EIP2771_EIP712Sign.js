@@ -20,12 +20,130 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0x880176EDA9f1608A2Bf182385379bDcC1a65Dfcf",
-        abi: [{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_forwarder","type":"address"}],"name":"setTrustedForwarder","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"name":"isTrustedForwarder","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"trustedForwarder","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"versionRecipient","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}]
+        // address: "0x379A64a30B9Da67A6E0c2957bA23a3eC4a666fE7",
+        address: "0x0c242356e5e71b8840c4b525a56d60da049497d0",
+        abi: [
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "newQuote",
+                        "type": "string"
+                    }
+                ],
+                "name": "setQuote",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "trustedForwarder",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "inputs": [],
+                "name": "admin",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getQuote",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "currentQuote",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "currentOwner",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getTrustedForwarder",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "forwarder",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "forwarder",
+                        "type": "address"
+                    }
+                ],
+                "name": "isTrustedForwarder",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "quote",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ]
     },
     apiKey: {
-        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
-        prod: "sCd7Ht3sK.e21885c4-5f31-469a-8e15-969e47ec7842"
+        test: "avl5trG6v.cc393c85-0ae9-4c67-add3-db164f248d74",
+        // prod: "W8fWv0lrr.0aeac97f-78fc-4335-bf44-a3d28575f67d"
+        // prod: "R9F1P21uy.66fe0259-3a4c-48a5-817c-49ff24a0454c"
+        // prod: "6z_2dpRH2.20f485bb-6b7e-428e-94b1-185d63911081"
+        prod: "gtgZM-nz7.3c43012d-7db8-4c87-8f97-0d1e091151c7"
     }
 }
 
@@ -79,7 +197,7 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-amoy.blockpi.network/v1/rpc/public");
                 biconomy = new Biconomy(jsonRpcProvider, {
                     walletProvider: window.ethereum,
                     apiKey: config.apiKey.prod,
@@ -106,6 +224,7 @@ function App() {
                     );
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
+                    console.log("get network quote");
                     getQuoteFromNetwork();
                 }).onEvent(biconomy.ERROR, (error, message) => {
                     // Handle error while initializing mexa
@@ -124,7 +243,7 @@ function App() {
     };
 
     const onSubmitWithEIP712Sign = async () => {
-        if (newQuote != "" && contract) {
+        if (contract) {
             setTransactionHash("");
             if (metaTxEnabled) {
                 showInfoMessage(`Getting user signature`);
@@ -245,6 +364,7 @@ function App() {
         if (contract) {
             try {
                 let { data } = await contract.populateTransaction.setQuote(arg);
+                
                 let provider = biconomy.getEthersProvider();
                 let txParams = {
                     data: data,

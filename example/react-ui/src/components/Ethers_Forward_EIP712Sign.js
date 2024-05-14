@@ -20,18 +20,19 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0x6ec90770285D545B9872795b7D9f833025F4dF9F",
+        address: "0x0c242356e5e71b8840c4b525a56d60da049497d0",
         abi: [{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_forwarder","type":"address"}],"name":"setTrustedForwarder","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"forwarder","type":"address"}],"name":"isTrustedForwarder","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"trustedForwarder","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"versionRecipient","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}]
     },
     apiKey: {
         test: "m60yDrUs7.5c3b23fa-0b93-46ac-86f9-79e998d8f361",
-        prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
+        prod: "gSgx6t8TJ.74579bc4-20f8-428a-a209-3b8ec9d5f293"
     }
 }
 
-config.erc20ForwarderAddress = "0x9A60349561E0489faB15A6cc5ad9F75061db0F52";
+config.erc20ForwarderAddress = "0x9130927806aC54F93Feb58Eb459c08dcA7D116F8";
 config.daiAddress = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 config.usdtAddress = "0x8e1084f3599ba90991C3b2f9e25D920738C1496D";
+config.sandAddress = "0xD20fbd836e80DabFb777E6AaBbe52e96c07eCD1B";
 
 config.usdc = {
     address: "0x6043fD7126e4229d6FcaC388c9E1C8d333CCb8fA",
@@ -143,7 +144,7 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-amoy.blockpi.network/v1/rpc/public");
                 biconomy = new Biconomy(provider, {
                     walletProvider: window.ethereum,
                     apiKey: config.apiKey.prod,
@@ -217,34 +218,34 @@ function App() {
 
           //If your provider is not a signer with accounts then you must pass userAddress in the permit options
 
-          const usdcPermitOptions = {
-            domainData: usdcDomainData,
-            value: "100000000000000000000",
-            userAddress: userAddress,
-            deadline: Number(Math.floor(Date.now() / 1000 + 3600)),
-          };
+          // const usdcPermitOptions = {
+          //   domainData: usdcDomainData,
+          //   value: "100000000000000000000",
+          //   userAddress: userAddress,
+          //   deadline: Number(Math.floor(Date.now() / 1000 + 3600)),
+          // };
 
-          console.log(usdcPermitOptions);
+          // console.log(usdcPermitOptions);
 
-          const daiPermitOptions = {
-            // spender: config.erc20ForwarderAddress,
-            expiry: Math.floor(Date.now() / 1000 + 3600),
-            allowed: true,
-          };
+          // const daiPermitOptions = {
+          //   // spender: config.erc20ForwarderAddress,
+          //   expiry: Math.floor(Date.now() / 1000 + 3600),
+          //   allowed: true,
+          // };
 
-          console.log("getting permit to spend usdc tokens");
-          showInfoMessage(
-            `Getting signature and permit transaction to spend usdc token by ERC20 Forwarder contract`
-          );
+          // console.log("getting permit to spend usdc tokens");
+          // showInfoMessage(
+          //   `Getting signature and permit transaction to spend usdc token by ERC20 Forwarder contract`
+          // );
 
-          //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
-          //Users need to pass provider object from window, spender address (erc20 forwarder OR the fee proxy address) and DAI's address for your network
+          // //If you're not using biconomy's permit client as biconomy's member you can create your own without importing Biconomy.
+          // //Users need to pass provider object from window, spender address (erc20 forwarder OR the fee proxy address) and DAI's address for your network
 
-          //OR use biconomy's permitclient member as below!  
+          // //OR use biconomy's permitclient member as below!  
 
-          // This step only needs to be done once and is valid during the given deadline
-          let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
-          await permitTx.wait(1);
+          // // This step only needs to be done once and is valid during the given deadline
+          // let permitTx = await permitClient.eip2612Permit(usdcPermitOptions);
+          // await permitTx.wait(1);
 
           console.log("Sending meta transaction");
           showInfoMessage("Building transaction to forward");
@@ -257,14 +258,16 @@ function App() {
             from: userAddress,
             data: data,
           });
+          console.log("hello");
           console.log(gasLimit.toString());
           console.log(gasPrice.toString());
           console.log(data);
 
+          // buildCustomTx for sandbox sign format
           const builtTx = await ercForwarderClient.buildTx({
             to: config.contract.address,
-            token: config.usdc.address,
-            txGas: Number(gasLimit),
+            token: config.sandAddress,
+            txGas: Number(gasLimit) + 1000000,
             data,
           });
           const tx = builtTx.request;
@@ -276,6 +279,8 @@ function App() {
           //signature of this method is sendTxEIP712({req, signature = null, userAddress})
           //signature param is optional. check network agnostics section for more details about this
           //userAddress is must when your provider does not have a signer with accounts
+
+          // sendCustomTxEIP712 for sandbox sign format
           let transaction = await ercForwarderClient.sendTxEIP712({ req: tx });
           //returns an object containing code, log, message, txHash
           console.log(transaction);

@@ -143,7 +143,7 @@ let config = {
         // prod: "W8fWv0lrr.0aeac97f-78fc-4335-bf44-a3d28575f67d"
         // prod: "R9F1P21uy.66fe0259-3a4c-48a5-817c-49ff24a0454c"
         // prod: "6z_2dpRH2.20f485bb-6b7e-428e-94b1-185d63911081"
-        prod: "gtgZM-nz7.3c43012d-7db8-4c87-8f97-0d1e091151c7"
+        prod: "gSgx6t8TJ.74579bc4-20f8-428a-a209-3b8ec9d5f293"
     }
 }
 

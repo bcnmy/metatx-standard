@@ -264,7 +264,7 @@ function App() {
           console.log(data);
 
           // buildCustomTx for sandbox sign format
-          const builtTx = await ercForwarderClient.buildTx({
+          const builtTx = await ercForwarderClient.buildCustomTx({
             to: config.contract.address,
             token: config.sandAddress,
             txGas: Number(gasLimit) + 1000000,
@@ -281,7 +281,7 @@ function App() {
           //userAddress is must when your provider does not have a signer with accounts
 
           // sendCustomTxEIP712 for sandbox sign format
-          let transaction = await ercForwarderClient.sendTxEIP712({ req: tx });
+          let transaction = await ercForwarderClient.sendCustomTxEIP712({ req: tx, metaInfo: {forwardRequest: "V2", type: "V4"} });
           //returns an object containing code, log, message, txHash
           console.log(transaction);
 

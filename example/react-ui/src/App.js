@@ -83,7 +83,7 @@ const useStyles = makeStyles((theme) => ({
 function App() {
 
   const classes = useStyles();
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState(1);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -100,7 +100,7 @@ function App() {
           aria-label="Vertical tabs example"
           className={classes.tabs}
         >
-          {<Tab label="Ethers + Custom + EIP712 Sign" {...a11yProps(1)} />}
+          {/* {<Tab label="Ethers + Custom + EIP712 Sign" {...a11yProps(1)} />} */}
           {/* <Tab label="Ethers + Custom + Personal Sign" {...a11yProps(1)} />
           <Tab label="Ethers + Custom + EIP712 Sign + API" {...a11yProps(3)} />
           <Tab label="Ethers + Custom + Personal Sign + API" {...a11yProps(4)} /> */}
@@ -121,7 +121,8 @@ function App() {
 
           {/* <Tab label="Web3 + EIP2771 + API" {...a11yProps(13)} /> */}
 
-          {/* <Tab label="Ethers + EIP2771 + API" {...a11yProps(7)} /> */}
+          <Tab label="Ethers + EIP2771 + API" {...a11yProps(1)} />
+          {/* <Tab label="Ethers + EIP2771 + 2771Sign" {...a11yProps(1)} /> */}
 
           {/* <Tab label="Ethers + Forward + Personal Sign" {...a11yProps(9)} />
           <Tab label="Ethers + Forward + All Tokens" {...a11yProps(10)} /> */}
@@ -136,9 +137,9 @@ function App() {
           */}
         </Tabs>
 
-        {/*<TabPanel value={value} index={0}>
+        {/* <TabPanel value={value} index={0}>
           <Ethers_Custom_EIP712Sign />
-        </TabPanel>*/}
+        </TabPanel> */}
         {/* <TabPanel value={value} index={0}>
           <Ethers_Custom_PersonalSign />
         </TabPanel>
@@ -165,13 +166,13 @@ function App() {
 
 
 
-        {/* <TabPanel value={value} index={1}>
-          <Ethers_EIP2771_PersonalSign />
+        {/* <TabPanel value={value} index={0}>
+          <Ethers_EIP2771_EIP712Sign />
         </TabPanel> */}
 
-        {<TabPanel value={value} index={0}>
+        {/* {<TabPanel value={value} index={0}>
           <Ethers_Forward_EIP712Sign />
-        </TabPanel>}
+        </TabPanel>} */}
         {/* <TabPanel value={value} index={4}>
           <Web3_Custom_EIP712Sign_API />
         </TabPanel> */}
@@ -186,9 +187,9 @@ function App() {
           <Web3_EIP2771_API />
         </TabPanel> */}
 
-        {/* <TabPanel value={value} index={6}>
+        <TabPanel value={value} index={1}>
           <Ethers_EIP2771_API />
-        </TabPanel> */}
+        </TabPanel>
 
         {/* <TabPanel value={value} index={15}>
           <Ethers_Forward_PersonalSign />

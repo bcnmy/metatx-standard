@@ -21,129 +21,15 @@ let sigUtil = require("eth-sig-util");
 let config = {
     contract: {
         // address: "0x379A64a30B9Da67A6E0c2957bA23a3eC4a666fE7",
-        address: "0x0c242356e5e71b8840c4b525a56d60da049497d0",
-        abi: [
-            {
-                "inputs": [
-                    {
-                        "internalType": "string",
-                        "name": "newQuote",
-                        "type": "string"
-                    }
-                ],
-                "name": "setQuote",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "trustedForwarder",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "inputs": [],
-                "name": "admin",
-                "outputs": [
-                    {
-                        "internalType": "address",
-                        "name": "",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "getQuote",
-                "outputs": [
-                    {
-                        "internalType": "string",
-                        "name": "currentQuote",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "currentOwner",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "getTrustedForwarder",
-                "outputs": [
-                    {
-                        "internalType": "address",
-                        "name": "forwarder",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "forwarder",
-                        "type": "address"
-                    }
-                ],
-                "name": "isTrustedForwarder",
-                "outputs": [
-                    {
-                        "internalType": "bool",
-                        "name": "",
-                        "type": "bool"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "owner",
-                "outputs": [
-                    {
-                        "internalType": "address",
-                        "name": "",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "quote",
-                "outputs": [
-                    {
-                        "internalType": "string",
-                        "name": "",
-                        "type": "string"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ]
+        address: "0x64742C1acC255CfcA1dE078e1E2b852A1308912B",
+        abi: [ { "inputs": [], "name": "spin", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "contract ERC2771Forwarder", "name": "forwarder", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "spinner", "type": "address" } ], "name": "WheelSpinEvent", "type": "event" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" } ]
     },
     apiKey: {
         test: "avl5trG6v.cc393c85-0ae9-4c67-add3-db164f248d74",
         // prod: "W8fWv0lrr.0aeac97f-78fc-4335-bf44-a3d28575f67d"
         // prod: "R9F1P21uy.66fe0259-3a4c-48a5-817c-49ff24a0454c"
         // prod: "6z_2dpRH2.20f485bb-6b7e-428e-94b1-185d63911081"
-        prod: "gSgx6t8TJ.74579bc4-20f8-428a-a209-3b8ec9d5f293"
+        prod: "p4MMyUygT.e13c5954-4530-4429-b502-c6ac4db13f6c"
     }
 }
 
@@ -197,7 +83,7 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-amoy.blockpi.network/v1/rpc/public");
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/mantle/07101210d8974c619d563526229a15fdc1675bb1e862ed04a6b8c4e90fa45fab");
                 biconomy = new Biconomy(jsonRpcProvider, {
                     walletProvider: window.ethereum,
                     apiKey: config.apiKey.prod,
@@ -225,7 +111,8 @@ function App() {
 
                     contractInterface = new ethers.utils.Interface(config.contract.abi);
                     console.log("get network quote");
-                    getQuoteFromNetwork();
+                    handleClose();
+                    // getQuoteFromNetwork();
                 }).onEvent(biconomy.ERROR, (error, message) => {
                     // Handle error while initializing mexa
                     console.log(message);
@@ -238,14 +125,11 @@ function App() {
         init();
     }, []);
 
-    const onQuoteChange = event => {
-        setNewQuote(event.target.value);
-    };
-
     const onSubmitWithEIP712Sign = async () => {
         if (contract) {
             setTransactionHash("");
             if (metaTxEnabled) {
+                console.log("here");
                 showInfoMessage(`Getting user signature`);
                 sendTransaction(userAddress, newQuote);
             } else {
@@ -258,94 +142,11 @@ function App() {
                 setTransactionHash(tx.hash);
 
                 showSuccessMessage("Transaction confirmed on chain");
-                getQuoteFromNetwork();
+                // getQuoteFromNetwork();
             }
         } else {
             showErrorMessage("Please enter the quote");
         }
-    };
-
-    const onSubmitWithPrivateKey = async () => {
-        if (newQuote != "" && contract) {
-            setTransactionHash("");
-            try {
-                if (metaTxEnabled) {
-                    showInfoMessage(`Getting user signature`);
-                    let privateKey = "bf096e6fb9754860c4c99eb336c0579db994a3ef7fb3f7db869ad2f1972fc755";
-                    let userAddress = "0xf7AB2d00f379167c339691c23B23111eB598B3fb";
-                    let userSigner = new ethers.Wallet(privateKey);
-                    let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
-
-                    let rawTx = {
-                        to: config.contract.address,
-                        data: functionSignature,
-                        from: userAddress
-                    };
-
-                    let signedTx = await userSigner.signTransaction(rawTx);
-                    // should get user message to sign for EIP712 or personal signature types
-                    const forwardData = await biconomy.getForwardRequestAndMessageToSign(signedTx);
-                    console.log(forwardData);
-
-                    // optionally one can sign using sigUtil
-                    const signature = sigUtil.signTypedMessage(new Buffer.from(privateKey, 'hex'), { data: forwardData.eip712Format }, 'V3');
-
-                    let data = {
-                        signature: signature,
-                        forwardRequest: forwardData.request,
-                        rawTransaction: signedTx,
-                        signatureType: biconomy.EIP712_SIGN,
-                    };
-
-                    let provider = biconomy.getEthersProvider();
-                    // send signed transaction with ethers
-                    // promise resolves to transaction hash                  
-                    let txHash = await provider.send("eth_sendRawTransaction", [data]);
-                    showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
-                    let receipt = await provider.waitForTransaction(txHash);
-                    setTransactionHash(txHash);
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                    console.log(receipt);
-                } else {
-                    console.log("Sending normal transaction");
-                    let tx = await contract.setQuote(newQuote);
-                    console.log("Transaction hash : ", tx.hash);
-                    showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-                    let confirmation = await tx.wait();
-                    console.log(confirmation);
-                    setTransactionHash(tx.hash);
-
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                }
-            } catch (error) {
-                console.log(error);
-                handleClose();
-            }
-        } else {
-            showErrorMessage("Please enter the quote");
-        }
-    }
-
-    const getQuoteFromNetwork = async () => {
-        setLoadingMessage("Getting Quote from contact ...");
-        let result = await contract.getQuote();
-        if (
-            result &&
-            result.currentQuote != undefined &&
-            result.currentOwner != undefined
-        ) {
-            if (result.currentQuote == "") {
-                showErrorMessage("No quotes set on blockchain yet");
-            } else {
-                setQuote(result.currentQuote);
-                setOwner(result.currentOwner);
-            }
-        } else {
-            showErrorMessage("Not able to get quote information from Network");
-        }
-        handleClose();
     };
 
     const showErrorMessage = message => {
@@ -363,14 +164,14 @@ function App() {
     const sendTransaction = async (userAddress, arg) => {
         if (contract) {
             try {
-                let { data } = await contract.populateTransaction.setQuote(arg);
-                
+                let { data } = await contract.populateTransaction.spin();
                 let provider = biconomy.getEthersProvider();
+                
                 let txParams = {
                     data: data,
                     to: config.contract.address,
                     from: userAddress,
-                    signatureType: "EIP712_SIGN"
+                    signatureType: "EIP712_SIGN",
                 };
                 let tx;
                 try {
@@ -384,13 +185,9 @@ function App() {
                 console.log("Transaction hash : ", tx);
                 showInfoMessage(`Transaction sent. Waiting for confirmation ..`)
 
-                //event emitter methods
                 provider.once(tx, (transaction) => {
-                    // Emitted when the transaction has been mined
                     showSuccessMessage("Transaction confirmed on chain");
-                    console.log(transaction);
                     setTransactionHash(tx);
-                    getQuoteFromNetwork();
                 })
 
             } catch (error) {
@@ -446,18 +243,8 @@ function App() {
             <section>
                 <div className="submit-container">
                     <div className="submit-row">
-                        <input
-                            type="text"
-                            placeholder="Enter your quote"
-                            onChange={onQuoteChange}
-                            value={newQuote}
-                        />
                         <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
                             Submit
-            </Button>
-
-                        <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
-                            Submit (Private Key)
             </Button>
                     </div>
                 </div>

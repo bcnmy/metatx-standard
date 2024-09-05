@@ -21,15 +21,15 @@ let sigUtil = require("eth-sig-util");
 let config = {
     contract: {
         // address: "0x379A64a30B9Da67A6E0c2957bA23a3eC4a666fE7",
-        address: "0x64742C1acC255CfcA1dE078e1E2b852A1308912B",
-        abi: [ { "inputs": [], "name": "spin", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "contract ERC2771Forwarder", "name": "forwarder", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "spinner", "type": "address" } ], "name": "WheelSpinEvent", "type": "event" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" } ]
+        address: "0xcf62df0148574e0b33598178491d965327e29b8c",
+        abi: [ { "inputs": [ { "internalType": "address", "name": "_feeRecipient", "type": "address" }, { "internalType": "address", "name": "_implementation", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "wallet", "type": "address" } ], "name": "Created", "type": "event" }, { "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "newRecipient", "type": "address" } ], "name": "FeeRecipientUpdated", "type": "event" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" } ], "name": "OwnershipTransferred", "type": "event" }, { "inputs": [ { "internalType": "address", "name": "wallet", "type": "address" }, { "internalType": "bytes", "name": "sign", "type": "bytes" }, { "internalType": "bytes", "name": "data", "type": "bytes" } ], "name": "callWallet", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_owner", "type": "address" } ], "name": "deployWallet", "outputs": [ { "internalType": "address", "name": "addr", "type": "address" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_owner", "type": "address" }, { "internalType": "bytes", "name": "sign", "type": "bytes" }, { "internalType": "bytes", "name": "data", "type": "bytes" } ], "name": "deployWalletAndCall", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [], "name": "feeRecipient", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getAddressETH", "outputs": [ { "internalType": "address", "name": "eth", "type": "address" } ], "stateMutability": "pure", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "contractAddr", "type": "address" }, { "internalType": "uint256", "name": "nonce", "type": "uint256" }, { "internalType": "bytes", "name": "data", "type": "bytes" } ], "name": "getHash", "outputs": [ { "internalType": "bytes32", "name": "", "type": "bytes32" } ], "stateMutability": "pure", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_owner", "type": "address" } ], "name": "getWalletAddress", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "implementation", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "isOwner", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "addr", "type": "address" } ], "name": "toBytes32", "outputs": [ { "internalType": "bytes32", "name": "", "type": "bytes32" } ], "stateMutability": "pure", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "newOwner", "type": "address" } ], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_feeRecipient", "type": "address" } ], "name": "updateFeeRecipient", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "", "type": "address" } ], "name": "walletRegistered", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "", "type": "address" } ], "name": "wallets", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "erc20", "type": "address" }, { "internalType": "address payable", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "withdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function" } ]
     },
     apiKey: {
-        test: "avl5trG6v.cc393c85-0ae9-4c67-add3-db164f248d74",
+        test: "s0zhXKGyU.c2763d13-4fea-473d-b508-7419ab846e41",
         // prod: "W8fWv0lrr.0aeac97f-78fc-4335-bf44-a3d28575f67d"
         // prod: "R9F1P21uy.66fe0259-3a4c-48a5-817c-49ff24a0454c"
         // prod: "6z_2dpRH2.20f485bb-6b7e-428e-94b1-185d63911081"
-        prod: "p4MMyUygT.e13c5954-4530-4429-b502-c6ac4db13f6c"
+        prod: "s0zhXKGyU.c2763d13-4fea-473d-b508-7419ab846e41"
     }
 }
 
@@ -83,7 +83,7 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/mantle/07101210d8974c619d563526229a15fdc1675bb1e862ed04a6b8c4e90fa45fab");
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://arbitrum.meowrpc.com");
                 biconomy = new Biconomy(jsonRpcProvider, {
                     walletProvider: window.ethereum,
                     apiKey: config.apiKey.prod,
@@ -164,13 +164,13 @@ function App() {
     const sendTransaction = async (userAddress, arg) => {
         if (contract) {
             try {
-                let { data } = await contract.populateTransaction.spin();
+                    let { data } = await contract.populateTransaction.deployWalletAndCall("0x1248D243388940579beC75864Df9118a3e61Cc62", "0x9f973f51ad161d0d847c7aa6631556a5165f41cc2e490288e491ca21abf7d5c37f9886a6a2e1696f65dcdd5c9a4963b273e021b603ebd2558ebfe626d602bc1f1b", "0xc8d18a4500000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000000000000019275666125736df3a99564f15064b09501650bf0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000840411b252000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831000000000000000000000000509339cec4dd87ee11ef2ea30b45b0790ae7af6e0000000000000000000000000000000000000000000000000000000000072bf0000000000000000000000000000000000000000000000000000000000000753000000000000000000000000000000000000000000000000000000000");
                 let provider = biconomy.getEthersProvider();
                 
                 let txParams = {
                     data: data,
                     to: config.contract.address,
-                    from: userAddress,
+                    from: "0xD02329b31D6a7B33173F2197c7b04Eaf68F8184a",
                     signatureType: "EIP712_SIGN",
                 };
                 let tx;

@@ -20,13 +20,13 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0x880176EDA9f1608A2Bf182385379bDcC1a65Dfcf",
+        address: "0x3d08ce1f9609bb02f47192ff620634d9eb0e7b56",
         abi: [{ "inputs": [{ "internalType": "address", "name": "forwarder", "type": "address" }], "name": "isTrustedForwarder", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "trustedForwarder", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "stateMutability": "view", "type": "function", "constant": true }, { "inputs": [], "name": "versionRecipient", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function", "constant": true }]
     },
     apiKey: {
-        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
+        test: "k_POEMBl7.cd8fa918-1af6-430a-a095-8929de7081a7",
         prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
-    }
+    },
 }
 
 let walletProvider, walletSigner;
@@ -79,10 +79,10 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://eth-goerli.g.alchemy.com/v2/ZW86oTEJS9D58oy8p-uKZTMaSophOnvj");
                 biconomy = new Biconomy(jsonRpcProvider, {
                     walletProvider: window.ethereum,
-                    apiKey: config.apiKey.prod,
+                    apiKey: config.apiKey.test,
                     debug: true
                 });
 
@@ -308,10 +308,10 @@ function App() {
                 {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
                     <Typography>
                         Check your transaction hash
-            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
+                        <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
                             className={classes.link}>
                             here
-            </Link>
+                        </Link>
                     </Typography>
                 </Box>}
             </section>
@@ -326,11 +326,11 @@ function App() {
                         />
                         <Button variant="contained" color="primary" onClick={onSubmitWithPersonalSign} style={{ marginLeft: "10px" }}>
                             Submit
-            </Button>
+                        </Button>
 
                         <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
                             Submit (Private Key)
-            </Button>
+                        </Button>
                     </div>
                 </div>
             </section>

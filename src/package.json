@@ -7,8 +7,13 @@
     "test": "test"
   },
   "scripts": {
-    "test": "truffle test",
-    "coverage": "npx truffle run coverage"
+    "build": "hardhat compile",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "deploy:goerli": "hardhat run scripts/deploy-goerli.ts --network goerli",
+    "deploy:mumbai": "hardhat run scripts/deploy-mumbai.ts --network polygonMumbai",
+    "deploy:fuji": "hardhat run scripts/deploy-fuji.ts --network fuji"
   },
   "keywords": [
     "meta-transaction",
@@ -17,15 +22,28 @@
   ],
   "author": "Sachin Tomar",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@openzeppelin/contracts": "^2.3.0",
+    "@openzeppelin/hardhat-upgrades": "^1.12.0",
+    "@typechain/ethers-v5": "^7.0.1",
+    "@typechain/hardhat": "^2.3.0",
     "chai": "^4.2.0",
     "eth-sig-util": "^2.5.3",
-    "ganache-cli": "^6.10.2",
-    "truffle-hdwallet-provider": "^1.0.17",
-    "web3": "^1.3.0"
+    "hardhat": "^2.8.4",
+    "hardhat-contract-sizer": "^2.4.0",
+    "hardhat-gas-reporter": "^1.0.4"
   },
-  "devDependencies": {
-    "solidity-coverage": "^0.7.10"
+  "dependencies": {
+    "@biconomy/ccmp-contracts": "^0.0.6",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "@openzeppelin/contracts": "^4.8.1",
+    "@openzeppelin/contracts-upgradeable": "4.3.0",
+    "abdk-libraries-solidity": "^3.0.0",
+    "axios": "^0.27.2",
+    "base64-sol": "^1.1.0",
+    "ethereum-waffle": "^3.4.4",
+    "solidity-coverage": "^0.8.2"
   }
 }

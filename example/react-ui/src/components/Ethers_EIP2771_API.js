@@ -2,16 +2,13 @@ import React, { useState, useEffect } from "react";
 import "../App.css";
 import Button from "@material-ui/core/Button";
 import {
-  helperAttributes,
   getDomainSeperator,
-  getDataToSignForPersonalSign,
   getDataToSignForEIP712,
   buildForwardTxRequest,
   getBiconomyForwarderConfig
 } from '../api-helpers/biconomyForwarderHelpers';
 import {
   NotificationContainer,
-  NotificationManager
 } from "react-notifications";
 import "react-notifications/lib/notifications.css";
 import Backdrop from '@material-ui/core/Backdrop';
@@ -24,18 +21,16 @@ import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
-let sigUtil = require("eth-sig-util");
 
 
 let config = {
   contract: {
-    // address: "0x379A64a30B9Da67A6E0c2957bA23a3eC4a666fE7",
-    address: "0x64742C1acC255CfcA1dE078e1E2b852A1308912B",
+    address: "0x4990D27658070dD1f1a0CDD7411C3567676352A6",
       abi: [ { "inputs": [], "name": "spin", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "contract ERC2771Forwarder", "name": "forwarder", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "spinner", "type": "address" } ], "name": "WheelSpinEvent", "type": "event" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" } ]
   },
   apiKey: {
     test: "k_POEMBl7.cd8fa918-1af6-430a-a095-8929de7081a7",
-    prod: "p4MMyUygT.e13c5954-4530-4429-b502-c6ac4db13f6c"
+    prod: "0op7QZJTc.e0c1d2df-e503-4b9b-86c4-8e684a851a5d"
   },
   api: {
     test: "https://test-api.biconomy.io",
@@ -69,9 +64,7 @@ function App() {
   const classes = useStyles();
   const [backdropOpen, setBackdropOpen] = React.useState(true);
   const [loadingMessage, setLoadingMessage] = React.useState(" Loading Application ...");
-  const [quote, setQuote] = useState("This is a default quote");
   const [owner, setOwner] = useState("Default Owner Address");
-  const [newQuote, setNewQuote] = useState("");
   const [selectedAddress, setSelectedAddress] = useState("");
   const [metaTxEnabled] = useState(true);
   const [transactionHash, setTransactionHash] = useState("");
@@ -124,25 +117,18 @@ function App() {
           contractInterface = new ethers.utils.Interface(config.contract.abi);
           console.log(" contract ready");
           handleClose();
-          // getQuoteFromNetwork();
         }).onEvent(biconomy.ERROR, (error, message) => {
           // Handle error while initializing mexa
           console.log(message);
           console.log(error);
         });
-      } else {
-        showErrorMessage("Metamask not installed");
       }
     }
     init();
   }, []);
 
-  const onQuoteChange = event => {
-    setNewQuote(event.target.value);
-  };
-
   const onSubmitWithEIP712Sign = async () => {
-    if (newQuote != "" && contract) {
+    if (contract) {
       setTransactionHash("");
       if (metaTxEnabled) {
         console.log("Sending meta transaction");
@@ -157,12 +143,12 @@ function App() {
         let { data } = await contract.populateTransaction.spin();
         console.log(data);
         let gasPrice = await ethersProvider.getGasPrice();
-        console.log(gasPrice.toString());
+        console.log(`gasPrice: ${gasPrice.toString()}`);
         let gasLimit = await ethersProvider.estimateGas({
           maxFeePerGas: feeData.maxFeePerGas,
           maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
           to: config.contract.address,
-          from: userAddress,
+          from: "0x2ea96239E348E28C0A2EDf22aAAcC547C2EbcE55",
           data: data,
         });
         console.log(gasLimit.toString());
@@ -190,6 +176,7 @@ function App() {
           batchId:0,
           batchNonce,
           data,
+          txGas: 296608153205769,
         });
         
         console.log(req);
@@ -214,197 +201,8 @@ function App() {
           });
       } else {
         console.log("Sending normal transaction");
-        let tx = await contract.setQuote(newQuote);
-        console.log("Transaction hash : ", tx.hash);
-        showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-        let confirmation = await tx.wait();
-        console.log(confirmation);
-        setTransactionHash(tx.hash);
-
-        showSuccessMessage("Transaction confirmed on chain");
-        // getQuoteFromNetwork();
       }
-    } else {
-      showErrorMessage("Please enter the quote");
     }
-  };
-
-  const onSubmitWithPersonalSign = async () => {
-    if (newQuote != "" && contract) {
-      setTransactionHash("");
-      if (metaTxEnabled) {
-        console.log("Sending meta transaction");
-        let userAddress = selectedAddress;
-
-        let { data } = await contract.populateTransaction.setQuote(newQuote);
-        let gasPrice = await ethersProvider.getGasPrice();
-        let gasLimit = await ethersProvider.estimateGas({
-          to: config.contract.address,
-          from: userAddress,
-          data: data,
-        });
-        console.log(gasLimit.toString());
-        console.log(gasPrice.toString());
-
-        let forwarder = await getBiconomyForwarderConfig(42);
-        let forwarderContract = new ethers.Contract(
-          forwarder.address,
-          forwarder.abi,
-          biconomy.getSignerByAddress(userAddress)
-        );
-
-        const batchNonce = await forwarderContract.getNonce(userAddress, 0);
-        //const batchId = await forwarderContract.getBatch(userAddress);
-
-        console.log(batchNonce);
-        const to = config.contract.address;
-        const gasLimitNum = Number(gasLimit.toNumber().toString());
-        console.log(gasLimitNum);
-        const batchId = 0;
-        const req = await buildForwardTxRequest({
-          account: userAddress,
-          to,
-          gasLimitNum,
-          batchId,
-          batchNonce,
-          data,
-        });
-        console.log(req);
-
-
-        const hashToSign = getDataToSignForPersonalSign(req);
-        walletSigner.signMessage(hashToSign)
-          .then(function (sig) {
-            console.log('signature ' + sig);
-            sendTransaction({ userAddress, request: req, sig, signatureType: "PERSONAL_SIGN" });
-          })
-          .catch(function (error) {
-            console.log(error)
-          });
-
-
-      } else {
-        console.log("Sending normal transaction");
-        let tx = await contract.setQuote(newQuote);
-        console.log("Transaction hash : ", tx.hash);
-        showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-        let confirmation = await tx.wait();
-        console.log(confirmation);
-        setTransactionHash(tx.hash);
-
-        showSuccessMessage("Transaction confirmed on chain");
-        // getQuoteFromNetwork();
-      }
-    } else {
-      showErrorMessage("Please enter the quote");
-    }
-  };
-
-  const onSubmitWithPrivateKey = async () => {
-    if (newQuote != "" && contract) {
-      setTransactionHash("");
-      try {
-        if (metaTxEnabled) {
-          let privateKey = "bf096e6fb9754860c4c99eb336c0579db994a3ef7fb3f7db869ad2f1972fc755";
-          let userAddress = "0xf7AB2d00f379167c339691c23B23111eB598B3fb";
-          let userSigner = new ethers.Wallet(privateKey);
-          let { data } = await contract.populateTransaction.setQuote(newQuote);
-          let gasPrice = await ethersProvider.getGasPrice();
-          let gasLimit = await ethersProvider.estimateGas({
-            to: config.contract.address,
-            from: userAddress,
-            data: data,
-          });
-          console.log(gasLimit.toString());
-          console.log(gasPrice.toString());
-
-          let forwarder = await getBiconomyForwarderConfig(42);
-          let forwarderContract = new ethers.Contract(
-            forwarder.address,
-            forwarder.abi,
-            biconomy.getSignerByAddress(userAddress)
-          );
-
-          const batchNonce = await forwarderContract.getNonce(userAddress, 0);
-          //const batchId = await forwarderContract.getBatch(userAddress);
-
-          console.log(batchNonce);
-          const to = config.contract.address;
-          const gasLimitNum = Number(gasLimit.toNumber().toString());
-          console.log(gasLimitNum);
-          const batchId = 0;
-          const req = await buildForwardTxRequest({
-            account: userAddress,
-            to,
-            gasLimitNum,
-            batchId,
-            batchNonce,
-            data,
-          });
-          console.log(req);
-
-          const hashToSign = getDataToSignForPersonalSign(req);
-
-          const signature = await userSigner.signMessage(hashToSign);
-          sendTransaction({
-            userAddress,
-            request: req,
-            sig: signature,
-            signatureType: "PERSONAL_SIGN",
-          });
-
-
-        } else {
-          console.log("Sending normal transaction");
-          let tx = await contract.setQuote(newQuote);
-          console.log("Transaction hash : ", tx.hash);
-          showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-          let confirmation = await tx.wait();
-          console.log(confirmation);
-          setTransactionHash(tx.hash);
-
-          showSuccessMessage("Transaction confirmed on chain");
-          // getQuoteFromNetwork();
-        }
-      } catch (error) {
-        console.log(error);
-        handleClose();
-      }
-    } else {
-      showErrorMessage("Please enter the quote");
-    }
-  }
-
-  const getQuoteFromNetwork = async () => {
-    setLoadingMessage("Getting Quote from contact ...");
-    let result = await contract.getQuote();
-    if (
-      result &&
-      result.currentQuote != undefined &&
-      result.currentOwner != undefined
-    ) {
-      if (result.currentQuote == "") {
-        showErrorMessage("No quotes set on blockchain yet");
-      } else {
-        setQuote(result.currentQuote);
-        setOwner(result.currentOwner);
-      }
-    } else {
-      showErrorMessage("Not able to get quote information from Network");
-    }
-    handleClose();
-  };
-
-  const showErrorMessage = message => {
-    NotificationManager.error(message, "Error", 5000);
-  };
-
-  const showSuccessMessage = message => {
-    NotificationManager.success(message, "Message", 3000);
-  };
-
-  const showInfoMessage = message => {
-    NotificationManager.info(message, "Info", 3000);
   };
 
   const sendTransaction = async ({ userAddress, request, sig, domainSeparator, signatureType }) => {
@@ -424,7 +222,7 @@ function App() {
           },
           body: JSON.stringify({
             to: config.contract.address,
-            apiId: "969f5d3b-c218-4552-97df-0f9bbaf924c0",
+            apiId: "d0ba7fc4-9bab-4020-ada4-666b6c78acce",
             params: params,
             from: userAddress,
             signatureType: signatureType
@@ -433,7 +231,6 @@ function App() {
           .then((response) => response.json())
           .then(function (result) {
             console.log(result);
-            showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
             return result.txHash;
             // todo - fetch mined transaction receipt, show tx confirmed and update quotes
           }).then(function (hash) {
@@ -442,7 +239,6 @@ function App() {
               // Emitted when the transaction has been mined
               console.log(transaction);
               setTransactionHash(hash);
-              getQuoteFromNetwork();
             })
           })
           .catch(function (error) {
@@ -472,12 +268,6 @@ function App() {
         </div>
       </section>
       <section className="main">
-        <div className="mb-wrap mb-style-2">
-          <blockquote cite="http://www.gutenberg.org/ebboks/11">
-            <p>{quote}</p>
-          </blockquote>
-        </div>
-
         <div className="mb-attribution">
           <p className="mb-author">{owner}</p>
           {selectedAddress.toLowerCase() === owner.toLowerCase() && (
@@ -502,22 +292,10 @@ function App() {
       <section>
         <div className="submit-container">
           <div className="submit-row">
-            <input
-              type="text"
-              placeholder="Enter your quote"
-              onChange={onQuoteChange}
-              value={newQuote}
-            />
             <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
               Submit With EIP712 Sign
             </Button>
-            <Button variant="contained" color="primary" onClick={onSubmitWithPersonalSign} style={{ marginLeft: "10px" }}>
-              Submit With Personal Sign
-            </Button>
 
-            <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
-              Submit (Private Key)
-            </Button>
           </div>
         </div>
       </section>

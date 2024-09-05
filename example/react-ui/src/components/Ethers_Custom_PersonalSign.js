@@ -16,22 +16,22 @@ import { makeStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { Box } from "@material-ui/core";
-import {toBuffer} from "ethereumjs-util";
+import { toBuffer } from "ethereumjs-util";
 let sigUtil = require("eth-sig-util");
 let abi = require('ethereumjs-abi')
 
 let config = {
     contract: {
-        address: "0x1E1c36546F6ddD71e8e6aEDf135B82F7EEaA08b9",
-        abi: [{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"addresspayable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"getChainID","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"uint256","name":"chainID","type":"uint256"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"verify","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}]
+        address: "0x18d355d5ca77b5d7d664c049c9ce0a834d7f5314",
+        abi: [{ "inputs": [{ "internalType": "address", "name": "userAddress", "type": "address" }, { "internalType": "bytes", "name": "functionSignature", "type": "bytes" }, { "internalType": "bytes32", "name": "sigR", "type": "bytes32" }, { "internalType": "bytes32", "name": "sigS", "type": "bytes32" }, { "internalType": "uint8", "name": "sigV", "type": "uint8" }], "name": "executeMetaTransaction", "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }], "stateMutability": "payable", "type": "function" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "userAddress", "type": "address" }, { "indexed": false, "internalType": "addresspayable", "name": "relayerAddress", "type": "address" }, { "indexed": false, "internalType": "bytes", "name": "functionSignature", "type": "bytes" }], "name": "MetaTransactionExecuted", "type": "event" }, { "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "getChainID", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "pure", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "getNonce", "outputs": [{ "internalType": "uint256", "name": "nonce", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "uint256", "name": "nonce", "type": "uint256" }, { "internalType": "uint256", "name": "chainID", "type": "uint256" }, { "internalType": "bytes", "name": "functionSignature", "type": "bytes" }, { "internalType": "bytes32", "name": "sigR", "type": "bytes32" }, { "internalType": "bytes32", "name": "sigS", "type": "bytes32" }, { "internalType": "uint8", "name": "sigV", "type": "uint8" }], "name": "verify", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }]
     },
     apiKey: {
-        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
+        test: "k_POEMBl7.cd8fa918-1af6-430a-a095-8929de7081a7",
         prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
-    }
+    },
 }
 
-let salt = 42;
+let salt = ethers.utils.hexZeroPad((5), 32);
 let walletProvider, walletSigner, ethersProvider;
 let contract, contractInterface;
 
@@ -86,11 +86,11 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
+                let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://eth-goerli.g.alchemy.com/v2/ZW86oTEJS9D58oy8p-uKZTMaSophOnvj");
                 biconomy = new Biconomy(jsonRpcProvider, {
                     walletProvider: window.ethereum,
-                    apiKey: config.apiKey.prod,
-                    debug: true 
+                    apiKey: config.apiKey.test,
+                    debug: true
                 });
 
                 /*
@@ -137,13 +137,18 @@ function App() {
             if (metaTxEnabled) {
                 showInfoMessage(`Getting user signature`);
                 let userAddress = selectedAddress;
+                console.log(userAddress);
                 let nonce = await contract.getNonce(userAddress);
                 let functionSignature = contractInterface.encodeFunctionData("setQuote", [newQuote]);
+                console.log(nonce.toNumber(), salt, functionSignature, config.contract.address);
                 let messageToSign = constructMetaTransactionMessage(nonce.toNumber(), salt, functionSignature, config.contract.address);
                 const signature = await walletSigner.signMessage(messageToSign);
-                
+
                 console.info(`User signature is ${signature}`);
                 let { r, s, v } = getSignatureParameters(signature);
+
+                console.log("***************");
+                console.log(userAddress, functionSignature, r, s, v);
                 sendSignedTransaction(userAddress, functionSignature, r, s, v);
             } else {
                 console.log("Sending normal transaction");
@@ -164,95 +169,95 @@ function App() {
 
     const constructMetaTransactionMessage = (nonce, salt, functionSignature, contractAddress) => {
         return abi.soliditySHA3(
-            ["uint256","address","uint256","bytes"],
+            ["uint256", "address", "uint256", "bytes"],
             [nonce, contractAddress, salt, toBuffer(functionSignature)]
         );
-      }
+    }
 
     const onSubmitWithPrivateKey = async (event) => {
-      if (newQuote != "" && contract) {
-        setTransactionHash("");
+        if (newQuote != "" && contract) {
+            setTransactionHash("");
 
-        try {
-          if (metaTxEnabled) {
-            showInfoMessage(`Getting user signature`);
-            let wallet = new ethers.Wallet(
-              "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910"
-            );
-            let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-            let nonce = await contract.getNonce(userAddress);
-            let functionSignature = contractInterface.encodeFunctionData(
-              "setQuote",
-              [newQuote]
-            );
-            let messageToSign = constructMetaTransactionMessage(
-              nonce.toNumber(),
-              salt,
-              functionSignature,
-              config.contract.address
-            );
-            const signature = await wallet.signMessage(messageToSign);
-
-            console.info(`User signature is ${signature}`);
-            let { r, s, v } = getSignatureParameters(signature);
-            let rawTx, tx;
-            rawTx = {
-              to: config.contract.address,
-              data: contractInterface.encodeFunctionData(
-                "executeMetaTransaction",
-                [userAddress, functionSignature, r, s, v]
-              ),
-              from: userAddress,
-            };
-            tx = await wallet.signTransaction(rawTx);
-            let transactionHash;
             try {
-              let receipt = await ethersProvider.sendTransaction(tx);
-              console.log(receipt);
+                if (metaTxEnabled) {
+                    showInfoMessage(`Getting user signature`);
+                    let wallet = new ethers.Wallet(
+                        "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910"
+                    );
+                    let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
+                    let nonce = await contract.getNonce(userAddress);
+                    let functionSignature = contractInterface.encodeFunctionData(
+                        "setQuote",
+                        [newQuote]
+                    );
+                    let messageToSign = constructMetaTransactionMessage(
+                        nonce.toNumber(),
+                        salt,
+                        functionSignature,
+                        config.contract.address
+                    );
+                    const signature = await wallet.signMessage(messageToSign);
+
+                    console.info(`User signature is ${signature}`);
+                    let { r, s, v } = getSignatureParameters(signature);
+                    let rawTx, tx;
+                    rawTx = {
+                        to: config.contract.address,
+                        data: contractInterface.encodeFunctionData(
+                            "executeMetaTransaction",
+                            [userAddress, functionSignature, r, s, v]
+                        ),
+                        from: userAddress,
+                    };
+                    tx = await wallet.signTransaction(rawTx);
+                    let transactionHash;
+                    try {
+                        let receipt = await ethersProvider.sendTransaction(tx);
+                        console.log(receipt);
+                    } catch (error) {
+                        // Ethers check the hash from user's signed tx and hash returned from Biconomy
+                        // Both hash are expected to be different as biconomy send the transaction from its relayers
+                        if (error.returnedHash && error.expectedHash) {
+                            console.log("Transaction hash : ", error.returnedHash);
+                            transactionHash = error.returnedHash;
+                        } else {
+                            console.log(error);
+                            showErrorMessage("Error while sending transaction");
+                        }
+                    }
+
+                    if (transactionHash) {
+                        showInfoMessage(
+                            `Transaction sent by relayer with hash ${transactionHash}`
+                        );
+                        let receipt = await ethersProvider.waitForTransaction(
+                            transactionHash
+                        );
+                        console.log(receipt);
+                        showSuccessMessage("Transaction confirmed on chain");
+                        getQuoteFromNetwork();
+                    } else {
+                        showErrorMessage("Could not get transaction hash");
+                    }
+                } else {
+                    console.log("Sending normal transaction");
+                    let tx = await contract.setQuote(newQuote);
+                    console.log("Transaction hash : ", tx.hash);
+                    showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+                    let confirmation = await tx.wait();
+                    console.log(confirmation);
+                    setTransactionHash(tx.hash);
+
+                    showSuccessMessage("Transaction confirmed on chain");
+                    getQuoteFromNetwork();
+                }
             } catch (error) {
-              // Ethers check the hash from user's signed tx and hash returned from Biconomy
-              // Both hash are expected to be different as biconomy send the transaction from its relayers
-              if (error.returnedHash && error.expectedHash) {
-                console.log("Transaction hash : ", error.returnedHash);
-                transactionHash = error.returnedHash;
-              } else {
                 console.log(error);
-                showErrorMessage("Error while sending transaction");
-              }
+                handleClose();
             }
-
-            if (transactionHash) {
-              showInfoMessage(
-                `Transaction sent by relayer with hash ${transactionHash}`
-              );
-              let receipt = await ethersProvider.waitForTransaction(
-                transactionHash
-              );
-              console.log(receipt);
-              showSuccessMessage("Transaction confirmed on chain");
-              getQuoteFromNetwork();
-            } else {
-              showErrorMessage("Could not get transaction hash");
-            }
-          } else {
-            console.log("Sending normal transaction");
-            let tx = await contract.setQuote(newQuote);
-            console.log("Transaction hash : ", tx.hash);
-            showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-            let confirmation = await tx.wait();
-            console.log(confirmation);
-            setTransactionHash(tx.hash);
-
-            showSuccessMessage("Transaction confirmed on chain");
-            getQuoteFromNetwork();
-          }
-        } catch (error) {
-          console.log(error);
-          handleClose();
+        } else {
+            showErrorMessage("Please enter the quote");
         }
-      } else {
-        showErrorMessage("Please enter the quote");
-      }
     };
 
     const getSignatureParameters = signature => {
@@ -362,10 +367,10 @@ function App() {
                 {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
                     <Typography>
                         Check your transaction hash
-            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
+                        <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
                             className={classes.link}>
                             here
-            </Link>
+                        </Link>
                     </Typography>
                 </Box>}
             </section>
@@ -380,11 +385,11 @@ function App() {
                         />
                         <Button variant="contained" color="primary" onClick={onSubmitWithPersonalSign} style={{ marginLeft: "10px" }}>
                             Submit
-            </Button>
+                        </Button>
 
                         <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
                             Submit (Private Key)
-            </Button>
+                        </Button>
                     </div>
                 </div>
             </section>

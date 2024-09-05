@@ -22,11 +22,11 @@ let sigUtil = require("eth-sig-util");
 let config = {
     contract: {
         address: "0x465F55aEaFB5291757c3E422663A206D13c1f2DF",
-        abi: [ { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "admin", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [ { "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "string", "name": "newQuote", "type": "string" } ], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "_trustedForwarder", "type": "address" } ], "name": "setTrustedForwarder", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" } ]
+        abi: [{ "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "admin", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "forwarder", "type": "address" }], "name": "isTrustedForwarder", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_trustedForwarder", "type": "address" }], "name": "setTrustedForwarder", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "trustedForwarder", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }]
     },
     walletFactory: {
         address: '0xB6D514655c1ed4A7ceeA2D717A3F37D7D8aEE90b',
-        abi: [{"inputs":[{"internalType":"address","name":"_baseImpl","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_proxy","type":"address"},{"indexed":true,"internalType":"address","name":"_implementation","type":"address"},{"indexed":true,"internalType":"address","name":"_owner","type":"address"}],"name":"WalletCreated","type":"event"},{"inputs":[{"internalType":"address","name":"_owner","type":"address"},{"internalType":"address","name":"_entryPoint","type":"address"},{"internalType":"address","name":"_handler","type":"address"},{"internalType":"uint256","name":"_index","type":"uint256"}],"name":"deployCounterFactualWallet","outputs":[{"internalType":"address","name":"proxy","type":"address"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_owner","type":"address"},{"internalType":"address","name":"_entryPoint","type":"address"},{"internalType":"address","name":"_handler","type":"address"}],"name":"deployWallet","outputs":[{"internalType":"address","name":"proxy","type":"address"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_owner","type":"address"},{"internalType":"uint256","name":"_index","type":"uint256"}],"name":"getAddressForCounterfactualWallet","outputs":[{"internalType":"address","name":"_wallet","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"isWalletExist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}]
+        abi: [{ "inputs": [{ "internalType": "address", "name": "_baseImpl", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "_proxy", "type": "address" }, { "indexed": true, "internalType": "address", "name": "_implementation", "type": "address" }, { "indexed": true, "internalType": "address", "name": "_owner", "type": "address" }], "name": "WalletCreated", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "_owner", "type": "address" }, { "internalType": "address", "name": "_entryPoint", "type": "address" }, { "internalType": "address", "name": "_handler", "type": "address" }, { "internalType": "uint256", "name": "_index", "type": "uint256" }], "name": "deployCounterFactualWallet", "outputs": [{ "internalType": "address", "name": "proxy", "type": "address" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_owner", "type": "address" }, { "internalType": "address", "name": "_entryPoint", "type": "address" }, { "internalType": "address", "name": "_handler", "type": "address" }], "name": "deployWallet", "outputs": [{ "internalType": "address", "name": "proxy", "type": "address" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_owner", "type": "address" }, { "internalType": "uint256", "name": "_index", "type": "uint256" }], "name": "getAddressForCounterfactualWallet", "outputs": [{ "internalType": "address", "name": "_wallet", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "isWalletExist", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }]
     },
     apiKey: {
         test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
@@ -36,7 +36,7 @@ let config = {
         test: "https://test-api.biconomy.io",
         prod: "https://api.biconomy.io"
     }
-    
+
 }
 
 const EIP712_WALLET_TX_TYPE = {
@@ -96,7 +96,7 @@ function App() {
     const [owner, setOwner] = useState("Default Owner Address");
     const [newQuote, setNewQuote] = useState("");
     const [selectedAddress, setSelectedAddress] = useState("");
-    const [ scwAddress, setSCWAddress ] = useState("");
+    const [scwAddress, setSCWAddress] = useState("");
     const [transactionHash, setTransactionHash] = useState("");
 
     const { connectWeb3, disconnect, account } = useWeb3Context();
@@ -121,13 +121,15 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                
+
                 let jsonRpcProvider = new ethers.providers.JsonRpcProvider("https://polygon-mumbai.g.alchemy.com/v2/kvzXRzX2Ofr6PMqNot-QvPGRpimO7Cp_");
                 // notice: uncomment signature piece L222 if you use jsonRpcProvider as first argument
                 biconomy = new Biconomy(jsonRpcProvider,
-                    { apiKey: config.apiKey.prod, // get api key from dashboard
-                    // walletProvider: window.ethereum, 
-                    debug: true });
+                    {
+                        apiKey: config.apiKey.prod, // get api key from dashboard
+                        // walletProvider: window.ethereum, 
+                        debug: true
+                    });
 
                 /*
                   This provider is linked to your wallet.
@@ -214,7 +216,7 @@ function App() {
             const { data } = await contract.populateTransaction.setQuote(newQuote);
             console.log("data", data);
             console.log('Building tx');
-            const safeTxBody = await biconomyWalletClient.buildExecTransaction({data, to:config.contract.address, walletAddress:scwAddress});
+            const safeTxBody = await biconomyWalletClient.buildExecTransaction({ data, to: config.contract.address, walletAddress: scwAddress });
             console.log('safeTxBody', safeTxBody);
 
 
@@ -232,20 +234,20 @@ function App() {
             let webHookAttributes = {
                 "webHookId": "c838bd63-d219-40c4-a29d-44c223e31fe9", // replace webHookId that one gets from register webhookId
                 "webHookData": {
-                    "signedNonce": {"v": 2, "r": "2", "s": "4", "transactionHash": "0x111"},
+                    "signedNonce": { "v": 2, "r": "2", "s": "4", "transactionHash": "0x111" },
                     "nonce": "1113",
                 },
             };
-            
 
-            const txHash = await biconomyWalletClient.sendBiconomyWalletTransaction({execTransactionBody:safeTxBody, walletAddress:scwAddress, signature: newSignature, webHookAttributes}); // signature appended
+
+            const txHash = await biconomyWalletClient.sendBiconomyWalletTransaction({ execTransactionBody: safeTxBody, walletAddress: scwAddress, signature: newSignature, webHookAttributes }); // signature appended
             biconomy.getEthersProvider().once(txHash, (transaction) => {
-                    // Emitted when the transaction has been mined
-                    showSuccessMessage("Transaction confirmed on chain");
-                    console.log(txHash);
-                    setTransactionHash(txHash);
-                    getQuoteFromNetwork();
-                })
+                // Emitted when the transaction has been mined
+                showSuccessMessage("Transaction confirmed on chain");
+                console.log(txHash);
+                setTransactionHash(txHash);
+                getQuoteFromNetwork();
+            })
 
         } else {
             showErrorMessage("Please enter the quote");
@@ -258,13 +260,13 @@ function App() {
             await connectWeb3();
             console.log('Wallet web3 connected...');
             console.log(`Checking if SCW exists for address: ${selectedAddress}`);
-            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({eoa:selectedAddress, index:6}); // default index(salt) 0
+            const { doesWalletExist, walletAddress } = await biconomyWalletClient.checkIfWalletExists({ eoa: selectedAddress, index: 6 }); // default index(salt) 0
             console.log('doesWalletExist', doesWalletExist);
             console.log('walletAddress:', walletAddress);
-            if(!doesWalletExist) {
+            if (!doesWalletExist) {
                 console.log('Wallet does not exist');
                 console.log('Deploying wallet');
-                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({eoa:selectedAddress, index:6}); // default index(salt) 0
+                const walletAddress = await biconomyWalletClient.checkIfWalletExistsAndDeploy({ eoa: selectedAddress, index: 6 }); // default index(salt) 0
                 console.log('Wallet deployed at address', walletAddress);
                 setSCWAddress(walletAddress);
             } else {
@@ -304,10 +306,10 @@ function App() {
                 </button>
 
                 <div>
-                <div className="submit-row">
-                <p className="mb-author">Your SCW</p>
-                </div>
-                <p className="mb-author">{scwAddress ? scwAddress.slice(0,6)+"..."+scwAddress.slice(-4) : "Not detected"}</p>
+                    <div className="submit-row">
+                        <p className="mb-author">Your SCW</p>
+                    </div>
+                    <p className="mb-author">{scwAddress ? scwAddress.slice(0, 6) + "..." + scwAddress.slice(-4) : "Not detected"}</p>
                 </div>
 
                 <div className="mb-attribution">

@@ -20,11 +20,11 @@ let sigUtil = require("eth-sig-util");
 
 let config = {
     contract: {
-        address: "0x853bfD0160d67DF13a9F70409f9038f6473585Bd",
-        abi: [{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"addresspayable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getQuote","outputs":[{"internalType":"string","name":"currentQuote","type":"string"},{"internalType":"address","name":"currentOwner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quote","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"newQuote","type":"string"}],"name":"setQuote","outputs":[],"stateMutability":"nonpayable","type":"function"}]
+        address: "0x18d355d5ca77b5d7d664c049c9ce0a834d7f5314",
+        abi: [{ "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "userAddress", "type": "address" }, { "indexed": false, "internalType": "addresspayable", "name": "relayerAddress", "type": "address" }, { "indexed": false, "internalType": "bytes", "name": "functionSignature", "type": "bytes" }], "name": "MetaTransactionExecuted", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "userAddress", "type": "address" }, { "internalType": "bytes", "name": "functionSignature", "type": "bytes" }, { "internalType": "bytes32", "name": "sigR", "type": "bytes32" }, { "internalType": "bytes32", "name": "sigS", "type": "bytes32" }, { "internalType": "uint8", "name": "sigV", "type": "uint8" }], "name": "executeMetaTransaction", "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "getNonce", "outputs": [{ "internalType": "uint256", "name": "nonce", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getQuote", "outputs": [{ "internalType": "string", "name": "currentQuote", "type": "string" }, { "internalType": "address", "name": "currentOwner", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "quote", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "string", "name": "newQuote", "type": "string" }], "name": "setQuote", "outputs": [], "stateMutability": "nonpayable", "type": "function" }]
     },
     apiKey: {
-        test: "cNWqZcoBb.4e4c0990-26a8-4a45-b98e-08101f754119",
+        test: "k_POEMBl7.cd8fa918-1af6-430a-a095-8929de7081a7",
         prod: "8nvA_lM_Q.0424c54e-b4b2-4550-98c5-8b437d3118a9"
     },
     api: {
@@ -50,10 +50,10 @@ let domainData = {
     name: "TestContract",
     version: "1",
     verifyingContract: config.contract.address,
-    salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(42)).toHexString(), 32)
+    salt: ethers.utils.hexZeroPad((ethers.BigNumber.from(5)).toHexString(), 32)
 };
 
-let ethersProvider,walletProvider, walletSigner;
+let ethersProvider, walletProvider, walletSigner;
 let contract, contractInterface;
 
 const useStyles = makeStyles((theme) => ({
@@ -107,8 +107,8 @@ function App() {
                 await provider.enable();
                 setLoadingMessage("Initializing Biconomy ...");
                 // We're creating biconomy provider linked to your network of choice where your contract is deployed
-                biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77"),
-                    { apiKey: config.apiKey.prod, debug: true });
+                biconomy = new Biconomy(new ethers.providers.JsonRpcProvider("https://eth-goerli.g.alchemy.com/v2/ZW86oTEJS9D58oy8p-uKZTMaSophOnvj"),
+                    { apiKey: config.apiKey.test, debug: true });
 
                 /*
                   This provider is linked to your wallet.
@@ -193,64 +193,64 @@ function App() {
     };
 
     const onSubmitWithPrivateKey = async (event) => {
-      if (newQuote != "" && contract) {
-        setTransactionHash("");
+        if (newQuote != "" && contract) {
+            setTransactionHash("");
 
-        try {
-          if (metaTxEnabled) {
-            showInfoMessage(`Getting user signature`);
-            let privateKey = 
-              "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
-            let wallet = new ethers.Wallet(privateKey);
-            let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
-            let nonce = await contract.getNonce(userAddress);
-            let functionSignature = contractInterface.encodeFunctionData(
-              "setQuote",
-              [newQuote]
-            );
-            let message = {};
-            message.nonce = parseInt(nonce);
-            message.from = userAddress;
-            message.functionSignature = functionSignature;
+            try {
+                if (metaTxEnabled) {
+                    showInfoMessage(`Getting user signature`);
+                    let privateKey =
+                        "2ef295b86aa9d40ff8835a9fe852942ccea0b7c757fad5602dfa429bcdaea910";
+                    let wallet = new ethers.Wallet(privateKey);
+                    let userAddress = "0xE1E763551A85F04B4687f0035885E7F710A46aA6";
+                    let nonce = await contract.getNonce(userAddress);
+                    let functionSignature = contractInterface.encodeFunctionData(
+                        "setQuote",
+                        [newQuote]
+                    );
+                    let message = {};
+                    message.nonce = parseInt(nonce);
+                    message.from = userAddress;
+                    message.functionSignature = functionSignature;
 
-            // NOTE: DO NOT use JSON.stringify on dataToSign object
-            const dataToSign = {
-              types: {
-                EIP712Domain: domainType,
-                MetaTransaction: metaTransactionType,
-              },
-              domain: domainData,
-              primaryType: "MetaTransaction",
-              message: message,
-            };
+                    // NOTE: DO NOT use JSON.stringify on dataToSign object
+                    const dataToSign = {
+                        types: {
+                            EIP712Domain: domainType,
+                            MetaTransaction: metaTransactionType,
+                        },
+                        domain: domainData,
+                        primaryType: "MetaTransaction",
+                        message: message,
+                    };
 
-            // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
-            // instead of chainId
-            const signature = sigUtil.signTypedMessage(
-              new Buffer.from(privateKey, "hex"),
-              { data: dataToSign },
-              "V3"
-            );
-            let { r, s, v } = getSignatureParameters(signature);
-            sendTransaction(userAddress, functionSignature, r, s, v);
-          } else {
-            console.log("Sending normal transaction");
-            let tx = await contract.setQuote(newQuote);
-            console.log("Transaction hash : ", tx.hash);
-            showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
-            let confirmation = await tx.wait();
-            console.log(confirmation);
-            setTransactionHash(tx.hash);
-            showSuccessMessage("Transaction confirmed on chain");
-            getQuoteFromNetwork();
-          }
-        } catch (error) {
-          console.log(error);
-          handleClose();
+                    // Its important to use eth_signTypedData_v3 and not v4 to get EIP712 signature because we have used salt in domain data
+                    // instead of chainId
+                    const signature = sigUtil.signTypedMessage(
+                        new Buffer.from(privateKey, "hex"),
+                        { data: dataToSign },
+                        "V3"
+                    );
+                    let { r, s, v } = getSignatureParameters(signature);
+                    sendTransaction(userAddress, functionSignature, r, s, v);
+                } else {
+                    console.log("Sending normal transaction");
+                    let tx = await contract.setQuote(newQuote);
+                    console.log("Transaction hash : ", tx.hash);
+                    showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
+                    let confirmation = await tx.wait();
+                    console.log(confirmation);
+                    setTransactionHash(tx.hash);
+                    showSuccessMessage("Transaction confirmed on chain");
+                    getQuoteFromNetwork();
+                }
+            } catch (error) {
+                console.log(error);
+                handleClose();
+            }
+        } else {
+            showErrorMessage("Please enter the quote");
         }
-      } else {
-        showErrorMessage("Please enter the quote");
-      }
     };
 
     const getSignatureParameters = signature => {
@@ -309,30 +309,30 @@ function App() {
                 fetch(`${config.api.prod}/api/v2/meta-tx/native`, {
                     method: "POST",
                     headers: {
-                      "x-api-key" : config.apiKey.prod,
-                      'Content-Type': 'application/json;charset=utf-8'
+                        "x-api-key": config.apiKey.prod,
+                        'Content-Type': 'application/json;charset=utf-8'
                     },
                     body: JSON.stringify({
-                      "to": config.contract.address,
-                      "apiId": "ab6a62bf-c58f-4040-9084-0fad85f3345a",
-                    //"apiId": "f93b5089-574e-47b7-92a1-2a9fff66215a",
-                      "params": [userAddress, functionData, r, s, v],
-                      "from": userAddress
+                        "to": config.contract.address,
+                        "apiId": "b8fa03de-0c42-42cc-8eae-286399f0312a",
+                        //"apiId": "f93b5089-574e-47b7-92a1-2a9fff66215a",
+                        "params": [userAddress, functionData, r, s, v],
+                        "from": userAddress
                     })
-                  })
-                  .then(response=>response.json())
-                  .then(async function(result) {
-                    console.log(result);
-                    showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
-                    let receipt = await ethersProvider.waitForTransaction(
-                        result.txHash
-                      );
-                      console.log(receipt);
-                    setTransactionHash(receipt.transactionHash);
-                    showSuccessMessage("Transaction confirmed on chain");
-                    getQuoteFromNetwork();
-                  }).catch(function(error) {
-                      console.log(error)
+                })
+                    .then(response => response.json())
+                    .then(async function (result) {
+                        console.log(result);
+                        showInfoMessage(`Transaction sent by relayer with hash ${result.txHash}`);
+                        let receipt = await ethersProvider.waitForTransaction(
+                            result.txHash
+                        );
+                        console.log(receipt);
+                        setTransactionHash(receipt.transactionHash);
+                        showSuccessMessage("Transaction confirmed on chain");
+                        getQuoteFromNetwork();
+                    }).catch(function (error) {
+                        console.log(error)
                     });
             } catch (error) {
                 console.log(error);
@@ -377,10 +377,10 @@ function App() {
                 {transactionHash !== "" && <Box className={classes.root} mt={2} p={2}>
                     <Typography>
                         Check your transaction hash
-            <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
+                        <Link href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank"
                             className={classes.link}>
                             here
-            </Link>
+                        </Link>
                     </Typography>
                 </Box>}
             </section>
@@ -395,11 +395,11 @@ function App() {
                         />
                         <Button variant="contained" color="primary" onClick={onSubmitWithEIP712Sign} style={{ marginLeft: "10px" }}>
                             Submit
-            </Button>
+                        </Button>
 
                         <Button variant="contained" color="secondary" onClick={onSubmitWithPrivateKey} style={{ marginLeft: "10px" }}>
                             Submit (Private Key)
-            </Button>
+                        </Button>
                     </div>
                 </div>
             </section>
